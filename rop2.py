@@ -66,7 +66,9 @@ whi = '\u001b[37m'
 res = '\u001b[0m'
 res2 = '\u001b[0m'
 
-opt={"bImgExc":True,"bSystemDlls":True,"bOtherDlls":True,"bImgExcExtracted":True,"bSystemDllsExtracted":True,"bOtherDllsExtracted":True, "bx86Extracted":False,"bx64Extracted":False, "bx86Get":True, "bx64Get":True, "bx86Print":True, "bx64Print":True, "lenMax":0x10,"bytesMax":0x15, "acceptASLR": False, "acceptSEH":False, "acceptSystemWin":False, "acceptCFG":False, "checkForBadBytes":True,"badBytes":b'\x93\x09\x11\x02\x03\x66\x05\x06\x03\x16', "lookupMod":sys.argv[1], "regsExc":["eax","ebx","ecx"]}
+opt={"bImgExc":True,"bSystemDlls":True,"bOtherDlls":True,"bImgExcExtracted":True,"bSystemDllsExtracted":True,"bOtherDllsExtracted":True, "bx86Extracted":False,"bx64Extracted":False, "bx86Get":True, "bx64Get":True, "bx86Print":True, "bx64Print":True, "lenMax":0x10,"bytesMax":0x15, "acceptASLR": False, "acceptSEH":False, "acceptSystemWin":False, "acceptCFG":False, "checkForBadBytes":True,"badBytes":b'', "lookupMod":sys.argv[1], "regsExc":[]}
+# "badBytes":b'\x93\x09\x11\x02\x03\x66\x05\x06\x03\x16
+# "regsExc":["eax","ebx","ecx"]
 oldsysOut=sys.stdout
 my_stdout = open( 1, "w", buffering = 400000 )
 
