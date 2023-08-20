@@ -13,6 +13,8 @@ ROP ROCKET is very powerful with some unique capabilities, which includes the fo
 - This allows for gadgets to be used regardless of bad bytes in the gadget address. For instance, if you need a pushad but there are bad bytes in the address, we can encode it and decode it at runtime, executing it via push r32 /ret. (See obfuscation options.) Several types of obfuscation are provided, including a very robust integer overflow that likely will not fail, assuming there are gadgets available. (If you exclude all \x00 and every gadget has those, there is nothing that can be done.) Registers can be excluded as well, preventing "clobbering."
 - Alternative mov dereference "sniper" approach to VirtualProtect - for those of you that need to avoid pushad.
 - Very Robust exclusion criteria - exclude based off of CFG, ASLR, Windows dlls, bad bytes, etc.
+- Persistence - ROP ROCKET will extract x86 gadgets upon launch. These are saved in an .obj file, so they will remain each time you open it, allowing previously found gadgets to be instantly available. Generating new attacks should be more or less instantaneous at this point. Note: if you extract up to 0x22 bytes and then decide you want to decrease it, you will need to clear those and re-capture; saving your results is automatic.
+- Config.cfg file for useful settings for some personal preferences.
 - Some other new and unique features are planned as well.
 
 # Install Instructions
