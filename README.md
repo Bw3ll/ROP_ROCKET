@@ -23,4 +23,5 @@ ROP ROCKET is very powerful with some unique capabilities, which includes the fo
 This should be installed as a local package. There is a setup.py file. In order to do this, just go to the directory and enter the following command:
 `py -m pip install -e ./` Depending on your Python installation, you may need to vary that slightly. If you go view installed packages, you should see ROP-ROCKET appear: `py -m pip list` It is belelived that all required dependencies are included, but if you encounter any issues - due to the newness of this release, just open an issue, and we will look into it.
 
-
+## Running the First Time
+Just simply run it from the command line:`py rop2.py rop_tester_syscall.exe` A fully exploitable rop_tester_syscall.exe is included as a zip file as well. This was developed just to help make sure that all gadgets are being found and not missed.
