@@ -61,6 +61,6 @@ This tool was inspired by the much older [JOP ROCKET](https://github.com/Bw3ll/J
 ![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot8.png?raw=true)
 *Here the user used obfuscation to dynamically decode at runtime the address for a **xor eax, edi # ret**, which hypothetically he could not use otherwise. Once decoded, the **push r32 / ret** causes this to be immediately executed. This is a great way to use gadgets otherwise unavailable due to bad bytes. ROCKET completes this in seconds. Its ability to do this with integer overflow is all but guaranteed to work, assuming no issues with bad bytes or lack of availble registers (i.e. the user excluded too many registers).*
 
-##Acknowledgement
+# Acknowledgement
 
 Shiva Shashank Kusuma works for Dr. Bramwell Brizendine as a graduate student to develop patterns for shellcodeless attacks. He has done great work, and he was also a co-speaker at DEFCON.
