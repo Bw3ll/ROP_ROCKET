@@ -9,8 +9,9 @@ ROP ROCKET is very powerful with some unique capabilities, which includes the fo
 - It can generate a novel Heaven's Gate attack to transition from x64 to x86 via ROP. This is 64-bit code.
 - It can generate shellcodeless ROP attacks for LoadLibrary / GetProcAddress / System and LoadLibrary/ GetProcAddress. Several others are under development for future release. The idea with "shellcodeless" ROP is to avoid bypassing DEP and to just invoke shellcode-like functionality directly. 
 - It internally utilizes emulation of ROP chains - which it may also do recursively - to determine distances to certain pointers used as parameters, such as a pointer to a string or structure. Without this, automatic chain generation likely would be infeasible.
-- It utilizes emulation of individual ROP gadgets to widen the attack surface. (This is not fully deployed on all yet.)
+- It utilizes emulation of individual ROP gadgets to widen the attack surface. (This is not fully deployed on all yet.) This can evaluate each ROP gadget to see what may or may not be cloberred, etc. Expect a lot more to happen with this.
 - This allows for gadgets to be used regardless of bad bytes in the gadget address. For instance, if you need a pushad but there are bad bytes in the address, we can encode it and decode it at runtime, executing it via push r32 /ret. (See obfuscation options.) Several types of obfuscation are provided, including a very robust integer overflow that likely will not fail, assuming there are gadgets available. (If you exclude all \x00 and every gadget has those, there is nothing that can be done.) Registers can be excluded as well, preventing "clobbering."
+- Alternative mov dereference "sniper" approach to VirtualProtect - for those of you that need to avoid pushad.
 - Very Robust exclusion criteria - exclude based off of CFG, ASLR, Windows dlls, bad bytes, etc.
 - Some other new and unique features are planned as well.
 
