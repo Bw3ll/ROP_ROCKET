@@ -2,7 +2,7 @@ This new, advanced ROP framwork made it debute at at DEF CON 31 with some unprec
 
 Please note that this is still a work in progress, with some updated and enhanced capabilities to be added. Updates should be frequent in the next couple months. If you encounter issues, please put them on issues or email me with them, and I will get them sorted. Additional, alternate ways of generating certain types of gadgets will also be added in the coming weeks.
 
-# Capabilities
+# Powerful ROP Capabilities
 ROP ROCKET is very powerful with some unique capabilities, which includes the following:
 - It can generate Windows syscalls for NtAllocateVirtualMemory and NtAllocateVirtualProtect - this is the first known usage of direct Windows syscalls in WoW64 ROP.
 - It can generate a novel Heaven's Gate attack to transition from x86 to x64 via ROP. To work with this, you will need to use WinDbg x64 and attach to a currently running process (do not open it directly in the debugger).
