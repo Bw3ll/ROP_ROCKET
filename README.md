@@ -33,3 +33,30 @@ Just simply run it from the command line:`py rop2.py rop_tester_syscall.exe` A f
 This tool was inspired by the much older [JOP ROCKET](https://github.com/Bw3ll/JOP_ROCKET/), which I wrote for part of my Ph.D. dissertation and released at DEF CON 27 in 2019. That led to a lot of further development on JOP and many new JOP capabilities, as well as providing extensive documentation on the mechancis and usage of JOP in different papers. That tool is a little outdated at the moment - it is an older style of Python. With this new research, part of this inspiration is to try and do something novel and different in the area of ROP. We have fulfilled that mandate so far. So in a way this tool is inspired by a JOP tool, allowing us to maybe try and think outside the box and in less conventional ways than we normally would with ROP.  ROP ROCKET does not have any JOP capabilities - it is strictly devoted to ROP. The only fully dedicated JOP tool is JOP ROCKET, as everything else just kind of has a placeholder for future work on JOP. Anyway, I wanted to clarify this historical information, so that the similarity in names does not confuse anyone, as these are two very different and unrelated tools.
 
 # Screenshots
+
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot2.png?raw=true)
+
+*ROCKET has generated a **Heaven's Gate x86-to-x64 attack**, printing it to screen and saving it.*
+
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot3.png?raw=true)
+
+*ROCKET has generated a **Windows Syscall for NtProtectVirtualMemory** for Win 10/11, printing it to screen and saving it.*
+
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot4.png?raw=true)
+
+*ROCKET provides many options for what and how you capture gadgets. Defaults can be set in the **config.cfg** file of course. Here the user decides the only want to examine chunks of memory with a maximum of 0xa (15) bytes.*
+
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot5.png?raw=true)
+
+*Not only can you print individual ROP chains, but you can print all gadgets found, organized by category, such as **mov edx**. There are hundreds of possibilities. You can also refine results by changing number of lines per gadget.*
+
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot6.png?raw=true)
+
+*When printing results, there are many options for different types of filters to apply to exclude gadgets, such as ASLR, CFG, Windows system DLLs, or just simple bad bytes. This is all **highly customizable**.*
+
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot7.png?raw=true)
+
+*Sometimes you need to **obfuscate a certain gadget** that might prove unavailable otherwise, due to bad bytes in the gadget address. We have many options for this, and you can exclude based on registers used or bad bytes as well.*
+
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot8.png?raw=true)
+*Here the user used obfuscation to dynamically decode at runtime the address for a **xor eax, edi # ret**, which hypothetically he could not use otherwise. Once decoded, the **push r32 / ret** causes this to be immediately executed. This is a great way to use gadgets otherwise unavailable due to bad bytes.*
