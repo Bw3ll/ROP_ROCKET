@@ -3,6 +3,8 @@ This new, advanced ROP framwork made it debute at at DEF CON 31 with some unprec
 
 Please note that this is still a work in progress, with some updated and enhanced capabilities to be added. Updates should be frequent in the next couple months. If you encounter issues, please put them on issues or email me with them, and I will get them sorted. Additional, alternate ways of generating certain types of gadgets will also be added in the coming weeks.
 
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot1.jpg?raw=true)
+
 # Powerful ROP Capabilities
 ROP ROCKET is very powerful with some unique capabilities, which includes the following:
 - It can generate Windows syscalls for NtAllocateVirtualMemory and NtAllocateVirtualProtect - this is the first known usage of direct Windows syscalls in WoW64 ROP.
@@ -30,3 +32,4 @@ Just simply run it from the command line:`py rop2.py rop_tester_syscall.exe` A f
 # History
 This tool was inspired by the much older [JOP ROCKET](https://github.com/Bw3ll/JOP_ROCKET/), which I wrote for part of my Ph.D. dissertation and released at DEF CON 27 in 2019. That led to a lot of further development on JOP and many new JOP capabilities, as well as providing extensive documentation on the mechancis and usage of JOP in different papers. That tool is a little outdated at the moment - it is an older style of Python. With this new research, part of this inspiration is to try and do something novel and different in the area of ROP. We have fulfilled that mandate so far. So in a way this tool is inspired by a JOP tool, allowing us to maybe try and think outside the box and in less conventional ways than we normally would with ROP.  ROP ROCKET does not have any JOP capabilities - it is strictly devoted to ROP. The only fully dedicated JOP tool is JOP ROCKET, as everything else just kind of has a placeholder for future work on JOP. Anyway, I wanted to clarify this historical information, so that the similarity in names does not confuse anyone, as these are two very different and unrelated tools.
 
+# Screenshots
