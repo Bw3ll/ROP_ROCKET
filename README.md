@@ -25,3 +25,7 @@ This should be installed as a local package. There is a setup.py file. In order 
 
 ## Running the First Time
 Just simply run it from the command line:`py rop2.py rop_tester_syscall.exe` A fully exploitable rop_tester_syscall.exe is included as a zip file as well. This was developed just to help make sure that all gadgets are being found and not missed.
+
+# History
+This tool was inspired by the much older [JOP ROCKET](https://github.com/Bw3ll/JOP_ROCKET/), which I wrote for part of my Ph.D. dissertation and released at DEF CON 27 in 2019. That led to a lot of further developpment on JOP and many new JOP capabilities. That tool is a little outdated at the moment - it is an older style of Python. With this research, part of this inspiration is to try and do something novel and different in the area of ROP. We have fulfilled that mandate so far. So in a way this tool is inspired by a JOP tool, allowing us to maybe try and think outside the box and in less conventional ways than we normally would with ROP. ROP ROCKET does not have any JOP capabilities - it is strictly devoted to ROP. The only fully dedicated JOP tool is JOP ROCKET, as everything else just kind of has a placeholder for future work on JOP. Anyway, I wanted to clarify this historical information, so that the similarity in names does not confuse anyone, as these are two very different and unrelated tools.
+
