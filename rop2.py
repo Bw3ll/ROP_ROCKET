@@ -10526,12 +10526,14 @@ def genWinSyscallNtAllocateVirtualMemory():
 	global bad
 	global excludeRegs
 	sysNtAllocParams=["tbd","tbd",0xFFFFFFFF,"ptr",0,"ptr",0x3000,0x40,0x6000]
+	print (cya+"   This will attempt to generate a ROP chain using the Windows syscall\n   NtAllocateVirtualMemory for "+yel+"Windows 10/11"+cya+". Other OSs not presently supported.\n"+res)
 	buildMovDerefSyscall([],bad, sysNtAllocParams,8 )
 
 def genWinSyscallNtProtectVirtualMemory():
 	global bad
 	global excludeRegs
 	sysNtProtectParms=["tbd", "tbd", 0xffffffff,"ptr", 1, 0x40, "ptr"]
+	print (cya+"   This will attempt to generate a ROP chain using the Windows syscall\n   NtProtectVirtualMemory for "+yel+"Windows 10/11"+cya+". Other OSs not presently supported.\n"+res)
 	buildMovDerefSyscallProtect([],bad, sysNtProtectParms,6 )
 def genShellcodelessROP_System():
 	global bad
