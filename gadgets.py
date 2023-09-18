@@ -41,6 +41,7 @@ def newGadget(address, pe,n,offset, op_strL,raw, mod, length, myDict2, c2,opOffs
 
 	dp ("\nnewGadget ropLookup mod", mod, hex(offset), hex(offsetEmBase))
 	dp("outsky", fg.ropLookup[mod][offset])
+	return obj
 
 def addGadget(address,pe, n,offset, op_str,raw, mod, c2=False, reg=None, myDict2=None):
 	# dp ("addGadget",op_str)
@@ -58,7 +59,8 @@ def addGadget(address,pe, n,offset, op_str,raw, mod, c2=False, reg=None, myDict2
 		op_strL=op_str.split(", ")
 		# dp ("op_strL",op_strL)
 		obj=newGadget(address,pe,n, offset, op_strL,raw, mod, length, myDict2, c2)
-
+		return obj
+	return False
 def addGadgetJmp(address, pe,n,offset, op_str,raw, mod, c2=False, reg=None, myDict2=None, opOffset=None):
 	# safe,length, op_str=checkPlease(raw,c2)
 	# dp("addGadgetJmp bytes", len(raw))
@@ -260,6 +262,7 @@ class gadgets:
 		self.op1=None
 		self.op2=None
 		self.opOffset=opOffset
+		self.FSIndex=None
 		
 		try:
 			self.op1=op_strL[0]
@@ -273,7 +276,9 @@ class gadgets:
 			self.opcode="c3"
 		else:
 			self.opcode="c2"
-
+	def setFSIndex(self,val):
+		# print ("setFSIndex", val)
+		self.FSIndex=val
 	def addHg1(self,val):
 		self.hg1=val			
 	def addHg2(self,val):
@@ -660,7 +665,47 @@ class foundGadgets:
 		self.movEDI = {}
 		self.movEBP = {}
 		self.movESP = {}
-		self.movFSSpecial = {}
+		self.movFS = {}
+		self.movFSEAX = {}
+		self.movFSEBX = {}
+		self.movFSECX = {}
+		self.movFSEDX = {}
+		self.movFSEDI = {}
+		self.movFSESI = {}
+		self.movFSEBP = {}
+		self.movFSESP = {}
+		self.addFSEAX = {}
+		self.addFSEBX = {}
+		self.addFSECX = {}
+		self.addFSEDX = {}
+		self.addFSEDI = {}
+		self.addFSESI = {}
+		self.addFSEBP = {}
+		self.addFSESP = {}
+		self.subFSEAX = {}
+		self.subFSEBX = {}
+		self.subFSECX = {}
+		self.subFSEDX = {}
+		self.subFSEDI = {}
+		self.subFSESI = {}
+		self.subFSEBP = {}
+		self.subFSESP = {}
+		self.xorFSEAX = {}
+		self.xorFSEBX = {}
+		self.xorFSECX = {}
+		self.xorFSEDX = {}
+		self.xorFSEDI = {}
+		self.xorFSESI = {}
+		self.xorFSEBP = {}
+		self.xorFSESP = {}
+		self.xchgFSEAX = {}
+		self.xchgFSEBX = {}
+		self.xchgFSECX = {}
+		self.xchgFSEDX = {}
+		self.xchgFSEDI = {}
+		self.xchgFSESI = {}
+		self.xchgFSEBP = {}
+		self.xchgFSESP = {}
 		self.mov = {}
 		self.movDwordEAX = {}
 		self.movDwordEBX = {}
@@ -1583,7 +1628,47 @@ class foundGadgets:
 		self.movEDI = {**self.movEDI, **old.movEDI}
 		self.movEBP = {**self.movEBP, **old.movEBP}
 		self.movESP = {**self.movESP, **old.movESP}
-		self.movFSSpecial = {**self.movFSSpecial, **old.movFSSpecial}
+		self.movFS = {**self.movFS, **old.movFS}
+		self.movFSEAX = {**self.movFSEAX, **old.movFSEAX}
+		self.movFSEBX = {**self.movFSEBX, **old.movFSEBX}
+		self.movFSECX = {**self.movFSECX, **old.movFSECX}
+		self.movFSEDX = {**self.movFSEDX, **old.movFSEDX}
+		self.movFSEDI = {**self.movFSEDI, **old.movFSEDI}
+		self.movFSESI = {**self.movFSESI, **old.movFSESI}
+		self.movFSEBP = {**self.movFSEBP, **old.movFSEBP}
+		self.movFSESP = {**self.movFSESP, **old.movFSESP}
+		self.addFSEAX = {**self.addFSEAX,**old.addFSEAX}
+		self.addFSEBX = {**self.addFSEBX,**old.addFSEBX}
+		self.addFSECX = {**self.addFSECX,**old.addFSECX}
+		self.addFSEDX = {**self.addFSEDX,**old.addFSEDX}
+		self.addFSEDI = {**self.addFSEDI,**old.addFSEDI}
+		self.addFSESI = {**self.addFSESI,**old.addFSESI}
+		self.addFSEBP = {**self.addFSEBP,**old.addFSEBP}
+		self.addFSESP = {**self.addFSESP,**old.addFSESP}
+		self.subFSEAX = {**self.subFSEAX,**old.subFSEAX}
+		self.subFSEBX = {**self.subFSEBX,**old.subFSEBX}
+		self.subFSECX = {**self.subFSECX,**old.subFSECX}
+		self.subFSEDX = {**self.subFSEDX,**old.subFSEDX}
+		self.subFSEDI = {**self.subFSEDI,**old.subFSEDI}
+		self.subFSESI = {**self.subFSESI,**old.subFSESI}
+		self.subFSEBP = {**self.subFSEBP,**old.subFSEBP}
+		self.subFSESP = {**self.subFSESP,**old.subFSESP}
+		self.xorFSEAX = {**self.xorFSEAX,**old.xorFSEAX}
+		self.xorFSEBX = {**self.xorFSEBX,**old.xorFSEBX}
+		self.xorFSECX = {**self.xorFSECX,**old.xorFSECX}
+		self.xorFSEDX = {**self.xorFSEDX,**old.xorFSEDX}
+		self.xorFSEDI = {**self.xorFSEDI,**old.xorFSEDI}
+		self.xorFSESI = {**self.xorFSESI,**old.xorFSESI}
+		self.xorFSEBP = {**self.xorFSEBP,**old.xorFSEBP}
+		self.xorFSESP = {**self.xorFSESP,**old.xorFSESP}
+		self.xchgFSEAX = {**self.xchgFSEAX,**old.xchgFSEAX}
+		self.xchgFSEBX = {**self.xchgFSEBX,**old.xchgFSEBX}
+		self.xchgFSECX = {**self.xchgFSECX,**old.xchgFSECX}
+		self.xchgFSEDX = {**self.xchgFSEDX,**old.xchgFSEDX}
+		self.xchgFSEDI = {**self.xchgFSEDI,**old.xchgFSEDI}
+		self.xchgFSESI = {**self.xchgFSESI,**old.xchgFSESI}
+		self.xchgFSEBP = {**self.xchgFSEBP,**old.xchgFSEBP}
+		self.xchgFSESP = {**self.xchgFSESP,**old.xchgFSESP}
 		self.mov = {**self.mov, **old.mov}
 		self.movDwordEAX = {**self.movDwordEAX, **old.movDwordEAX}
 		self.movDwordEBX = {**self.movDwordEBX, **old.movDwordEBX}
@@ -2378,7 +2463,7 @@ class PEInfo:
 		self.CFGStatus= val
 
 def calculateTotalGadgets(fg):
-	totalGadgets=len(fg.pops) + len(fg.popEAX) + len(fg.popEBX) + len(fg.popECX) + len(fg.popEDX) + len(fg.popESI) + len(fg.popEDI) + len(fg.popEBP) + len(fg.popESP) + len(fg.popOther) + len(fg.popDwordEAX) + len(fg.popDwordEBX) + len(fg.popDwordECX) + len(fg.popDwordEDX) + len(fg.popDwordESI) + len(fg.popDwordEDI) + len(fg.popDwordEBP) + len(fg.popDwordESP) + len(fg.popDword) + len(fg.popDwordOther) + len(fg.push) + len(fg.pushEAX) + len(fg.pushEBX) + len(fg.pushECX) + len(fg.pushEDX) + len(fg.pushESI) + len(fg.pushEDI) + len(fg.pushEBP) + len(fg.pushESP) + len(fg.pushDwordFS) + len(fg.pushDwordEAX) + len(fg.pushDwordEBX) + len(fg.pushDwordECX) + len(fg.pushDwordEDX) + len(fg.pushDwordESI) + len(fg.pushDwordEDI) + len(fg.pushDwordEBP) + len(fg.pushDwordESP) + len(fg.pushDword) + len(fg.pushDwordOther) + len(fg.pushConstant) + len(fg.pushDword) + len(fg.pushOther) + len(fg.inc) + len(fg.incEAX) + len(fg.incEBX) + len(fg.incECX) + len(fg.incEDX) + len(fg.incESI) + len(fg.incEDI) + len(fg.incEBP) + len(fg.incESP) + len(fg.dec) + len(fg.decEAX) + len(fg.decEBX) + len(fg.decECX) + len(fg.decEDX) + len(fg.decESI) + len(fg.decEDI) + len(fg.decEBP) + len(fg.decESP) + len(fg.addEAX) + len(fg.addEBX) + len(fg.addECX) + len(fg.addEDX) + len(fg.addESI) + len(fg.addEDI) + len(fg.addEBP) + len(fg.addESP) + len(fg.addFS) + len(fg.subFS) + len(fg.xorFS) + len(fg.xchgFS) + len(fg.add) + len(fg.addDword) + len(fg.addDwordEAX) + len(fg.addDwordEBX) + len(fg.addDwordECX) + len(fg.addDwordEDX) + len(fg.addDwordESI) + len(fg.addDwordEDI) + len(fg.addDwordEBP) + len(fg.addDwordESP) + len(fg.subEAX) + len(fg.subEBX) + len(fg.subECX) + len(fg.subEDX) + len(fg.subESI) + len(fg.subEDI) + len(fg.subEBP) + len(fg.subESP) + len(fg.sub) + len(fg.subDword) + len(fg.subDwordEAX) + len(fg.subDwordEBX) + len(fg.subDwordECX) + len(fg.subDwordEDX) + len(fg.subDwordESI) + len(fg.subDwordEDI) + len(fg.subDwordEBP) + len(fg.subDwordESP) + len(fg.mulEAX) + len(fg.mulEBX) + len(fg.mulECX) + len(fg.mulEDX) + len(fg.mulESI) + len(fg.mulEDI) + len(fg.mulEBP) + len(fg.mulESP) + len(fg.mul) + len(fg.divEAX) + len(fg.divEBX) + len(fg.divECX) + len(fg.divEDX) + len(fg.divESI) + len(fg.divEDI) + len(fg.divEBP) + len(fg.divESP) + len(fg.div) + len(fg.leaEAX) + len(fg.leaEBX) + len(fg.leaECX) + len(fg.leaEDX) + len(fg.leaESI) + len(fg.leaEDI) + len(fg.leaEBP) + len(fg.leaESP) + len(fg.lea ) + len(fg.movEAX) + len(fg.movEBX) + len(fg.movECX) + len(fg.movEDX) + len(fg.movESI) + len(fg.movEDI) + len(fg.movEBP) + len(fg.movESP) + len(fg.movFSSpecial) + len(fg.mov) + len(fg.movDwordEAX) + len(fg.movDwordEBX) + len(fg.movDwordECX) + len(fg.movDwordEDX) + len(fg.movDwordESI) + len(fg.movDwordEDI) + len(fg.movDwordEBP) + len(fg.movDwordESP) + len(fg.movDword) + len(fg.movDword2EAX) + len(fg.movDword2EBX) + len(fg.movDword2ECX) + len(fg.movDword2EDX) + len(fg.movDword2ESI) + len(fg.movDword2EDI) + len(fg.movDword2EBP) + len(fg.movDword2ESP) + len(fg.movDword2) + len(fg.xchgEAX) + len(fg.xchgEBX) + len(fg.xchgECX) + len(fg.xchgEDX) + len(fg.xchgESI) + len(fg.xchgEDI) + len(fg.xchgEBP) + len(fg.xchgESP) + len(fg.xchg) + len(fg.movConstantEAX) + len(fg.movConstantEBX) + len(fg.movConstantECX) + len(fg.movConstantEDX) + len(fg.movConstantESI) + len(fg.movConstantEDI) + len(fg.movConstantEBP) + len(fg.movConstantESP) + len(fg.movConstant) + len(fg.negEAX) + len(fg.negEBX) + len(fg.negECX) + len(fg.negEDX) + len(fg.negESI) + len(fg.negEDI) + len(fg.negEBP) + len(fg.negESP) + len(fg.neg) + len(fg.xorEAX) + len(fg.xorEBX) + len(fg.xorECX) + len(fg.xorEDX) + len(fg.xorESI) + len(fg.xorEDI) + len(fg.xorEBP) + len(fg.xorESP) + len(fg.xor) + len(fg.xorDwordEAX) + len(fg.xorDwordEBX) + len(fg.xorDwordECX) + len(fg.xorDwordEDX) + len(fg.xorDwordESI) + len(fg.xorDwordEDI) + len(fg.xorDwordEBP) + len(fg.xorDwordESP) + len(fg.xorDword) + len(fg.xorZeroEAX) + len(fg.xorZeroEBX) + len(fg.xorZeroECX) + len(fg.xorZeroEDX) + len(fg.xorZeroESI) + len(fg.xorZeroEDI) + len(fg.xorZeroEBP) + len(fg.xorZeroESP) + len(fg.xorZero) + len(fg.pushad) + len(fg.popal) + len(fg.shl) + len(fg.shr) + len(fg.shlDword) + len(fg.shrDword) + len(fg.rcl) + len(fg.rcr) + len(fg.rclDword) + len(fg.rcrDword) + len(fg.unusual) + len(fg.andInstEAX) + len(fg.andInstEBX) + len(fg.andInstECX) + len(fg.andInstEDX) + len(fg.andInstESI) + len(fg.andInstEDI) + len(fg.andInstEBP) + len(fg.andInstESP) + len(fg.andInst) + len(fg.andInstOther) + len(fg.notInstEAX) + len(fg.notInstEBX) + len(fg.notInstECX) + len(fg.notInstEDX) + len(fg.notInstESI) + len(fg.notInstEDI) + len(fg.notInstEBP) + len(fg.notInstESP) + len(fg.notInst) + len(fg.notInstOther) + len(fg.fs) + len(fg.fsSpecial) + len(fg.retfSingle) + len(fg.hgGadgets) + len(fg.hgPush) + len(fg.hgPushEAX) + len(fg.hgPushEBX) + len(fg.hgPushECX) + len(fg.hgPushEDX) + len(fg.hgPushESI) + len(fg.hgPushEDI) + len(fg.hgPushEBP) + len(fg.hgPushESP) + len(fg.hgPushDwordFS) + len(fg.hgPushDwordEAX) + len(fg.hgPushDwordEBX) + len(fg.hgPushDwordECX) + len(fg.hgPushDwordEDX) + len(fg.hgPushDwordESI) + len(fg.hgPushDwordEDI) + len(fg.hgPushDwordEBP) + len(fg.hgPushDwordESP) + len(fg.hgPushDword) + len(fg.hgPushDwordOther) + len(fg.hgPushConstant) + len(fg.hgPushDword) + len(fg.hgPushOther) + len(fg.retfSingle) 
+	totalGadgets=len(fg.pops) + len(fg.popEAX) + len(fg.popEBX) + len(fg.popECX) + len(fg.popEDX) + len(fg.popESI) + len(fg.popEDI) + len(fg.popEBP) + len(fg.popESP) + len(fg.popOther) + len(fg.popDwordEAX) + len(fg.popDwordEBX) + len(fg.popDwordECX) + len(fg.popDwordEDX) + len(fg.popDwordESI) + len(fg.popDwordEDI) + len(fg.popDwordEBP) + len(fg.popDwordESP) + len(fg.popDword) + len(fg.popDwordOther) + len(fg.push) + len(fg.pushEAX) + len(fg.pushEBX) + len(fg.pushECX) + len(fg.pushEDX) + len(fg.pushESI) + len(fg.pushEDI) + len(fg.pushEBP) + len(fg.pushESP) + len(fg.pushDwordFS) + len(fg.pushDwordEAX) + len(fg.pushDwordEBX) + len(fg.pushDwordECX) + len(fg.pushDwordEDX) + len(fg.pushDwordESI) + len(fg.pushDwordEDI) + len(fg.pushDwordEBP) + len(fg.pushDwordESP) + len(fg.pushDword) + len(fg.pushDwordOther) + len(fg.pushConstant) + len(fg.pushDword) + len(fg.pushOther) + len(fg.inc) + len(fg.incEAX) + len(fg.incEBX) + len(fg.incECX) + len(fg.incEDX) + len(fg.incESI) + len(fg.incEDI) + len(fg.incEBP) + len(fg.incESP) + len(fg.dec) + len(fg.decEAX) + len(fg.decEBX) + len(fg.decECX) + len(fg.decEDX) + len(fg.decESI) + len(fg.decEDI) + len(fg.decEBP) + len(fg.decESP) + len(fg.addEAX) + len(fg.addEBX) + len(fg.addECX) + len(fg.addEDX) + len(fg.addESI) + len(fg.addEDI) + len(fg.addEBP) + len(fg.addESP) + len(fg.addFS) + len(fg.subFS) + len(fg.xorFS) + len(fg.xchgFS) + len(fg.add) + len(fg.addDword) + len(fg.addDwordEAX) + len(fg.addDwordEBX) + len(fg.addDwordECX) + len(fg.addDwordEDX) + len(fg.addDwordESI) + len(fg.addDwordEDI) + len(fg.addDwordEBP) + len(fg.addDwordESP) + len(fg.subEAX) + len(fg.subEBX) + len(fg.subECX) + len(fg.subEDX) + len(fg.subESI) + len(fg.subEDI) + len(fg.subEBP) + len(fg.subESP) + len(fg.sub) + len(fg.subDword) + len(fg.subDwordEAX) + len(fg.subDwordEBX) + len(fg.subDwordECX) + len(fg.subDwordEDX) + len(fg.subDwordESI) + len(fg.subDwordEDI) + len(fg.subDwordEBP) + len(fg.subDwordESP) + len(fg.mulEAX) + len(fg.mulEBX) + len(fg.mulECX) + len(fg.mulEDX) + len(fg.mulESI) + len(fg.mulEDI) + len(fg.mulEBP) + len(fg.mulESP) + len(fg.mul) + len(fg.divEAX) + len(fg.divEBX) + len(fg.divECX) + len(fg.divEDX) + len(fg.divESI) + len(fg.divEDI) + len(fg.divEBP) + len(fg.divESP) + len(fg.div) + len(fg.leaEAX) + len(fg.leaEBX) + len(fg.leaECX) + len(fg.leaEDX) + len(fg.leaESI) + len(fg.leaEDI) + len(fg.leaEBP) + len(fg.leaESP) + len(fg.lea ) + len(fg.movEAX) + len(fg.movEBX) + len(fg.movECX) + len(fg.movEDX) + len(fg.movESI) + len(fg.movEDI) + len(fg.movEBP) + len(fg.movESP) + len(fg.movFS) + len(fg.mov) + len(fg.movDwordEAX) + len(fg.movDwordEBX) + len(fg.movDwordECX) + len(fg.movDwordEDX) + len(fg.movDwordESI) + len(fg.movDwordEDI) + len(fg.movDwordEBP) + len(fg.movDwordESP) + len(fg.movDword) + len(fg.movDword2EAX) + len(fg.movDword2EBX) + len(fg.movDword2ECX) + len(fg.movDword2EDX) + len(fg.movDword2ESI) + len(fg.movDword2EDI) + len(fg.movDword2EBP) + len(fg.movDword2ESP) + len(fg.movDword2) + len(fg.xchgEAX) + len(fg.xchgEBX) + len(fg.xchgECX) + len(fg.xchgEDX) + len(fg.xchgESI) + len(fg.xchgEDI) + len(fg.xchgEBP) + len(fg.xchgESP) + len(fg.xchg) + len(fg.movConstantEAX) + len(fg.movConstantEBX) + len(fg.movConstantECX) + len(fg.movConstantEDX) + len(fg.movConstantESI) + len(fg.movConstantEDI) + len(fg.movConstantEBP) + len(fg.movConstantESP) + len(fg.movConstant) + len(fg.negEAX) + len(fg.negEBX) + len(fg.negECX) + len(fg.negEDX) + len(fg.negESI) + len(fg.negEDI) + len(fg.negEBP) + len(fg.negESP) + len(fg.neg) + len(fg.xorEAX) + len(fg.xorEBX) + len(fg.xorECX) + len(fg.xorEDX) + len(fg.xorESI) + len(fg.xorEDI) + len(fg.xorEBP) + len(fg.xorESP) + len(fg.xor) + len(fg.xorDwordEAX) + len(fg.xorDwordEBX) + len(fg.xorDwordECX) + len(fg.xorDwordEDX) + len(fg.xorDwordESI) + len(fg.xorDwordEDI) + len(fg.xorDwordEBP) + len(fg.xorDwordESP) + len(fg.xorDword) + len(fg.xorZeroEAX) + len(fg.xorZeroEBX) + len(fg.xorZeroECX) + len(fg.xorZeroEDX) + len(fg.xorZeroESI) + len(fg.xorZeroEDI) + len(fg.xorZeroEBP) + len(fg.xorZeroESP) + len(fg.xorZero) + len(fg.pushad) + len(fg.popal) + len(fg.shl) + len(fg.shr) + len(fg.shlDword) + len(fg.shrDword) + len(fg.rcl) + len(fg.rcr) + len(fg.rclDword) + len(fg.rcrDword) + len(fg.unusual) + len(fg.andInstEAX) + len(fg.andInstEBX) + len(fg.andInstECX) + len(fg.andInstEDX) + len(fg.andInstESI) + len(fg.andInstEDI) + len(fg.andInstEBP) + len(fg.andInstESP) + len(fg.andInst) + len(fg.andInstOther) + len(fg.notInstEAX) + len(fg.notInstEBX) + len(fg.notInstECX) + len(fg.notInstEDX) + len(fg.notInstESI) + len(fg.notInstEDI) + len(fg.notInstEBP) + len(fg.notInstESP) + len(fg.notInst) + len(fg.notInstOther) + len(fg.fs) + len(fg.fsSpecial) + len(fg.retfSingle) + len(fg.hgGadgets) + len(fg.hgPush) + len(fg.hgPushEAX) + len(fg.hgPushEBX) + len(fg.hgPushECX) + len(fg.hgPushEDX) + len(fg.hgPushESI) + len(fg.hgPushEDI) + len(fg.hgPushEBP) + len(fg.hgPushESP) + len(fg.hgPushDwordFS) + len(fg.hgPushDwordEAX) + len(fg.hgPushDwordEBX) + len(fg.hgPushDwordECX) + len(fg.hgPushDwordEDX) + len(fg.hgPushDwordESI) + len(fg.hgPushDwordEDI) + len(fg.hgPushDwordEBP) + len(fg.hgPushDwordESP) + len(fg.hgPushDword) + len(fg.hgPushDwordOther) + len(fg.hgPushConstant) + len(fg.hgPushDword) + len(fg.hgPushOther) + len(fg.retfSingle) 
 	return totalGadgets
 rg={}
 def createFg():
