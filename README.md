@@ -1,3 +1,6 @@
+# ROP ROCKET - coming to Black Hat Europe Arsenal
+ROP ROCKET will be at Black Hat Europe Arsenal. Please come attend if you are there and interested. The time the presentation takes place is subject to change, so PLEASE check the final schedule before coming, as there could be last minute changes! Black Hat Europe takes place in London, England on 6-7 December, 2023!
+
 # Introducing the ROP ROCKET
 This new, advanced ROP framework made it debute at at DEF CON 31 with some unprecedented capabilities. ROCKET generates several types of chains, and it provides new patterns or techniques.
 
