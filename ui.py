@@ -100,6 +100,7 @@ def uiShowOptionsMainMenu(x86,x64):
 	text += "  {}        \n".format(cya + "p"+res+" -"+gre+"  Print gadgets found."+ res)
 
 	text += "  {}        \n".format(cya + "f"+res+" -"+gre+"  PE file submenu."+ res)
+	text += "  {}        \n".format(cya + "w"+res+" -"+gre+"  Find individual gadgets / wildcard"+ res)
 
 	text += "  {}        \n".format(cya + "c"+res+" -"+gre+"  Save config file ["+res+"config.cfg"+gre+"] with current selections."+ res)
 	text += "  {}        \n".format(cya + "h"+res+" -"+gre+"  Display options."+ res)

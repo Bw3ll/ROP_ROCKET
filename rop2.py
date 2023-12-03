@@ -4290,11 +4290,51 @@ def freeExclusionCritera(mod,addy):
 	if pe[mod].systemWin and not opt["acceptSystemWin"]:
 		return False
 	return True
+
+def printRetDictMini(myDict, limit, arch=32):
+	global opt
+	# reg=reg.lower()
+	mode="traditional"
+	
+	t=0
+
+	for q in myDict:
+		# dp ("in myDict")
+		# dp (n)
+		if t>limit:
+			return
+		addy = myDict[q].addressRet
+		bad=opt["badBytes"]
+		off = myDict[q].offset
+		raw=myDict[q].raw
+		length=myDict[q].length
+		mod=myDict[q].mod
+		if opt["checkForBadBytes"]:
+			if not checkFreeBadBytes(off,bad,mod,pe):
+				continue
+		n="rop_tester.exe"
+
+		# addy, off, raw, length = pe[n].give(op,reg)
+		if mode == "traditional":
+			try:
+				if length <=opt["lenMax"] and freeExclusionCritera(mod,addy):
+					cat = disHereClean6(mod, raw, addy,off, "traditional",arch)
+					if not cat == " ":
+						print ("\t",cat)#+" "+ "# length: " +str(length) )
+						# offsetEmBase=off+pe[mod].emBase
+						# print ("---> em ", hex(offsetEmBase))
+
+		
+			except:
+				pass
+		t+=1
+
 def printRetDict(op, reg, myDict, arch=32):
 	global opt
 	reg=reg.lower()
 	print("\nGadget:", op, reg)
 	mode="traditional"
+	
 	for q in myDict:
 		# dp ("in myDict")
 		# dp (n)
@@ -10740,6 +10780,223 @@ def printOutputs64():
 def captureRopGadgets():
 	pass
 
+def findGadget():
+
+# def findGeneric(instruction,reg,bad,length1, excludeRegs,espDesiredMovement=0):
+	
+	
+	bExists=False
+	print (mag+"\n   Find allows us to search for a gadget.\n " + red +"  * " + res + " is wildcard. " + red + "#" + res + " or "+red+";"+res+" are delimiters.\n   Enter desired expression and hit enter to end input.")
+	print (res+"\n   E.g. "+cya+"    pop edi ; ret")
+	print ("            pop esp#ret")
+	print ("            mov dword ptr [eax], ebx#ret  " + yel + " - must use \'dword ptr\' if applicable  ")
+	print (cya+"            add eax, 1#*#ret")
+	print(yel + "   Find: " +mag, end="")
+	userIN = input()
+	selections = userIN.replace(";", "#")
+	# print (selections)
+	selections = selections.split("#")
+	t=0
+	# print (selections)
+	for s in selections:
+		selections[t]=s.strip()
+		t+=1
+	# print (selections)
+	start=selections[0]
+	
+	hasWildcard=False
+	if "*" in userIN:
+		# print ("has wildcard")
+		hasWildcard=True
+
+	startComponents = start.split()
+	# print (startComponents)
+
+	# if "dword" not in start: 
+	# 	bExists, myDict=fg.getFg(startComponents[0], startComponents[1])
+	# else:
+	# 	print ("startComponents", startComponents)
+	# 	print ("startComponents[1]", startComponents[1])
+
+	# 	if "dword" in startComponents[1]:
+	# 		print ("starting")
+	# 		firstReg = re.findall("eax|ebx|ecx|edx|esi|edi|ebp|esp", start, re.IGNORECASE)
+	# 		if firstReg:
+	# 			print ("found")
+	# 			firstReg1=firstReg[0].replace("[","")
+	# 			firstReg1=firstReg1.replace("]","")
+
+	# 			print (firstReg, firstReg1)
+	# 		else:
+	# 			print ("NOT FOUND")
+	# 			print (firstReg)
+	# 		bExists, myDict=fg.getFg(startComponents[0] + "Dword", firstReg1)
+	# 	if "dword" in startComponents[2]:
+	# 		print ("it is here")
+	# 		print ("starting")
+	# 		foundReg = re.findall("eax|ebx|ecx|edx|esi|edi|ebp|esp", start, re.IGNORECASE)
+	# 		if foundReg:
+	# 			print ("found")
+	# 			secReg=foundReg[1].replace("[","")
+	# 			secReg=secReg.replace("]","")
+	# 			print (foundReg, secReg)
+	# 		else:
+	# 			print ("NOT FOUND")
+	# 			print (foundReg)
+	# 		bExists, myDict=fg.getFg(startComponents[0] + "Dword2", foundReg[0])
+	
+	if bExists==False:
+		foundReg = re.findall("eax|ebx|ecx|edx|esi|edi|ebp|esp", start, re.IGNORECASE)
+		testVal=""
+		testVal2=""
+
+		try:
+			testVal=startComponents[1]
+		except:
+			pass
+
+		try:
+			testVal2=startComponents[2]
+		except:
+			pass
+			
+		if "dword" in testVal:
+			bExists, myDict=fg.getFg(startComponents[0]+"Dword", foundReg[0])
+		elif "dword" in testVal2:
+			bExists, myDict=fg.getFg(startComponents[0] + "Dword2", foundReg[0])
+		else:
+			bExists, myDict=fg.getFg(startComponents[0], foundReg[0])
+		
+	foundWilds =  {}
+
+	
+
+	if bExists:
+		# print ("bExists")
+		t=0
+		for p in myDict:
+			freeBad=checkFreeBadBytes(p,bad)
+			if freeBad:
+				myDis=disOffset(p)
+				myDis=myDis.split( " # ")
+				dp ("\tmydis", myDis)
+				# if "dword" in myDis:
+				# 	print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
+				q=0
+				sIsGood=True
+				inWildMode=False
+				foundNext=False
+				for s in selections:
+					if "*" in s: # and myDict[p].opcode == "c2":
+						# print (gre+"has wildcard"+mag)
+						hasWildcard=True			
+					# if myDict[p].opcode == "c2":
+					# 	print ("----->  s", s,q)
+					if s == myDis[q].strip():
+						# if myDict[p].opcode == "c2":
+						# print ("\t\tsame", s, myDis[q],q, p)
+						pass
+					else:
+						# print ("\t\tnot same", s, myDis[q],q)
+						# if myDict[p].opcode == "c2":
+							
+						# print ("\t\tnotsame2", s, myDis[q],"stripped", myDis[q], "target", s,q, p)
+						if not hasWildcard: # and myDict[p].opcode == "c2":
+							sIsGood=False
+						if hasWildcard: # and myDict[p].opcode == "c2":
+							if s =="*":
+								inWildMode=True
+								dp(res+"inWildMode")
+								nextS=selections[q+1].strip()
+								dp ("nextS", nextS)
+								v=q
+								q2=0
+								foundNext=False
+								for e2 in myDis:
+									dp ("v", v, "q2",q2, "nextS", nextS, myDis[q2])
+									if nextS.strip()==myDis[q2].strip():
+										# print (cya+"we foudn the next",myDis[q2], v, q2)
+										# print (mag)
+										hasWildcard=False
+										# print (gre+"has NOT wildcard"+mag)
+
+										foundNext=True
+										foundNextDiff=q2-v
+										q=q2-1
+										continue
+									q2+=1
+								dp (mag)
+						if not foundNext:
+							sIsGood=False
+							break
+					q+=1
+				
+				# print ("exited loop")
+				if sIsGood and q == len(myDis):
+					foundWilds[p]=fg.rop[p]
+					# print ("q", q,len(myDis))
+					# print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
+					# print (red+"WE HAVE MATCH"+mag)
+			t+=1
+			# if t>=8000:
+			# if len(foundWilds) >= 20:
+			# 	break
+			# 	break
+
+	# if foundWilds:
+	# 	t=0
+	# 	if len(foundWilds) > 20:
+	# 		print ("   The first 20 results of " +  str(len(foundWilds)) + " are shown.")
+	# 	else:
+	# 		print ("   This search has produced " +  str(len(foundWilds)) + " results.")
+
+	# 	for p in foundWilds:
+	# 		print (t,"p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
+	# 		if t>= 20:
+	# 			break
+	# 		t+=1
+	if len(foundWilds) > 0:
+		if len(foundWilds) > 15:
+			print (yel+"   The first 15 results of " +  str(len(foundWilds)) + " are shown."+gre)
+		else:
+			print (yel+"   This search has produced " +  str(len(foundWilds)) + " results."+gre)
+
+		printRetDictMini(foundWilds, 20)
+		printWilds(foundWilds, userIN)
+
+
+	return
+	dp ("findGeneric", instruction, reg)
+	bExists, myDict=fg.getFg(instruction,reg)
+	if bExists:
+		dp ("it exists")
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
+			for p in myDict:
+				freeBad=checkFreeBadBytes(p,bad)
+				# print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
+					dp ("found ",instruction, reg) 
+					return True,p
+			return False,0
+		if not length1: # was else
+			for p in myDict:
+				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=False
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
+					dp ("found ", instruction, reg)
+					return True,p, myDict
+				dp (instruction," clob")
+				mdExist, m1, myDict, rObj = rop_testerFindClobberFree((instruction,reg), excludeRegs,bad, "c3", espDesiredMovement,[])
+				if mdExist:
+					dp ("found alt", instruction, reg)
+					return True,m1
+				else:
+					return False,0
+	else:
+		dp ("it does not exist")
+		# dp ("return false ", instruction)
+		return False,0
+
 def genObfs():
 	# for dll in pe:
 	# 	print(pe[dll].modName)
@@ -10835,6 +11092,18 @@ def printGadgetChain(gadgetTxt, chainType):
 	sys.stdout.close()
 	sys.stdout = restorePoint
 	print ("   Saved to "+ cya +outputs+filename2+"_"+chainType+".txt"+res)
+
+def printWilds(myDict, searchStr):
+	outputs=getBaseDir(filename2)
+	restorePoint = sys.stdout
+	# sys.stdout = open(outputs+filename2+"_find_gadgets.txt", 'w')
+	# print("")
+	sys.stdout = open(outputs+filename2+"_find_gadgets.txt", 'a')
+	printRetDict(searchStr, "", myDict)
+	sys.stdout.close()
+	sys.stdout = restorePoint
+	print ("   Saved to "+ cya + outputs+filename2+"_x86_gadgets.txt"+res)
+
 
 def printGadgetsx86():
 	outputs=getBaseDir(filename2)
@@ -11945,6 +12214,8 @@ def ui():
 				genObfs()
 			elif userIN[0:1] == "p":
 				printGadgets()
+			elif userIN[0:1] == "w":
+				findGadget()				
 			elif userIN[0:1] == "P":
 				if opt["bx86Print"] and opt["bx86Extracted"]:
 					print ("  Printing x86 gadgets...")
