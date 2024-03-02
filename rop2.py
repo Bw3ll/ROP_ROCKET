@@ -5115,7 +5115,7 @@ def findMovEsp(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="esp":
 					dp ("found findMovEsp", reg)
 					return True,p
-			return False,0,0
+			return False,0
 		if not length1: # was else
 			for p in myDict:
 				freeBad=checkFreeBadBytes(p,bad)
@@ -5145,7 +5145,7 @@ def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2==op2:
 					dp ("found movDword", reg)
 					return True,p
-			return False,0,0
+			return False,0
 		if not length1: # was else
 			for p in myDict:
 				freeBad=checkFreeBadBytes(p,bad)
@@ -7640,9 +7640,13 @@ def buildMovDerefSyscall(excludeRegs,bad, myArgs ,numArgs):
 		foundMovderef=False
 		regsNotUsed= copy.deepcopy(availableRegs)
 		regsNotUsed.remove(reg)
+		# print ("Reg1",reg, "from", availableRegs)
 		for op2 in regsNotUsed:	
+
 			regsNotUsed2= copy.deepcopy(regsNotUsed)
 			regsNotUsed2.remove(op2)
+			# print ("op2",op2, "from", regsNotUsed2)
+
 			dp ("op2 regsNotUsed", op2)
 			foundM1, m1 = findMovDeref(reg,op2,bad,length1, regsNotUsed,espDesiredMovement)
 			if not foundM1:
@@ -7678,7 +7682,9 @@ def buildMovDerefSyscall(excludeRegs,bad, myArgs ,numArgs):
 					pkInc=([cI2,cI2,cI2,cI2])
 					if foundT and foundT2 and foundInc2:	
 						break
-
+				if not foundT or not foundT2:
+					# print ("continue")
+					continue
 				
 					
 
@@ -7755,7 +7761,9 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 			regsNotUsed2= copy.deepcopy(regsNotUsed)
 			regsNotUsed2.remove(op2)
 			dp ("op2 regsNotUsed", op2)
+			# foundM1, m1 = findMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement)
 			foundM1, m1 = findMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement)
+	
 			if not foundM1:
 				continue
 			excludeRegs2,regsNotUsed3= regsAvailtoExclude(regsNotUsed2,excludeRegs)
@@ -7794,7 +7802,7 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 			except:
 				pass
 
-			if foundM1 and foundL1 and foundInc and findMovDerefGetStack:
+			if foundM1 and foundL1 and foundInc and findMovDerefGetStack and foundT and foundT2:
 				helperSuccessSV, pkNBforPtr=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, NumberBytesProtect, "Set up value for Number of Bytes for ptr, " + hex(NumberBytesProtect))
 				
 				foundT, gT3 = findUniTransfer(op2,op3, bad,length1,excludeRegs3,espDesiredMovement, "Get ptr to OldAccessProtection")
