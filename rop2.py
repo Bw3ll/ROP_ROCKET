@@ -200,11 +200,22 @@ def newDll(modName,path):
 dllDict={}
 def findEvilImports(myPE):
 	global dllDict
-	for item in myPE.DIRECTORY_ENTRY_IMPORT:
-		dllDict[item.dll.lower().decode()]={}
-		for i in item.imports:
-			dllDict[item.dll.lower().decode()][i.name.decode()]=i.address
-	dp (dllDict)
+	try:
+		for item in myPE.DIRECTORY_ENTRY_IMPORT:
+			# print ("item", item)
+			dllDict[item.dll.lower().decode()]={}
+			for i in item.imports:
+				try:
+					dllDict[item.dll.lower().decode()][i.name.decode()]=i.address
+				except:
+					dllDict[item.dll.lower().decode()][i.name]=i.address
+					pass
+		dp (dllDict)
+	except Exception as e:
+		dp ("problem")
+		print (e)
+		print(traceback.format_exc())
+
 	# try:
 	# 	address=dllDict["kernel32.dll"]["LoadLibraryA"]
 	# 	dp(hex(address))
