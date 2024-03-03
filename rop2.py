@@ -4818,6 +4818,58 @@ def rop_testerFindClobberFreeRegReg(myDict, excludeRegs, bad,c3,espDesiredMoveme
 			goodWithPops=outEmObj.checkForPops(findEspPops)
 		freeBad=checkFreeBadBytes(addy,bad)
 		if c3 =="c3":
+			 if myDict[addy].opcode=="c3":
+			 	goodRetEnding=True
+		elif c3 == "c2":
+			if myDict[addy].opcode=="c2":
+			 	goodRetEnding=True
+		elif c3 == "both":
+			goodRetEnding=True
+		elif c3 == "cb":
+			if myDict[addy].opcode=="cb":
+			 	goodRetEnding=True
+		if freeOfClobbering and goodWithPops and freeBad and goodRetEnding:
+			dp ("got one clobberfree", hex(addy))
+			return True, addy,myDict, outEmObj
+	dumb=gadgetRegs()
+	return False, 0,0,dumb
+def rop_testerFindClobberFreeRegRegOld(myDict, excludeRegs, bad,c3,espDesiredMovement, findEspPops=[],ignorePrevEmu=True):
+	if type(myDict)==tuple:
+		mnem=myDict[0]
+		reg=myDict[1].upper()
+		dExists, myDict= fg.getFg(mnem,reg)
+		if not dExists:
+			dp (myDict, "does not exist")
+			return False,0,0,0
+
+	dp ("rop_testerFindClobberFree", "excludeRegs", excludeRegs, "espDesiredMovement", espDesiredMovement)
+	goodWithPops=False
+	if not goodWithPops:
+		goodWithPops=True
+	for addy in myDict:
+		goodRetEnding=False
+		dp ("\t\rc candidate", hex(addy), disMini(myDict[addy].raw, myDict[addy].offset))
+		if not re.match( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p',myDict[addy].op2, re.M|re.I):	
+			continue
+		if ignorePrevEmu and not myDict[addy].emulated:
+			dp ("rop testing does not exist")
+			outEmObj=rop_tester(myDict[addy].raw)
+			myDict[addy].setRegsObj(outEmObj)
+		elif ignorePrevEmu:
+			dp ("rop testing already exists rc")
+			outEmObj=myDict[addy].regs
+		else:
+			dp("ignoring prevEm results")
+			outEmObj=rop_tester(myDict[addy].raw)
+			myDict[addy].setRegsObj(outEmObj)
+		outEmObj.show()
+		freeOfClobbering=outEmObj.checkForBad(excludeRegs, espDesiredMovement)  #-4 esp desirved movement  = push -4
+		if not freeOfClobbering:
+			continue
+		if findEspPops:
+			goodWithPops=outEmObj.checkForPops(findEspPops)
+		freeBad=checkFreeBadBytes(addy,bad)
+		if c3 =="c3":
 			 if myDict[p].opcode=="c3":
 			 	goodRetEnding=True
 		elif c3 == "c2":
@@ -5360,6 +5412,8 @@ def findPop(reg,bad,length1, excludeRegs,espDesiredMovement=4):
 
 def findAddRegReg(reg,bad,availableRegs, excludeRegs, espDesiredMovement):
 	dp ("findAddRegReg",reg, "excludeRegs", excludeRegs, "availableRegs", availableRegs, "espDesiredMovement",espDesiredMovement)
+	if None in availableRegs:
+		availableRegs.remove(None)
 	bExists,myDict=fg.getFg("add",reg)
 	if bExists:
 		for p in myDict:
@@ -5636,8 +5690,17 @@ def tryThisFunc(goal):
 
 	return tryThis
 
+def regListToFront(test_list, r):
+	if r in test_list:
+		test_list.remove(r)
+	test_list.insert(0,r)
+	return test_list
+
 def buildIntOverflowPR(excludeRegs,bad,goal,tThis, bb, withPR=True):
 	dp("buildIntOverflowPR")
+	# print("buildIntOverflowPR")
+	# print ("excludeRegs", excludeRegs)
+
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
 	aP1=0
 	p1=0
@@ -5654,7 +5717,9 @@ def buildIntOverflowPR(excludeRegs,bad,goal,tThis, bb, withPR=True):
 		dp (hex(obf1), hex(obf2))
 	for reg in excludeRegs:
 		availableRegs.remove(reg)
+	print ("availableRegs",availableRegs)
 	espDesiredMovement=4
+
 	addEspMove=0
 	for r in availableRegs:
 		foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(r,bad,availableRegs,excludeRegs, addEspMove)
@@ -5894,6 +5959,7 @@ def giveBad(oldBad,flag):
 		return oldBad
 
 def getHGandPops(hgExcludeRegs,excludeRegs,bad,availableRegs,pu1, destination):
+	#this function is deprecated, not used
 	noBad=b''
 	oldBad=bad
 	hFound=False
@@ -8171,6 +8237,37 @@ class getParamVals:
 		if foundJ:
 			return True, j1,comment
 		return False,0,"JMP DWORD NOT FOUND"
+	def get_VPPtr(self,name,excludeRegs,r,r2,bad,pk):
+		dp ("get VPPtr")
+		l=0x30000
+		comment=""
+		try:
+			l=dllDict["kernel32.dll"]["VirtualProtect"]
+		except:
+			try:
+				l=dllDict["kernelbase.dll"]["VirtualProtect"]
+			except:
+				dp ("Ptr to VirtualProtect not found.")
+				comment="Ptr to VirtualProtect not found. 0x30000 used as placeholder."
+
+		foundLL=True
+		if foundLL:
+			return True, l,comment
+		else:
+			True,0x30000,"Simulated value-VirtualProtect ptr not found!"
+		return False,0,"VirtualProtect Ptr not Found"
+	def get_dwSize(self,name,excludeRegs,r,r2,bad,pk):
+		comment=""
+		return True, 0x209,comment
+		
+	def get_flNewProtect(self,name,excludeRegs,r,r2,bad,pk):
+		comment="0x40 - RWX"
+		return True, 0x40,comment
+
+	def get_flOldProtect(self,name,excludeRegs,r,r2,bad,pk):
+		comment=""
+		return True, 0xbaddcad2,comment
+
 	def get_jmp(self,name,excludeRegs,r,r2,bad,pk):
 		foundJ, j1=findJmp(r2,bad)
 		comment=""
@@ -8642,6 +8739,18 @@ pat = {  'LoLi1':{
 		'8': {'r': 'ecx', 'val': 'destination0x33', 'excluded':[], "r2":"",'com':'Destination address'}
         },
 
+		'VP1':{ 
+		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':'Rop nop'},
+		'8': {'r': 'eax', 'val': 'VPPtr', 'excluded':[],"r2":"",'com':'VirtualProtect ptr'},
+		
+		'3': {'r': 'esi', 'val': 'JmpDword', 'excluded':[], "r2":"eax",'com':''},
+
+		'4': {'r': 'ebp', 'val': 'pop', 'excluded':[], "r2":"",'com':''},
+		'2': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'LpAddress - automatic - skip'},
+		'7': {'r': 'ebx', 'val': 'dwSize', 'excluded':[], "r2":"",'com':'dwSize'},
+		'5': {'r': 'edx', 'val': 'flNewProtect', 'excluded':[], "r2":"",'com':'flNewProtect - 0x40'},
+		'6': {'r': 'ecx', 'val': 'flOldProtect', 'excluded':[], "r2":"",'com':'flOldProtect - any writable memory address!'}
+        },
 		'SYSxx':{ 
 		'1': {'r': 'edi', 'val': 'x', 'excluded':[], "r2":'','com':''},
 		'2': {'r': 'eax', 'val': 'x', 'excluded':[],"r2":"",'com':''},
@@ -8793,12 +8902,17 @@ def giveApiNum(winApi,j):
 		apiCode="SYS"		
 	elif winApi=="HG":
 		apiNum=11
-		apiCode="HG32"		
+		apiCode="HG32"
+	elif winApi=="VP":
+		apiNum=1
+		apiCode="VP"			
 	i=apiCode+str(j)
 	curPat=i
 	return i,j, apiCode, apiNum
 
 def buildPushad(excludeRegs,bad, patType):
+	global opt
+	bad=opt["badBytes"]
 	global curPat
 	global oldPat
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
@@ -8845,6 +8959,13 @@ def buildPushad(excludeRegs,bad, patType):
 		if foundInnerHG:
 			fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
 			printGadgetChain(outputsTxtHG, "Heavens_Gate_32_to_64")
+	elif patType=="VP":
+		stopCode="VP"
+		foundInnerVP,outputsTxtVP, outputsTxtCVP,outputsPkVP=buildPushadInner(bad,excludeRegs2,"VP",1,"apiCode",pk,pk,stopCode)
+		if foundInnerVP:
+			# fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
+			#todo
+			printGadgetChain(outputsTxtVP, "VirtualProtect")
 
 
 def buildPushadOld(excludeRegs,bad, myArgs ,numArgs):
@@ -9027,6 +9148,7 @@ def pkBuild(myList):
 
 
 def buildHGDouble2(hgExcludeRegs,excludeRegs,bad,destination):
+	#####This whole function is deprecated and not used, including some functions below it.
 	dp ("buildHGDouble2")
 	first=""
 	second=""
@@ -11056,10 +11178,17 @@ def genWinSyscallNtProtectVirtualMemory():
 	sysNtProtectParms=["tbd", "tbd", 0xffffffff,"ptr", 1, 0x40, "ptr"]
 	print (cya+"   This will attempt to generate a ROP chain using the Windows syscall\n   NtProtectVirtualMemory for "+yel+"Windows 10/11"+cya+". Other OSs not presently supported.\n"+res)
 	buildMovDerefSyscallProtect([],bad, sysNtProtectParms,6 )
+
 def genShellcodelessROP_System():
 	global bad
 	global excludeRegs
 	buildPushad(excludeRegs,bad, "System" )
+
+def genVirtualProtectPushad():
+	global bad
+	global excludeRegs
+	print ("global bad genVirtualProtectPushad", bad)
+	buildPushad(excludeRegs,bad, "VP" )
 
 def genMovDerefVP():
 	global bad
@@ -11307,6 +11436,7 @@ def getPEs():
 
 
 def uiShowExclusionSettings():
+	global opt
 
 	if opt["acceptCFG"]:
 		togCFG=res+"["+gre+"X"+res+"]"
@@ -11348,7 +11478,87 @@ def uiShowExclusionSettings():
 
 	print (text)
 
+def getBadBytesSubmenu():
+	# print(uiShowExclusionSettings())
+	print(uiShowBadBytes())
+	global opt
+	global bad
+	userIN=""
+
+	# if opt["acceptCFG"]:
+	# if opt["acceptSEH"]:
+	# if opt["acceptSystemWin"]:
+	# if opt["acceptASLR"]:
+
+	while userIN != "e" or userIN !="x":		#Loops on keyboard input
+		try:			#Will break the loop on entering x
+			print(yel + " ROP_ROCKET>"+ cya+"BadBytes>" +res, end="")
+			userIN = input()
+			print(res)
+			if userIN[0:1] == "1" or userIN[0:1].lower() == "b":
+				bad=b''
+				opt["badBytes"]=bad
+				
+			elif userIN[0:1] == "2" or userIN[0:1].lower() == "b":
+				uiAddBadBytes()
+			elif userIN[0:1] == "3" or userIN[0:1] == "r":
+				uiRemoveBadBytes()
+			elif userIN[0:1] == "h" or userIN[0:7] == "display":
+				print(uiShowBadBytes()) 
+			elif userIN[0:1] == "q" or userIN[0:1] == "x":
+				break		
+			else:
+				print("   Invalid input. Enter " + red + "x"+res+" to exit Style.\n")
+		except Exception as e:
+			print (e)
+			print(traceback.format_exc())
+			print ("exception")
+
+def uiShowBadBytes():
+	global opt
+	if opt["acceptCFG"]:
+		togCFG=res+"["+gre+"X"+res+"]"
+	else:
+		togCFG=res+"["+gre+" "+res+"]"
+	if opt["acceptSEH"]:
+		togSEH=res+"["+gre+"X"+res+"]"
+	else:
+		togSEH=res+"["+gre+" "+res+"]"
+	if opt["acceptSystemWin"]:
+		togSystemWin=res+"["+gre+"X"+res+"]"
+	else:
+		togSystemWin=res+"["+gre+" "+res+"]"
+	if opt["acceptASLR"]:
+		togASLR=res+"["+gre+"X"+res+"]"
+	else:
+		togASLR=res+"["+gre+" "+res+"]"
+	if opt["checkForBadBytes"]:
+		togBad=res+"["+gre+" "+res+"]"
+	else:
+		togBad=res+"["+gre+"X"+res+"]"
+
+	bad=opt["badBytes"]
+
+	curBadBytes=binaryToStr(bad)
+	if len(curBadBytes)==0:
+		curBadBytes="None"
+	text = "  If you decide to {} certain exclusion criteria, toggle it.\n  {} means it will be excluded. {} means it will be included.\n\n".format(gre+"accept"+res,gre+"No check"+res, gre+"Check"+res)
+	text +="\n  Current Bad Bytes: {}\n\n".format(cya+curBadBytes+res)
+	
+	# text+=yel+"  {}\t {}             {} {} Include gadgets with ASLR in results.\n".format(cya+"1"+res,mag+"ASLR" +res, togASLR, "-"+yel)
+	# text+=yel+"  {}\t {}              {} {} Include gadgets with CFG in results.\n".format(cya+"2"+res,mag+"CFG" +res, togCFG, "-"+yel)
+	# text+=yel+"  {}\t {}              {} {} Include gadgets with SEH in results.\n".format(cya+"3"+res,mag+"SEH" +res, togSEH, "-"+yel)
+	# text+=yel+"  {}\t {}          {} {} Include gadgets that are Windows DLLs in results.\n".format(cya+"4"+res,mag+"Windows" +res, togSystemWin, "-"+yel)
+	# text+=yel+" {}\t {}        {} {} Include gadgets with bad bytes in results.\n".format(cya+"5"+res,mag+"Bad bytes" +res, togBad, "-"+yel)
+	text+=yel+"  {}\t {}  {} {} Clear all bad bytes.\n".format(cya+"1"+res,mag+"Clear bad bytes" +res, "   ", "-"+yel)
+	text+=yel+"  {}\t {}    {} {} Add additional bad bytes to exclude.\n".format(cya+"2"+res,mag+"Add bad bytes" +res, "   ", "-"+yel)
+	text+=yel+"  {}\t {} {} {} Remove bad bytes from exclusion criteria.\n".format(cya+"3"+res,mag+"Remove bad bytes" +res, "   ", "-"+yel)
+
+	print (text)
+
 def uiAddBadBytes():
+	global opt
+	global bad
 	bad=opt["badBytes"]
 	curBadBytes=binaryToStr(bad)
 	if len(curBadBytes)==0:
@@ -11375,6 +11585,7 @@ def uiAddBadBytes():
 	print (gre+"   New Bad bytes: " + cya +curBadBytes + red + binaryToStr(bytes(newBytes2)))
 def uiChangeExcludedRegs():
 	pass
+	global opt
 
 	rStr=""
 	for r in opt["regsExc"]:
@@ -11413,6 +11624,8 @@ def uiChangeExcludedRegs():
 	text=gre+"\n  Registers to Exclude: {}\n".format(rStr+res)
 	print (text)
 def uiRemoveBadBytes():
+	global bad
+	global opt
 	bad=opt["badBytes"]
 	curBadBytes=binaryToStr(bad)
 	if len(curBadBytes)==0:
@@ -11439,11 +11652,13 @@ def uiRemoveBadBytes():
 			newBytes2.append(nB)
 			test.remove(nB)
 	opt["badBytes"]=bytes(test)
+	bad = opt["badBytes"]
 	print (gre+"   New Bad bytes: " + cya + binaryToStr(opt["badBytes"]))
 
 def getExclusionCrtieria():
 	print(uiShowExclusionSettings())
 	global opt
+	global bad
 	userIN=""
 
 	# if opt["acceptCFG"]:
@@ -11490,8 +11705,11 @@ def getExclusionCrtieria():
 			elif userIN[0:1] == "5" or userIN[0:1].lower() == "b":
 				if opt["checkForBadBytes"]==False:
 					opt["checkForBadBytes"]=True
+					# print ("opt bad ", opt["badBytes"])
+					bad=opt["badBytes"]
 				else:
 					opt["checkForBadBytes"]=False
+
 				print ("  Check for bad bytes: ", mag+str(opt["checkForBadBytes"])+res)
 				if opt["checkForBadBytes"]:
 					print ("  Gadgets with bad bytes in the addresses will not be included in results.")
@@ -11987,6 +12205,8 @@ def printObfMenu():
 			print(yel + " ROP_ROCKET>"+ cya+"Obfuscation> " +res, end="")
 			userIN = input()
 			print(res)
+			# badRegs=["eax", "ebx"]
+			# excludeRegs=badRegs
 			excludeRegs=opt['regsExc']
 			bad=opt['badBytes']
 			if userIN[0:4] == "1234" or userIN[0:1] == "l":
@@ -12007,6 +12227,8 @@ def printObfMenu():
 				userLines = input()
 				desired= int(userLines,16)
 				print(res) 
+				
+
 				intSuccess, p5 =buildIntOverflowPR(excludeRegs,bad,desired,"",bb,True)
 				if intSuccess:
 					cOut,out=genOutput(p5)
@@ -12227,6 +12449,11 @@ def ui():
 			elif userIN[0:1] == "m":
 
 				genMovDerefVP()
+			elif userIN[0:1] == "!":
+
+				genVirtualProtectPushad()
+			elif userIN[0:1] == "b":
+				getBadBytesSubmenu()
 			elif userIN[0:1] == "d":
 				genShellcodelessROP_GetProc()
 			elif userIN[0:1] == "o":
