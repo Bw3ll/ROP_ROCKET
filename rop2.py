@@ -4770,7 +4770,7 @@ def rop_testerFindClobberFree(myDict, excludeRegs,bad, c3,espDesiredMovement, fi
 		if not freeOfClobbering:
 			dp ("not free of Clobbering, hit the continue")
 			continue
-		freeBad=checkFreeBadBytes(addy.offset,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+		freeBad=checkFreeBadBytes(addy,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 
 		if findEspPops:
@@ -4827,7 +4827,7 @@ def rop_testerFindClobberFreeRegReg(myDict, excludeRegs, bad,c3,espDesiredMoveme
 			continue
 		if findEspPops:
 			goodWithPops=outEmObj.checkForPops(findEspPops)
-		freeBad=checkFreeBadBytes(addy.offset,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+		freeBad=checkFreeBadBytes(addy,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 		if c3 =="c3":
 			 if myDict[addy].opcode=="c3":
@@ -4880,7 +4880,7 @@ def rop_testerFindClobberFreeRegRegOld(myDict, excludeRegs, bad,c3,espDesiredMov
 			continue
 		if findEspPops:
 			goodWithPops=outEmObj.checkForPops(findEspPops)
-		freeBad=checkFreeBadBytes(addy.offset,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+		freeBad=checkFreeBadBytes(addy,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 		if c3 =="c3":
 			 if myDict[p].opcode=="c3":
