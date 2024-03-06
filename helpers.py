@@ -3,6 +3,8 @@ import re
 import gc
 import logging
 import sys
+import traceback
+
 cs = Cs(CS_ARCH_X86, CS_MODE_32)
 logging.basicConfig(filename='myLog.log', level=logging.DEBUG)
 
@@ -29,6 +31,7 @@ def dp(*args):
 
 
 def hx(val, length=8):
+	# print ("hx val", val)
 	hex_str = format(val, 'x').zfill(length) 
 	return hex_str
 def toHex(val, length=8):
@@ -40,45 +43,85 @@ def truncate(num, bits):
 	return int(v,16)
 
 
-def checkFreeBadBytes(address, bad,mod=None,pe=None):
+def checkFreeBadBytes(address, bad,myDict=None,pe=None,checkImg=False,isVal=False):
 	dp("checkFreeBadBytes helpers", address,hx(address) )
-	
-	if mod!=None:
-		address = address+pe[mod].startLoc
+	# print("checkFreeBadBytes helpers", address,hx(address) )
+	checkOffset=True
+	mod=None
+	if myDict!=None:
+		try:
+			mod=myDict[address].mod
+			offset=myDict[address].offset + pe[n].VirtualAdd
+			checkImg=True
+			lenBad=len(bad)
+			if lenBad < 5: # and not checkImg:
+				if checkImg and  len(myDict) >0:
+					address1 = offset+pe[mod].startLoc
+					for soBad in bad:
+						if hx(soBad,2) in hx(address1):
+							dp ("bad", hx(soBad,2), "in", hx(address1))
+							# print ("baddd", hx(soBad,2), "in", hx(address1))
+							return False
+		except Exception as e:
+			pass
+			# come back and fix later
+			# print ("weird error", hex(address),e)
+			# print("\t",traceback.format_exc())
+
 	if type(address)==int:
 		lenBad=len(bad)
 		dp ("lenBad", lenBad,bad)
-		if lenBad < 5:
-			for soBad in bad:
-				if hx(soBad,2) in hx(address):
-					dp ("bad", hx(soBad,2), "in", hx(address))
-					return False
-			dp ("good bytes")
+		if lenBad < 5: # and not checkImg:
+			if checkOffset:
+				for soBad in bad:
+					# do this one too
+					if hx(soBad,2) in hx(address):
+						dp ("bad", hx(soBad,2), "in", hx(address))
+						# print ("badd2", hx(soBad,2), "in", hx(address))
+						return False
 			return True
 		else:
-			start=hx(address)
-			p1=start[0:2]
-			p2=start[2:4]
-			p3=start[4:6]
-			p4=start[6:8]
-			
-			# dp ("bads", binaryToStr(bad))
-			if start[0:2] in binaryToStr(bad):
-				dp ("bad", start[0:2], "in", start)
-				return False
-			if start[2:4] in binaryToStr(bad):
-				dp ("bad", start[2:4], "in", start)
-				return False
-			if start[4:6] in binaryToStr(bad):
-				dp ("bad", start[4:6], "in", start)
-				return False
-			if start[6:8] in binaryToStr(bad):
-				dp ("bad", start[6:8], "in", start)
-				return False
-			# if start[0:2] or start[2:4] or start[4:6] or start[6:8] in bad:
-			dp ("No bads seen in ", start)
+			checkBad=binaryToStr(bad)
+			if checkOffset:
+				start=hx(address)
+				if start[0:2] in checkBad:
+					dp ("bad", start[0:2], "in", start)
+					return False
+				if start[2:4] in checkBad:
+					dp ("bad", start[2:4], "in", start)
+					return False
+				if start[4:6] in checkBad:
+					dp ("bad", start[4:6], "in", start)
+					return False
+				if start[6:8] in checkBad:
+					dp ("bad", start[6:8], "in", start)
+					return False
+				# if start[0:2] or start[2:4] or start[4:6] or start[6:8] in bad:
+				dp ("No bads seen in ", start)
+			if checkImg and len(myDict) >0 and not isVal:
+				# print ("in checkImg")
+				try:
+					address = offset+pe[mod].startLoc
+					start=hx(address)
+					# print ("\t------------->", start)
+					# dp ("bads", binaryToStr(bad))
+					if start[0:2] in checkBad:
+						dp ("bad", start[0:2], "in", start)
+						return False
+					if start[2:4] in checkBad:
+						dp ("bad", start[2:4], "in", start)
+						return False
+					if start[4:6] in checkBad:
+						dp ("bad", start[4:6], "in", start)
+						return False
+					if start[6:8] in checkBad:
+						dp ("bad", start[6:8], "in", start)
+						return False
+					dp ("No bads seen in ", start)		
+				except:
+					print ("CheckImg address not found.")
+					pass
 			return True
-
 	if type(address)==list:
 		for addy in address:
 			for soBad in bad:

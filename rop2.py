@@ -4321,7 +4321,9 @@ def printRetDictMini(myDict, limit, arch=32):
 		length=myDict[q].length
 		mod=myDict[q].mod
 		if opt["checkForBadBytes"]:
-			if not checkFreeBadBytes(off,bad,mod,pe):
+			# if not checkFreeBadBytes(off,bad,fg.rop,pe):
+			if not checkFreeBadBytes(q,bad,fg.rop,pe, opt["bad_bytes_imgbase"]):
+
 				continue
 		n="rop_tester.exe"
 
@@ -4349,15 +4351,17 @@ def printRetDict(op, reg, myDict, arch=32):
 	for q in myDict:
 		# dp ("in myDict")
 		# dp (n)
-		addy = myDict[q].addressRet
 		bad=opt["badBytes"]
+		if opt["checkForBadBytes"]:
+			# if not checkFreeBadBytes(off,bad,fg.rop,pe):
+			if not checkFreeBadBytes(q,bad,fg.rop,pe, opt["bad_bytes_imgbase"]):
+				continue
+		addy = myDict[q].addressRet
 		off = myDict[q].offset
 		raw=myDict[q].raw
 		length=myDict[q].length
 		mod=myDict[q].mod
-		if opt["checkForBadBytes"]:
-			if not checkFreeBadBytes(off,bad,mod,pe):
-				continue
+		
 		n="rop_tester.exe"
 
 		# addy, off, raw, length = pe[n].give(op,reg)
@@ -4670,16 +4674,22 @@ def getFSIndex(obj):
 		returnVal=returnVal.replace(" ","")
 	return returnVal
 
-def findPopLength1(myPops,bad):
+def findPopLength1(myPops,bad, isVal=False):
 	for p in myPops:
-		freeBad=checkFreeBadBytes(p,bad)
+		# freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
+		freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
+
 		if myPops[p].length ==1 and myPops[p].opcode=="c3" and freeBad:
 			return True,p
 	return False,0
 
-def findPushLength1(myPushs,bad):
+def findPushLength1(myPushs,bad, isVal=False):
 	for p in myPushs:
-		freeBad=checkFreeBadBytes(p,bad)
+		# freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
+		freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
+
 		if myPushs[p].length ==1 and myPushs[p].opcode=="c3" and freeBad:
 			return True,p
 	return False,0
@@ -4760,7 +4770,8 @@ def rop_testerFindClobberFree(myDict, excludeRegs,bad, c3,espDesiredMovement, fi
 		if not freeOfClobbering:
 			dp ("not free of Clobbering, hit the continue")
 			continue
-		freeBad=checkFreeBadBytes(addy,bad)
+		freeBad=checkFreeBadBytes(addy.offset,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 
 		if findEspPops:
 			goodWithPops=outEmObj.checkForPops(findEspPops)
@@ -4816,7 +4827,8 @@ def rop_testerFindClobberFreeRegReg(myDict, excludeRegs, bad,c3,espDesiredMoveme
 			continue
 		if findEspPops:
 			goodWithPops=outEmObj.checkForPops(findEspPops)
-		freeBad=checkFreeBadBytes(addy,bad)
+		freeBad=checkFreeBadBytes(addy.offset,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 		if c3 =="c3":
 			 if myDict[addy].opcode=="c3":
 			 	goodRetEnding=True
@@ -4868,7 +4880,8 @@ def rop_testerFindClobberFreeRegRegOld(myDict, excludeRegs, bad,c3,espDesiredMov
 			continue
 		if findEspPops:
 			goodWithPops=outEmObj.checkForPops(findEspPops)
-		freeBad=checkFreeBadBytes(addy,bad)
+		freeBad=checkFreeBadBytes(addy.offset,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 		if c3 =="c3":
 			 if myDict[p].opcode=="c3":
 			 	goodRetEnding=True
@@ -4893,7 +4906,8 @@ def findGeneric(instruction,reg,bad,length1, excludeRegs,espDesiredMovement=0):
 		dp ("it exists")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				# print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found ",instruction, reg) 
@@ -4901,7 +4915,8 @@ def findGeneric(instruction,reg,bad,length1, excludeRegs,espDesiredMovement=0):
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found ", instruction, reg)
@@ -4971,7 +4986,8 @@ def findXorOffset(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				print("just checking: op1",myDict[p].op1, "op2", myDict[p].op2, isReg32(myDict[p].op1),"\n\t", disOffset(p)) 
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and isReg32(myDict[p].op1):
 					try: 
@@ -4990,7 +5006,8 @@ def findXorOffset(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 	# if bExists:
 	# 	if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 	# 		for p in myDict:
-	# 			freeBad=checkFreeBadBytes(p,bad)
+	# 			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 	# 			print("just checking pt 2: op1",myDict[p].op1, "op2", myDict[p].op2, isReg32(myDict[p].op1),isReg32(myDict[p].op2),"\n\t", disOffset(p)) 
 	# 			if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and isReg32(myDict[p].op1) and isReg32(myDict[p].op2) and myDict[p].op1==reg:
 					
@@ -5007,7 +5024,7 @@ def findXchg(op2, reg,bad,length1, excludeRegs,espDesiredMovement=0):
 	if bExists or bExistsOp2:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and ((myDict[p].op2==op2 and myDict[p].op1==reg ) or (myDict[p].op1==op2 and myDict[p].op2==reg )):
 					dp ("found ",instruction, reg)
 					return True,p
@@ -5015,7 +5032,7 @@ def findXchg(op2, reg,bad,length1, excludeRegs,espDesiredMovement=0):
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
 					dp ("found ", instruction, reg)
@@ -5033,14 +5050,14 @@ def findXchg(op2, reg,bad,length1, excludeRegs,espDesiredMovement=0):
 
 #foundAdd, a1 = findGenericOp1Op2("add", op1, op2, reg,bad,length1, excludeRegs,espDesiredMovement)
 
-def findGenericOp1Op2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMovement=0):
+def findGenericOp1Op2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMovement=0,isVal=False):
 	dp ("instruction", instruction, "reg", reg)
 	dp ("findGeneric", instruction+reg)
 	bExists, myDict=fg.getFg(instruction,reg)
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op1==op1 and myDict[p].op2==op2:
 					dp ("found ",instruction, reg)
 					return True,p
@@ -5048,7 +5065,7 @@ def findGenericOp1Op2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredM
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op1==op1 and myDict[p].op2==op2:
 					dp ("found ", instruction, reg)
@@ -5064,14 +5081,14 @@ def findGenericOp1Op2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredM
 		# dp ("return false ", instruction)
 		return False,0
 
-def findGenericOp2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMovement=0):
+def findGenericOp2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMovement=0,isVal=False):
 	dp ("instruction", instruction, "reg", reg)
 	dp ("findGeneric", instruction+reg)
 	bExists, myDict=fg.getFg(instruction,reg)
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
 					dp ("found ",instruction, reg)
 					return True,p
@@ -5079,7 +5096,8 @@ def findGenericOp2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMove
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
+
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
 					dp ("found ", instruction, reg)
@@ -5095,20 +5113,22 @@ def findGenericOp2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMove
 		# dp ("return false ", instruction)
 		return False,0
 
-def findGeneric64(instruction,fgReg,reg,bad,length1, excludeRegs,espDesiredMovement=0):
+def findGeneric64(instruction,fgReg,reg,bad,length1, excludeRegs,espDesiredMovement=0,isVal=False):
 	dp ("findGeneric64", instruction, reg)
 	bExists, myDict=fg.getFg(instruction,fgReg)
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
+
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found ",instruction, reg) 
 					return True,p
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
+
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found ", instruction, reg)
@@ -5124,7 +5144,7 @@ def findGeneric64(instruction,fgReg,reg,bad,length1, excludeRegs,espDesiredMovem
 		# dp ("return false ", instruction)
 		return False,0
 
-def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDesiredMovement=0):
+def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDesiredMovement=0,isVal=False):
 	dp ("instruction", instruction, "reg", reg, "op2", op2)
 	dp ("findGeneric", instruction+reg)
 	bExists, myDict=fg.getFg(instruction,fgReg)
@@ -5132,7 +5152,8 @@ def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDes
 		# dp ("It exists")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
+
 				# dp ("here", myDict[p].length, myDict[p].op2)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
 					dp ("found ",instruction, reg)
@@ -5141,7 +5162,8 @@ def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDes
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
+
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
 					dp ("found ", instruction, reg)
@@ -5163,14 +5185,16 @@ def findMovEsp(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="esp":
 					dp ("found findMovEsp", reg)
 					return True,p
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="esp":
 					dp ("found findMovEsp", reg)
@@ -5193,14 +5217,16 @@ def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 		dp ("findMovDeref exists")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2==op2:
 					dp ("found movDword", reg)
 					return True,p
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2==op2:
 					dp ("found movDword", reg)
@@ -5232,13 +5258,15 @@ def findMovDeref2(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="dword ptr ["+reg+"]":
 					return True,p
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="dword ptr ["+reg+"]":
 					dp ("found movDword2", reg)
@@ -5260,7 +5288,8 @@ def findPush(reg,bad,length1, excludeRegs,espDesiredMovement=-4):
 		# length1=False
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget, push eax / ret
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				# print ("p",p)
 				# print(myDict[p].length,myDict[p].opcode, freeBad)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
@@ -5269,7 +5298,8 @@ def findPush(reg,bad,length1, excludeRegs,espDesiredMovement=-4):
 			return False,0,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found findPush2", reg)
@@ -5295,7 +5325,8 @@ def findRet(bad, mode64=False):
 	# dp ("dict size", reg, len(myDict))
 	if bExists:
 		for p in myDict:
-			freeBad=checkFreeBadBytes(p,bad)
+			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 			if  myDict[p].opcode=="c3" and freeBad:
 				dp ("found ret")
 				return True,p, myDict
@@ -5311,7 +5342,8 @@ def findRetf(bad, mode64=False):
 	# dp ("dict size", reg, len(myDict))
 	if bExists:
 		for p in myDict:
-			freeBad=checkFreeBadBytes(p,bad)
+			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 			if  myDict[p].opcode=="c3" and freeBad:
 				dp ("found retf")
 				return True,p, myDict
@@ -5352,18 +5384,24 @@ def findPushad(bad,length1, excludeRegs,espDesiredMovement=4):
 	dp ("findPushad")
 	bExists, myDict=fg.getFg("pushad")
 	# dp ("dict size", reg, len(myDict))
+	backupPushad=0x99
 	if bExists:
 		dp ("pushad exists")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget, pop eax / ret
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
-				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
+				if myDict[p].length ==1 and myDict[p].opcode=="c3":
 					dp ("found findPushad")
-					return True,p, myDict
-			return False,0,0
+					backupPushad=p
+					if freeBad:
+						return True,p, myDict
+					else:
+						return False, backupPushad, myDict
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found findPushad")
@@ -5380,21 +5418,23 @@ def findPushad(bad,length1, excludeRegs,espDesiredMovement=4):
 		# dp ("return false findpop")
 		return False,0,0
 
-def findPop(reg,bad,length1, excludeRegs,espDesiredMovement=4):
+def findPop(reg,bad,length1, excludeRegs,espDesiredMovement=4,isVal=False):
 	dp ("findPop", reg)
 	bExists, myDict=fg.getFg("pop",reg)
 	# dp ("dict size", reg, len(myDict))
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget, pop eax / ret
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
+
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found findpop", reg)
 					return True,p, myDict
 			return False,0,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
+
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found findpop2", reg)
@@ -5420,7 +5460,8 @@ def findAddRegReg(reg,bad,availableRegs, excludeRegs, espDesiredMovement):
 			# dp ("\tpossible", myDict[p].op1, myDict[p].op2, "length", myDict[p].length, hex(p))
 			# dp ("\t-->",disMini(myDict[p].raw, myDict[p].offset))
 			if myDict[p].length ==1 and myDict[p].opcode=="c3":
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				if any(item in myDict[p].op2 for item in availableRegs) and myDict[p].op2!=reg and freeBad:
 					dp ("yes!", myDict[p].op2)
 					dp ("\tadd",disMini(myDict[p].raw, myDict[p].offset))
@@ -5457,7 +5498,8 @@ def findAddValtoESP(val,bad, excludeRegs):
 			# dp ("\tval", val, "len", type(val))
 			if myDict[p].length ==1 and myDict[p].opcode=="c3" and myDict[p].op2==val:
 				# dp ("bad", binaryToStr(bad))
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				if freeBad:
 					dp ("\tadd",disMini(myDict[p].raw, myDict[p].offset))
 					chAE=chainObj(p, "", [])
@@ -5696,7 +5738,108 @@ def regListToFront(test_list, r):
 	test_list.insert(0,r)
 	return test_list
 
-def buildIntOverflowPR(excludeRegs,bad,goal,tThis, bb, withPR=True):
+def buildIntOverflowPR(excludeRegs,bad,goal,tThis, bb, withPR=True, regFirst=None, comment=None, isVal=False):
+	# print(red + "buildIntOverflowPR", regFirst, "target val", goal,res)
+	# print (yel,"bi1", excludeRegs,bad,goal,tThis, bb, withPR, regFirst, res)
+	if regFirst!=None:
+		intSuccess, package =buildIntOverflowPRTargetReg(excludeRegs,bad,goal,tThis, bb, withPR, regFirst,comment,isVal)
+	else:
+		intSuccess, package =buildIntOverflowPR2(excludeRegs,bad,goal,tThis, bb, withPR)
+	return intSuccess, package
+
+def buildIntOverflowPRTargetReg(excludeRegs,bad,goal,tThis, bb, withPR=True, regFirst=None, comment=None,isVal=False):
+	# print (yel,"bi2", excludeRegs,bad,goal,tThis, bb, withPR, regFirst, res)
+
+	dp("buildIntOverflowPR")
+	# print(red + "buildIntOverflowPR", regFirst, "target val", goal,res)
+	# print ("excludeRegs", excludeRegs)
+	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	aP1=0
+	p1=0
+	p2=0
+	intDict={}
+	buildSucces=False
+	foundPu1=True
+	success, obf1,obf2=buildObfValuesIntOverflow(goal,bad,bb)
+	if not success:
+		dp ("Cannot find desired integer overflow")
+		return False,1
+	if success:
+		dp ("Got obfuscation values for integer oveflow:")
+		dp (hex(obf1), hex(obf2))
+	for reg in excludeRegs:
+		availableRegs.remove(reg)
+	espDesiredMovement=4
+	addEspMove=0
+	foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(regFirst,bad,availableRegs,excludeRegs, addEspMove)
+	if not foundAdd:
+		# print ("hit the continue")
+		return False,1
+	foundP1, p1, popD1 = findPop(regFirst,bad,True,excludeRegs)
+	if not foundP1:
+		# print ("hit the continue")
+		return False,1
+	
+	for r in availableRegs:
+		foundP2, p2, popD2 = findPop(reg2,bad,True,excludeRegs)
+		if withPR:
+			foundPu1, pu1, pushD1 = findPush(regFirst,bad,True,excludeRegs)
+		if foundAdd and foundP1 and foundP2 and foundPu1:
+			dp ("got build int overflow template")
+			buildSucces=True
+			break
+	# buildSucces=False
+	if not buildSucces:
+		# print ("IN ALTERNATE buildIntOverflowPR template")
+		# print ("availableRegs", availableRegs)
+		foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(regFirst,bad,availableRegs,excludeRegs, addEspMove)
+		if not foundAdd:
+			return False,1
+		foundP1, p1, popD1 = findPop(regFirst,bad,True,excludeRegs)
+		for r in availableRegs:
+			foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(regFirst,bad,availableRegs, excludeRegs, addEspMove)
+			if not foundAdd:
+				return False,1
+			### need add desired movement
+			#### create loop for desireved move - incrementing by 4 - will check already emulateds
+			foundP2, p2, popD2 = findPop(reg2,bad,False,excludeRegs,4)
+			foundPu1=True
+			if withPR:
+				foundPu1, pu1, pushD1 = findPush(firstReg,bad,False,excludeRegs,-4)
+			if foundAdd and foundP1 and foundP2 and foundPu1:
+				dp ("got build int overflow template ALTERNATE")
+				buildSucces=True
+				break
+	
+	if buildSucces:
+		tryThis=tryThisFunc(goal)
+	
+		dp ("\n\n-----integer overflow")
+
+		com1 = redundantComChecker("",hx(goal,8)+tryThis,comment)
+
+		p1Obj=addChain(popD1[p1], "load obfsucated value for int overflow", [obf1], intDict,0)
+		p2Obj=addChain(popD2[p2], "load obfsucated value for int overflow", [obf2], intDict,1)
+		addObj=addChain(addD1[aP1], "generate deobfuscated: 0x" +  com1, [], intDict,2)
+		package=[p1Obj, p2Obj,addObj]
+
+		if withPR:
+			tTh=tryThisFunc(goal)
+			prObj=addChain(pushD1[pu1], "Push/ret - going to 0x" + hx(goal,8) + tTh, [], intDict,3)
+			package.extend([prObj])
+
+		# p1Obj.setObf("intOverflow",[p1Obj, p2Obj,addObj,prObj] )
+		frc.intOverflow[0]=intDict
+		# print (intDict)
+		# showChain(intDict)
+		# showChain(package)
+		genOutput(intDict)
+		# dp ("\n\n-----\n")
+		return buildSucces,  package
+	return buildSucces, []
+
+
+def buildIntOverflowPR2(excludeRegs,bad,goal,tThis, bb, withPR=True):
 	dp("buildIntOverflowPR")
 	# print("buildIntOverflowPR")
 	# print ("excludeRegs", excludeRegs)
@@ -5711,13 +5854,13 @@ def buildIntOverflowPR(excludeRegs,bad,goal,tThis, bb, withPR=True):
 	success, obf1,obf2=buildObfValuesIntOverflow(goal,bad,bb)
 	if not success:
 		dp ("Cannot find desired integer overflow")
-		return False,1,2,3,4
+		return False,1
 	if success:
 		dp ("Got obfuscation values for integer oveflow:")
 		dp (hex(obf1), hex(obf2))
 	for reg in excludeRegs:
 		availableRegs.remove(reg)
-	print ("availableRegs",availableRegs)
+	# print ("availableRegs",availableRegs)
 	espDesiredMovement=4
 
 	addEspMove=0
@@ -5734,7 +5877,10 @@ def buildIntOverflowPR(excludeRegs,bad,goal,tThis, bb, withPR=True):
 			dp ("got build int overflow template")
 			buildSucces=True
 			break
+	
 	if not buildSucces:
+		# print ("IN ALTERNATE buildIntOverflowPR template")
+		# print ("availableRegs", availableRegs)
 		for r in availableRegs:
 			foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(r,bad,availableRegs, excludeRegs, addEspMove)
 			if not foundAdd:
@@ -5767,7 +5913,7 @@ def buildIntOverflowPR(excludeRegs,bad,goal,tThis, bb, withPR=True):
 		# p1Obj.setObf("intOverflow",[p1Obj, p2Obj,addObj,prObj] )
 
 		frc.intOverflow[0]=intDict
-		showChain(intDict)
+		# showChain(intDict)
 		genOutput(intDict)
 		# dp ("\n\n-----\n")
 		return buildSucces,  package
@@ -5837,7 +5983,8 @@ def findPushOold2(reg,bad,length1, excludeRegs,espDesiredMovement=-4):
 	if bExists:
 		if length1 or not length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget, push eax / ret
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found findpush", reg)
 					return True,p, myDict
@@ -5952,7 +6099,8 @@ def CopyChainObj(gadgetObj, comment=None):
 	return obj
 
 def giveBad(oldBad,flag):
-	bad = b''
+	#deprecated
+	bad = b''  
 	if not flag:
 		return bad
 	else:
@@ -5967,7 +6115,8 @@ def getHGandPops(hgExcludeRegs,excludeRegs,bad,availableRegs,pu1, destination):
 	p2Found=False
 
 	for p in fg.hgGadgets:
-		freeBad=checkFreeBadBytes(p,bad)
+		freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 		first=fg.hgGadgets[p].hg1
 		second=fg.hgGadgets[p].hg2
 		if fg.hgGadgets[p].hgDiff==0 and freeBad and any(item in first for item in availableRegs)  and any(item in second for item in availableRegs):
@@ -5993,9 +6142,12 @@ def getHGandPops(hgExcludeRegs,excludeRegs,bad,availableRegs,pu1, destination):
 	for p in fg.hgGadgets:
 		package=[]
 		if hFound:
-			freeBad=checkFreeBadBytes(p,bad)
+			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 		if not hFound:
-			freeBad=checkFreeBadBytes(p,giveBad(bad,hFound))
+			# freeBad=checkFreeBadBytes(p,giveBad(bad,hFound))  
+			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 		first=fg.hgGadgets[p].hg1
 		second=fg.hgGadgets[p].hg2
 		if fg.hgGadgets[p].hgDiff==0 and freeBad and any(item in first for item in availableRegs)  and any(item in second for item in availableRegs):
@@ -6086,7 +6238,7 @@ def xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement):
 	else:
 		return False, 0
 
-def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement):
+def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement,isVal=False):
 	availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
 	try:
 		excludeRegs.remove("esp")
@@ -6100,10 +6252,10 @@ def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement):
 
 	for r in availableRegs:
 		# foundXor, x1 = findGeneric("xor",reg,bad,length1, excludeRegs,espDesiredMovement)
-		foundXor, x1 = findGenericOp2("xorZero", reg,reg,bad,length1, excludeRegs,espDesiredMovement)
+		foundXor, x1 = findGenericOp2("xorZero", reg,reg,bad,length1, excludeRegs,espDesiredMovement,isVal)
 		
-		foundAdd, a1 = findGenericOp2("add", r,reg,bad,length1, excludeRegs,espDesiredMovement)
-		foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs)
+		foundAdd, a1 = findGenericOp2("add", r,reg,bad,length1, excludeRegs,espDesiredMovement,isVal)
+		foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs,isVal)
 		if foundXor and foundP1 and foundAdd:
 				chP=chainObj(p1, "Indirectly loading " +reg, [val])
 				pk=pkBuild([x1,chP,a1])
@@ -6113,8 +6265,64 @@ def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement):
 				return True, pk
 	return False,0x666
 
-def loadReg(reg,bad,length1,excludeRegs,val,comment=None):
+
+def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
+	hexVal=""
+	if val!="skip":
+		hexVal= hex(val)
+	# print (yel,"--> the bad",binaryToStr(bad), "val",hexVal,val, "target reg",reg,res)
+	if val=="skip":
+		return True, 0,0
+	# freeBadGoalVal=checkFreeBadBytes(val,bad)
+	freeBadGoalVal=checkFreeBadBytes(val,bad,fg.rop,pe,opt["bad_bytes_imgbase"],isVal)
+
+	# if freeBadGoalVal:
+	# 	print (val, "freebadbytes")
+	# else:
+	# 	print ("\t",hex(val),val, "has badbytes")
+
+	if not freeBadGoalVal:
+		tThis=""
+		# bb=""
+		# print ("tryObfMethods", reg, "comment", comment)
+		success, tryPackage = tryObfMethods(excludeRegs,bad,val,tThis, bb, False,reg,comment, isVal)
+		if success:
+			# print ("found tryObfMethods")
+			# showChain(tryPackage, True)
+			return success, 0x99, tryPackage
+
+	if freeBadGoalVal:
+		foundP1, p1,pDict=findPop(reg,bad,length1,excludeRegs,isVal)
+		if foundP1:
+			comment2="load " + reg
+			if comment!=None:
+				comment2+= ", " + comment
+			chP=chainObj(p1, comment2, [val])
+			return foundP1, p1, chP
+
+	
+	foundX, chX=lXorAdd(reg,val,bad,length1,excludeRegs,0,isVal)
+	if foundX:
+		return True, 0,chX
+	# if foundP1:
+	# 	return foundP1, p1, chP
+	else:
+		# return foundP1, 0x99, chP
+
+		return False, 0,0
+
+def loadRegOld(reg,bad,length1,excludeRegs,val,comment=None):
+	if val=="skip":
+		return True, 0,0
+	freeBadGoalVal=checkFreeBadBytes(val,bad)
+	# if freeBadGoalVal:
+	# 	# print (val, "freebadbytes")
+	# else:
+	# 	# print ("!!!!!!!\t",hex(val),val, "has badbytes")
+	# 	pa
+
 	foundP1, p1,pDict=findPop(reg,bad,length1,excludeRegs)
+
 	if foundP1:
 		comment2="load " + reg
 		if comment!=None:
@@ -6734,7 +6942,8 @@ def findJmpDword(reg,bad):
 	bExists, myDict=fg.getFg("jmpDword",reg)
 	if bExists:
 		for p in myDict:
-			freeBad=checkFreeBadBytes(p,bad)
+			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 			if freeBad:
 				# dp ("returning ", hex(p))
 				return True,p
@@ -6743,7 +6952,8 @@ def findJmp(reg,bad):
 	bExists, myDict=fg.getFg("jmp",reg)
 	if bExists:
 		for p in myDict:
-			freeBad=checkFreeBadBytes(p,bad)
+			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 			if freeBad:
 				dp ("returning ", hex(p))
 				return True,p
@@ -7555,7 +7765,7 @@ def buildHG(bad,excludeRegs):
 
 	# availableRegs=["rax","rbx","rcx","rdx","rsi","rdi","rsp","rbp","r8 ","r9 ","r10","r11","r12","r13","r14","r15"]
 	# availableRegs=[("rax", "eax"),("rbx", "ebx"),("rcx", "ecx"),("rdx", "edx"),("rsi","esi"),("rdi", "edi"),("rsp", "esp"),("rbp", "ebp"),("r8 ", "r8"),("r9 ", "r9"),("r10", "r10"),("r11", "r11"),("r12", "r12"),("r13", "r13"),("r14","r14"),("r15", "r15")]
-	availableRegss=[	 "eax", "ebx", "ecx", "edx","esi", "edi", "esp", "ebp", "r8", "r9", "r10", "r11", "r12", "r13","r14", "r15","rax"]
+	availableRegs=[	 "eax", "ebx", "ecx", "edx","esi", "edi", "esp", "ebp", "r8", "r9", "r10", "r11", "r12", "r13","r14", "r15","rax"]
 	# availableRegsB=["rbx","rcx","rdx","rsi","rdi","rsp","rbp","r8 ","r9 ","r10","r11","r12","r13","r14","r15"]
 	
 
@@ -8261,7 +8471,7 @@ class getParamVals:
 		return True, 0x209,comment
 		
 	def get_flNewProtect(self,name,excludeRegs,r,r2,bad,pk):
-		comment="0x40 - RWX"
+		comment=" - RWX"
 		return True, 0x40,comment
 
 	def get_flOldProtect(self,name,excludeRegs,r,r2,bad,pk):
@@ -8786,6 +8996,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 
 	for x in range(apiNum):
 		i,j, apiCode, apiNum= giveApiNum(winApi,j)
+		# print (gre+"i", i, "j", j, "apiCode",apiCode,"apiNum",apiNum,res)
 		# apiCode="GPA1s"
 		excludeRegs2= copy.deepcopy(excludeRegs)
 		# i=apiCode+str(j)
@@ -8796,6 +9007,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 		foundL1, pl1, lr1,r1 = loadRegP(1,i, bad,True,excludeRegs2,pk)
 		if foundL1:
 			excludeRegs2=addExRegs(excludeRegs2, r1)
+			# print (cya+"adding to excludeRegs2 1", excludeRegs2,res)
 			pk=pkBuild([pk1,lr1])
 		else:
 			continue
@@ -8803,6 +9015,8 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 		foundL2, pl2, lr2,r2 = loadRegP(2,i, bad,True,excludeRegs2,pk)
 		if foundL2:
 			excludeRegs2=addExRegs(excludeRegs2, r2)
+			# print (cya+"adding to excludeRegs2 2", excludeRegs2,res)
+
 			pk=pkBuild([pk,lr2])
 		else:
 			continue
@@ -8810,6 +9024,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 		foundL3, pl3, lr3,r3 = loadRegP(3,i, bad,True,excludeRegs2,pk)
 		if foundL3:
 			excludeRegs2=addExRegs(excludeRegs2, r3)
+			# print (cya+"adding to excludeRegs2 3", excludeRegs2,res)
 			pk=pkBuild([pk,lr3])
 		else:
 			continue
@@ -8817,6 +9032,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 		foundL4, pl4, lr4,r4 = loadRegP(4,i, bad,True,excludeRegs2,pk)
 		if foundL4:
 			excludeRegs2=addExRegs(excludeRegs2, r4)
+			# print (cya+"adding to excludeRegs2 4", excludeRegs2,res)
 			pk=pkBuild([pk,lr4])
 		else:
 			continue
@@ -8824,6 +9040,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 		foundL5, pl5, lr5,r5 = loadRegP(5,i, bad,True,excludeRegs2,pk)
 		if foundL5:
 			excludeRegs2=addExRegs(excludeRegs2, r5)
+			# print (cya+"adding to excludeRegs2 5", excludeRegs2,res)
 			pk=pkBuild([pk,lr5])
 		else:
 			continue
@@ -8831,6 +9048,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 		foundL6, pl6, lr6,r6 = loadRegP(6,i, bad,True,excludeRegs2,pk)
 		if foundL6:
 			excludeRegs2=addExRegs(excludeRegs2, r6)
+			# print (cya+"adding to excludeRegs2 6", excludeRegs2,res)
 			pk=pkBuild([pk,lr6])
 		else:
 			continue
@@ -8838,8 +9056,10 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 		foundL7, pl7, lr7,r7 = loadRegP(7,i, bad,True,excludeRegs2,pk)
 		if foundL7:
 			excludeRegs2=addExRegs(excludeRegs2, r7)
+			# print (cya+"adding to excludeRegs2 7", excludeRegs2,res)
 			pk=pkBuild([pk,lr7])
 		else:
+			# print ("continue 7")
 			continue
 
 		foundL8, pl8, lr8,r8 = loadRegP(8,i, bad,True,excludeRegs2,pk)
@@ -8847,15 +9067,30 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 			excludeRegs2=addExRegs(excludeRegs2, r8)
 			pk=pkBuild([pk,lr8])
 		else:
+			# print ("continue 8")
 			continue
 
 		fRet, pR,rDict=findRet(bad)
-
 		foundPushad, puA,pDict=findPushad(bad,length1,excludeRegs)
 		if foundPushad:
 			pkPA=pkBuild([pk,puA])
 		else:
-			continue
+			cOut,out= (genOutput(pk,winApi))
+			print (cOut)
+			print (red,"  Valid pushad not found - all else found - chain generation TERMINATED!!!",res)
+			if puA!=0x99:
+				print (red,"  A pushad with bad bytes does exist:",res)
+				offset1=fg.rop[puA].offset + pe[n].VirtualAdd
+				print(gre+"\t0x"+hx(img(puA)),res, "\toffset:",cya, hex(offset1), yel,disOffset(puA),res)
+				print ("  Some patterns may allow this to be substituted for a ROP nop and done via Push/Ret -> Pushad.\n   e.g. integer overflow, XOR, etc.")
+				
+				# str(hx (img(t,myDict), 8))+ whi+", # " + yel+ disMini(myDict[t].g.raw, myDict[t].g.offset) 
+			return False, [],[],[]
+			### too unreliable to automate - will disrupt any other register
+			# if puA==0x99:
+			# 	continue
+			# else:
+			# 	success, tryPackage = tryObfMethods(excludeRegs,bad,img(puA),"", bb, False,reg,comment)
 
 		if foundL1 and foundL2 and foundL3 and foundL4 and foundL5 and foundL6 and foundL7 and foundL8 and foundPushad:
 			pkFinal=pkBuild([lr1,lr2,lr3,lr4,lr5,lr6,lr7,lr8, pR])
@@ -8871,7 +9106,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 			return False,apiCode+str(j), [],[]
 		# j+=1
 		excludeRegs2.clear()
-		showChain(pkAll)	
+		# showChain(pkAll)	
 		cOut,out= (genOutput(pkAll,winApi))
 		outputsTxt.append(out)
 		outputsTxtC.append(cOut)
@@ -9212,25 +9447,42 @@ def remakeD(func,num,*myArgs): # dumb testing func - not used
 	out=func(*myArgs)
 	return out
 
-def tryObfMethods(excludeRegs,bad,goal,tThis, bb, withPR=True):
-	dp ("inside tryObfMethods")
+def availRegs(regFirst,excludeRegs):
+	print ("availRegs",regFirst,excludeRegs)
+	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	for reg in excludeRegs:
+		availableRegs.remove(reg)
+	availableRegs =regListToFront((availableRegs, reg))
+	print ("availableRegs",availableRegs)
+	return availableRegs
 
-	intSuccess, package =buildIntOverflowPR(excludeRegs,bad,goal,tThis,bb,withPR)
+def tryObfMethods(excludeRegs,bad,goal,tThis, bb, withPR=True,reg=None, comment="",isVal=False):
+	dp ("inside tryObfMethods")
+	# print (blu+"tryObfMethods", hex(goal), "excludeRegs",excludeRegs,res)
+
+	intSuccess, package =buildIntOverflowPR(excludeRegs,bad,goal,tThis,bb,withPR,reg,comment,isVal)
 	if intSuccess:
 		return True, package
-	foundInt2,package = buildFoundIntOv(goal,excludeRegs,bad,withPR)
+	return False, []
+
+	foundInt2,package = buildFoundIntOv(goal,excludeRegs,bad,withPR,reg, comment,isVal)
 	if foundInt2:
+		# print ("buildFoundIntOv true")
 		return True, package
-	negSucess, package=buildNeg(goal,excludeRegs, bad,withPR)
-	if negSucess:
-		return True, package
-	notSucess, package=buildNot(goal,excludeRegs, bad,withPR)
+
+	# negSucess, package=buildNeg(goal,excludeRegs, bad,withPR,reg,isVal)
+	# if negSucess:
+	# 	return True, package
+	notSucess, package=buildNot(goal,excludeRegs, bad,withPR,reg,comment,isVal)
 	if notSucess:
 		return True, package
-	xorSuccess,package=buildXor(goal,excludeRegs,bad,bb,withPR)
+
+	xorSuccess,package=buildXor(goal,excludeRegs,bad,bb,withPR,reg,comment,isVal)
 	if xorSuccess:
 		return True, package
-	foundXorSuccess,package=buildFoundXor(goal,excludeRegs,bad,bb, True,withPR)
+	return False,[]
+
+	foundXorSuccess,package=buildFoundXor(goal,excludeRegs,bad,bb, True,withPR, reg,comment,isVal)
 	if foundXorSuccess:
 		return True, package
 	
@@ -9312,7 +9564,8 @@ def getRetf(bad):
 		dp ("bExistsR")
 		for r in retfOut:
 			dp ("r",hex(r))
-			freeBad=checkFreeBadBytes(r,bad)
+			freeBad=checkFreeBadBytes(r,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 			if freeBad:
 				rf=r
 				return True, r, retfOut
@@ -9349,7 +9602,8 @@ def buildHGDouble(hgExcludeRegs,excludeRegs):
 	skipOtherSearches=False
 	dp ("num fg.hgGadgets", len(fg.hgGadgets))
 	for p in fg.hgGadgets:
-		freeBad=checkFreeBadBytes(p,bad)
+		freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 		if fg.hgGadgets[p].hgDiff==0 and freeBad:
 			first=fg.hgGadgets[p].hg1
 			second=fg.hgGadgets[p].hg2
@@ -9487,7 +9741,8 @@ def buildHGDouble(hgExcludeRegs,excludeRegs):
 		dp ("bExistsR")
 		for r in retfOut:
 			dp ("r",hex(r))
-			freeBad=checkFreeBadBytes(r,bad)
+			freeBad=checkFreeBadBytes(r,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 			if freeBad:
 				rf=r
 				break
@@ -9550,8 +9805,7 @@ def foundIntOverflows(myDict, desired,bad):
 		# dp (myDict[g].op2, "    ---------       ",disOffset2(g,fg) )
 		try:
 			if myDict[g].length ==1 and len(myDict[g].op2) > 4:
-				if checkFreeBadBytes(g,bad):
-
+				if checkFreeBadBytes(g,bad,fg.rop, pe, opt["bad_bytes_imgbase"]):
 					# dp ("\n\n************", myDict[g].op2)
 					foundOverflow,target=	foundIntOverflows2(myDict[g].op2, desired,bad)
 					if foundOverflow:
@@ -9619,12 +9873,14 @@ def findingNeg1(myDict, desired,bad):
 			dp (myDict[g].op2, "    ---------       ",disOffset(g) )
 		
 			if myDict[g].length ==1:
-				if checkFreeBadBytes(g,bad):
+				if checkFreeBadBytes(g,bad,fg.rop,pe, opt["bad_bytes_imgbase"]):
+
 					target=	twos_complement_neg(desired)
 					dp ("neg/not target:",hex(target))
 					ans=twos_complement_neg(target)
 					dp ("ans", hex(ans), hex(desired))
-					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(target,bad):
+					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(target,bad,fg.rop,pe, opt["bad_bytes_imgbase"],True):
+
 						return True, target, g
 					# else:
 					# 	dp ("NO!!!fs")
@@ -9648,20 +9904,27 @@ def findingNeg1(myDict, desired,bad):
 	return False,0,0
 
 def findingXor1(myDict, desired,bad,availableRegs,bb):
+	# print (gre+"findingXor1", desired, "availableRegs",availableRegs,res)
 	t=0
 	for g in myDict:
 		# dp (g, type(g))
 		dp (t, myDict[g].op2, "    ---------       ",disOffset(g) )
+		# print (t, myDict[g].op2, "    ---------       ",disOffset(g) )
+
 		try:
 			if myDict[g].length ==1:
-				if checkFreeBadBytes(g,bad):
+				if checkFreeBadBytes(g,bad,fg.rop,pe, opt["bad_bytes_imgbase"]):
+
 					special=bb.giveXor()
 					target=	xor_(desired,special)
 					dp ("xor target:",hex(target))
 					ans=xor_(target,special)
+					# print (yel+"special", hex(special), "target", hex(target),"ans", hex(ans),res, "myDict[g].op1",myDict[g].op1, yel+"myDict[g].op2",myDict[g].op2,res)
 					dp ("ans", hex(ans), hex(desired), "\t",disOffset(g))
 					isRegOp1= re.match( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p',(myDict[g].op1), re.M|re.I)
-					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(ans,bad) and any(item in myDict[g].op2 for item in availableRegs) and isRegOp1:
+					# print ("myDict[g].op2 for item in availableRegs",any(item in myDict[g].op2 for item in availableRegs), blu+"isRegOp1",isRegOp1, res )
+					# print ("checkingforbadbytes",checkFreeBadBytes(target,bad), hex(ans), "bad",bad)
+					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(target,bad,fg.rop,pe, opt["bad_bytes_imgbase"],True) and any(item in myDict[g].op2 for item in availableRegs) and isRegOp1:
 						dp ("return true")
 						return True, target, g, special, myDict[g].op2
 		
@@ -9680,35 +9943,30 @@ def findingFoundXor1(myDict, desired,bad,availableRegs,bb,enforceNoBadBytes):
 	for g in myDict:
 		# dp (g, type(g))
 		# dp (t, myDict[g].op2, "    ---------       ",disOffset(g) )
+		# print (t, myDict[g].op2, "    ---------       ",disOffset(g) )
 		try:
 			isReg= re.match( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p|[b|c|d|a]l|[b|c|d|a]h|si|di|bp|sp',(myDict[g].op2), re.M|re.I)
 			isRegOp1= re.match( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p',(myDict[g].op1), re.M|re.I)
-
 			if myDict[g].length ==1 and not isReg and isRegOp1:
 				dp(disOffset(g))
-				
+				# print(disOffset(g))
 				try:
 					special=int(myDict[g].op2)
 				except:
 					special=int(myDict[g].op2,16)
-
 				target=	xor_(desired,special)
 				dp ("xor target:",hex(target), "special", hex(special))
 				ans=xor_(target,special)
+				# print ("ans", hex(ans), "special", hex(special), "target",hex(target), hex(desired), disOffset(g))
 				dp ("ans", hex(ans), hex(desired), "\t",disOffset(g))
-				if ans==desired and checkFreeBadBytes(ans,bad):
+				if ans==desired and checkFreeBadBytes(target,bad,fg.rop,pe, opt["bad_bytes_imgbase"],True):
 					dp ("return true")
-					if enforceNoBadBytes:
-						if checkFreeBadBytes(g,bad) and checkFreeBadBytes(target,bad):
-							return True, target, g
-						else: 
-							return False,0,0
-							
+					# print (checkFreeBadBytes(g,bad), g, hex(g), hex(img(g)))
 					return True, target, g
-		
 		except Exception as e:
 			dp ("exception findingXor1:")
 			dp (e)
+			# print (red, e, res)
 			dp(traceback.format_exc())
 			dp ("error")
 			pass
@@ -9722,13 +9980,14 @@ def findingNot1(myDict, desired,bad):
 		# dp (myDict[g].op2, "    ---------       ",disOffset(g) )
 		try:
 			if myDict[g].length ==1:
-				if checkFreeBadBytes(g,bad):
+				if checkFreeBadBytes(g,bad,fg.rop,pe, opt["bad_bytes_imgbase"]):
+
 					target=	not_(desired)
 					# target+=1
 					dp ("not target:",hex(target))
 					ans=not_(target)
 					dp ("ans", hex(ans), hex(desired))
-					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(target,bad):
+					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(target,bad,fg.rop,pe, opt["bad_bytes_imgbase"],True):
 						return True, target, g
 					# else:
 					# 	dp("unacceptable size")
@@ -9736,7 +9995,50 @@ def findingNot1(myDict, desired,bad):
 			dp ("error")
 			pass
 	return False,0,0
-def buildNeg(desired,excludeRegs, bad, withPR=True):
+def buildNeg(desired,excludeRegs, bad, withPR=True,firstReg=False):
+	if firstReg!=None:
+		negSucess, package=buildNegTarget(desired,excludeRegs, bad, withPR,firstReg)
+	else:
+		negSucess, package=buildNeg(desired,excludeRegs, bad, withPR,firstReg)
+	return negSucess, package
+
+def buildNegTarget(desired,excludeRegs, bad, withPR=True, firstReg=False):
+	print ("buildNegTarget")
+	dp ("\n\nbuildNeg", hex(desired))
+	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	try:
+		for reg in excludeRegs:
+			availableRegs.remove(reg)
+	except:
+		pass
+	dp ("availableRegs",availableRegs)
+	bExists, myDict=fg.getFg("neg",firstReg)
+	bExistsP, myDictP=fg.getFg("pop",firstReg)
+	if not bExists and not bExistsP:
+		return False, 0
+	negFound, preNeg,f1 = findingNeg1(myDict,desired,bad)
+	if not negFound:
+		return False, 0
+	if negFound:
+		foundP1, p1, popD1 = findPop(firstReg,bad,True,excludeRegs)
+		if withPR:
+			foundPu1, pu1, pushD1 = findPush(firstReg,bad,True,excludeRegs,-4)
+		else:
+			foundPu1=True
+		if negFound and foundP1 and foundPu1:
+			print ("found them")
+			tryThis=tryThisFunc(desired)
+			rp1=chainObj(p1, "loading value for neg", [preNeg])
+			rp2=chainObj(f1, hex(preNeg) + " -> " + hex(desired) + tryThis, [])
+			rOut=[rp1, rp2]
+			if withPR:
+				prObj=chainObj(pu1, "Push/ret - going to 0x" + hx(desired,8), [])
+				rOut.extend([prObj])
+			showChain(rOut)
+			return negFound, rOut
+	return False,0
+
+def buildNeg2(desired,excludeRegs, bad, withPR=True, firstReg=False):
 	dp ("\n\nbuildNeg", hex(desired))
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
 	try:
@@ -9772,8 +10074,70 @@ def buildNeg(desired,excludeRegs, bad, withPR=True):
 				return negFound, rOut
 	return False,0
 
-def buildFoundXor(desired,excludeRegs, bad,bb,enforceNoBadBytes=False,withPR=True):
+def buildFoundXor(desired,excludeRegs, bad,bb,withPR=True, firstReg=None, comment="",isVal=False):
+	if firstReg != None:
+		foundXorSuccess, package=buildFoundXorTarget(desired,excludeRegs, bad,bb,withPR, firstReg, comment,isVal)
+	else:
+		foundXorSuccess, package=buildFoundXor2(desired,excludeRegs, bad,bb,withPR, firstReg)
+	return foundXorSuccess, package
+
+def buildFoundXorTarget(desired,excludeRegs, bad,bb,withPR=True, firstReg=None, comment="",isVal=False):
+	enforceNoBadBytes=False
+	# print ("buildFoundXorTarget", "desired", hex(desired), "firstReg", firstReg)
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	for r in excludeRegs:
+		availableRegs.remove(r)
+	dp ("\n\nbuildFoundxor", hex(desired))
+	# print ("regFirst", firstReg)
+
+	bExists, myDict=fg.getFg("xor",firstReg)
+	bExistsP, myDictP=fg.getFg("pop",firstReg)
+	# print ("bExists", bExists, "bExistsP", bExistsP)
+	if not bExists and not bExistsP:
+		return False, 0
+	xorFound, xorVal,x1 = findingFoundXor1(myDict,desired,bad, availableRegs,bb, enforceNoBadBytes)
+	if not xorFound:
+		dp ("NO xor found ", firstReg)
+		# print ("NO xor found ", firstReg)
+
+	if xorFound:
+		# print ("xor found", hex(xorVal), hex(x1), disOffset(x1), img(x1))
+		
+		#disMini(myDict[t].g.raw, myDict[t].g.offset)
+		#cOut+= gre+"\t"+  "0x"+str(hx (img(t,myDict), 8))+ whi+", # " + yel+ disMini(myDict[t].g.raw, myDict[t].g.offset) + whi+ " # " +cya+ myDict[t].comment + whi+ " # " +blu+ myDict[t].g.mod +whi+"\n"
+		#def img(p, fg2=None):
+
+
+#bramwell		
+		dp ("xor found", hex(xorVal), hex(x1), disOffset(x1))
+		foundP1, p1, popD1 = findPop(firstReg,bad,True,excludeRegs)
+
+		if withPR:
+			foundPu1, pu1, pushD1 = findPush(firstReg,bad,True,excludeRegs,-4)
+		else:
+			foundPu1=True
+		if xorFound and foundP1 and foundPu1:
+			# try:
+			# 	tryThis= " -> " + disOffset(desired)
+			# 	dp (tryThis)
+			# except Exception as e:
+			# 	tryThis=""
+			# print ("comment", comment)
+			tryThis=tryThisFunc(desired)
+			rp1=chainObj(p1, "loading XOR value", [xorVal])
+			rp2=chainObj(x1, hex(xorVal) + " ^ " + fg.rop[x1].op2 + " = " + hex(desired) +tryThis + " - " + comment, [])
+			rOut=[rp1, rp2]
+			if withPR:
+				prObj=chainObj(pu1, "Push/ret - going to 0x" + hx(desired,8), [])
+				rOut.extend([prObj])
+
+			showChain(rOut)
+			cOut,out=genOutput(rOut)
+			return xorFound, rOut
+	return False,0
+def buildFoundXor2(desired,excludeRegs, bad,bb,withPR=True, firstReg=None):
+	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	enforceNoBadBytes=False
 	for r in excludeRegs:
 		availableRegs.remove(r)
 	dp ("\n\nbuildFoundxor", hex(desired))
@@ -9811,8 +10175,61 @@ def buildFoundXor(desired,excludeRegs, bad,bb,enforceNoBadBytes=False,withPR=Tru
 				cOut,out=genOutput(rOut)
 				return xorFound, rOut
 	return False,0
+def buildXor(desired,excludeRegs,bad, bb,withPR=True, firstReg=None, comment=None,isVal=False):
+	# print ("buildXor", firstReg)
+	if firstReg!=None:
+		xorSucccess, package=buildXorTarget(desired,excludeRegs,bad, bb,withPR,firstReg,comment,isVal)
+	else:
+		xorSucccess, package=buildXor2(desired,excludeRegs,bad, bb,withPR,firstReg)
+	return xorSucccess, package
 
-def buildXor(desired,excludeRegs,bad, bb,withPR=True):
+def buildXorTarget(desired,excludeRegs,bad, bb,withPR=True, firstReg=None, comment=None,isVal=False):
+	# print (red+"buildXorTarget","firstReg",firstReg,"desired",hex(desired),res)
+	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	for r in excludeRegs:
+		availableRegs.remove(r)
+		dp ("\n\nbuildxor", hex(desired))
+
+	bExists, myDict=fg.getFg("xor",firstReg)
+	bExistsP, myDictP=fg.getFg("pop",firstReg)
+	if not bExists and not bExistsP:
+		# print (yel+"returning false",res)
+		return False,0
+	xorFound, xorVal,x1,key, secondReg = findingXor1(myDict,desired,bad, availableRegs,bb)
+	if xorFound:
+		dp ("xor found", hex(xorVal), hex(x1), disOffset(x1))
+		dp(secondReg, "secondReg")
+		foundP1, p1, popD1 = findPop(firstReg,bad,True,excludeRegs)
+		foundP2, p2, popD2 = findPop(secondReg,bad,True,excludeRegs)
+
+		if withPR:
+			foundPu1, pu1, pushD1 = findPush(firstReg,bad,True,excludeRegs,-4)
+		else:
+			foundPu1=True
+		if xorFound and foundP1 and foundPu1:
+			try:
+				tryThis= " -> " + disOffset(desired)
+				dp (tryThis)
+			except Exception as e:
+				tryThis=""
+			tryThis=tryThisFunc(desired)				
+			rp1=chainObj(p1, "loading first XOR value", [xorVal])
+			rp2=chainObj(p2, "loading second XOR value", [key])
+			com1 = redundantComChecker("",hex(desired) +tryThis,comment)
+			rp3=chainObj(x1, hex(xorVal) + " ^ " + hex(key) + " = " + hex(desired) + " - " + com1, [])
+
+			# rp3=chainObj(x1, hex(xorVal) + " ^ " + hex(key) + " = " + hex(desired) +tryThis + " - "+comment, [])
+			rOut=[rp1, rp2,rp3]
+			if withPR:
+				prObj=chainObj(pu1, "Push/ret - going to 0x" + hx(desired,8), [])
+				rOut.extend([prObj])
+
+			showChain(rOut)
+			return xorFound, rOut
+	dp ("return false xor")
+	return False,0
+
+def buildXor2(desired,excludeRegs,bad, bb,withPR=True, firstReg=None):
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
 	for r in excludeRegs:
 		availableRegs.remove(r)
@@ -9854,8 +10271,55 @@ def buildXor(desired,excludeRegs,bad, bb,withPR=True):
 	dp ("return false xor")
 	return False,0
 
+def buildNot(desired,excludeRegs, bad,withPR=True, firstReg=None,comment="",isVal=False):
+	
+	if firstReg !=None:
+		foundNot,package =	buildNotTarget(desired,excludeRegs, bad,withPR, firstReg, comment,isVal)
+	else:
+		foundNot,package =buildNot2(desired,excludeRegs, bad,withPR, firstReg)
+	return foundNot,package 
 
-def buildNot(desired,excludeRegs, bad,withPR=True):
+def redundantComChecker(com1,phrase,comment):
+	try:
+		if phrase in comment:
+		# print ("it is already there")
+			com1=comment
+		else:
+			com1=phrase
+		return com1
+	except:
+		return phrase
+def buildNotTarget(desired,excludeRegs, bad,withPR=True, firstReg=None,comment="",isVal=False):
+	dp ("\n\nbuildNot", hex(desired))
+	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	
+	bExists, myDict=fg.getFg("notInst",firstReg)
+	bExistsP, myDictP=fg.getFg("pop",firstReg)
+	if not bExists and not bExistsP:
+		return False, 0
+	negFound, preNot,f1 = findingNot1(myDict,desired,bad)
+	if negFound:
+		foundP1, p1, popD1 = findPop(firstReg,bad,True,excludeRegs)
+		if withPR:
+			foundPu1, pu1, pushD1 = findPush(firstReg,bad,True,excludeRegs,-4)
+		else:
+			foundPu1=True
+		if negFound and foundP1 and foundPu1:
+			tryThis=tryThisFunc(desired)
+			rp1=chainObj(p1, "loading value for not", [preNot])
+			com1 = redundantComChecker("Not = ",hex(desired) + tryThis,comment)
+			rp2=chainObj(f1, hex(preNot) + " - "+com1, [])
+			rOut=[rp1, rp2]
+			if withPR:
+				prObj=chainObj(pu1, "Push/ret - going to 0x" + hx(desired,8), [])
+				rOut.extend([prObj])
+
+			showChain(rOut)
+			return negFound, rOut
+	return False,0
+
+def buildNot2(desired,excludeRegs, bad,withPR=True, firstReg=None):
+	# print (red+"buildnot2 firstReg", firstReg, "desired", desired,res)
 	dp ("\n\nbuildNot", hex(desired))
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
 	for reg in excludeRegs:
@@ -9885,7 +10349,59 @@ def buildNot(desired,excludeRegs, bad,withPR=True):
 				showChain(rOut)
 				return negFound, rOut
 	return False,0
-def buildFoundIntOv(desired,excludeRegs,bad, withPR=True):
+def buildFoundIntOv(desired,excludeRegs,bad, withPR=True,regFirst=None, comment=None,isVal=False):
+	# print (yel,"regFirst", regFirst,res)
+	# regFirst="ebp"
+	if regFirst!=None:
+		foundInt2,package = buildFoundIntOvTarget(desired,excludeRegs,bad, withPR, regFirst,comment,isVal)
+	else:
+		foundInt2,package = buildFoundIntOv2(desired,excludeRegs,bad, withPR, regFirst)
+
+	return foundInt2,package
+def buildFoundIntOvTarget(desired,excludeRegs,bad, withPR=True, regFirst=None, comment=None,isVal=False):
+	dp ("buildFoundIntOv", hex(desired))
+	# print (red+"buildFoundIntOv", "regFirst", regFirst, "goal", desired, res)
+	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	for reg in excludeRegs:
+		availableRegs.remove(reg)
+
+
+	bExists, myDict=fg.getFg("add",regFirst)
+	bExistsP, myDictP=fg.getFg("pop",regFirst)
+	if not bExists and not bExistsP:
+		return False,0
+	intFound, overflow,f1 = foundIntOverflows(myDict,desired,bad)
+	foundP1, p1, popD1 = findPop(regFirst,bad,True,excludeRegs)
+	if not intFound:
+		# print ("intFound exit")
+		return False,0
+	if not foundP1:
+		# print ("foundP1 exit")
+		return False,0
+	if withPR:
+		foundPu1, pu1, pushD1 = findPush(regFirst,bad,True,excludeRegs,-4)
+	else:
+		foundPu1=True
+	if intFound and foundP1 and foundPu1:
+		dp("found the trio")
+		
+		tryThis=tryThisFunc(desired)
+		rp1=chainObj(p1, "first pop", [overflow])
+		com1 = redundantComChecker("",hex(desired) +tryThis,comment)
+
+		rp2=chainObj(f1, hex(overflow) + " + " + fg.rop[f1].op2 + " = " + hex(desired) + com1, [])
+
+		rOut=[rp1, rp2]
+		if withPR:
+			prObj=chainObj(pu1, "Push/ret - going to 0x" + hx(desired,8), [])
+			rOut.extend([prObj])
+
+		# showChain(rOut)
+		return intFound, rOut
+	# showChain(rOut)
+	return False,0
+
+def buildFoundIntOv2(desired,excludeRegs,bad, withPR=True, regFirst=None):
 	dp ("buildFoundIntOv", hex(desired))
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
 	for reg in excludeRegs:
@@ -9899,10 +10415,10 @@ def buildFoundIntOv(desired,excludeRegs,bad, withPR=True):
 		intFound, overflow,f1 = foundIntOverflows(myDict,desired,bad)
 		foundP1, p1, popD1 = findPop(reg,bad,True,excludeRegs)
 		if not intFound:
-			print ("intFound continue")
+			# print ("intFound continue")
 			continue
 		if not foundP1:
-			print ("foundP1 continue")
+			# print ("foundP1 continue")
 			continue
 		if withPR:
 			foundPu1, pu1, pushD1 = findPush(reg,bad,True,excludeRegs,-4)
@@ -9923,7 +10439,6 @@ def buildFoundIntOv(desired,excludeRegs,bad, withPR=True):
 			showChain(rOut)
 			return intFound, rOut
 	return False,0
-
 def postDoublePush():
 	myDict=fg.push
 
@@ -11016,7 +11531,8 @@ def findGadget():
 		# print ("bExists")
 		t=0
 		for p in myDict:
-			freeBad=checkFreeBadBytes(p,bad)
+			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 			if freeBad:
 				myDis=disOffset(p)
 				myDis=myDis.split( " # ")
@@ -11113,7 +11629,8 @@ def findGadget():
 		dp ("it exists")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				# print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found ",instruction, reg) 
@@ -11121,7 +11638,8 @@ def findGadget():
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad)
+				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe, opt["bad_bytes_imgbase"])
+
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found ", instruction, reg)
@@ -11187,7 +11705,6 @@ def genShellcodelessROP_System():
 def genVirtualProtectPushad():
 	global bad
 	global excludeRegs
-	print ("global bad genVirtualProtectPushad", bad)
 	buildPushad(excludeRegs,bad, "VP" )
 
 def genMovDerefVP():
@@ -11495,18 +12012,24 @@ def getBadBytesSubmenu():
 			print(yel + " ROP_ROCKET>"+ cya+"BadBytes>" +res, end="")
 			userIN = input()
 			print(res)
-			if userIN[0:1] == "1" or userIN[0:1].lower() == "b":
+			if userIN[0:1] == "c" or userIN[0:1].lower() == "c":
 				bad=b''
 				opt["badBytes"]=bad
 				
-			elif userIN[0:1] == "2" or userIN[0:1].lower() == "b":
+			elif userIN[0:1] == "b" or userIN[0:1].lower() == "b":
 				uiAddBadBytes()
-			elif userIN[0:1] == "3" or userIN[0:1] == "r":
+			elif userIN[0:1] == "r" or userIN[0:1] == "r":
 				uiRemoveBadBytes()
 			elif userIN[0:1] == "h" or userIN[0:7] == "display":
 				print(uiShowBadBytes()) 
 			elif userIN[0:1] == "q" or userIN[0:1] == "x":
 				break		
+			elif userIN[0:1] == "1" or userIN[0:1].lower() == "i":
+				toggleImgBase()
+			# elif userIN[0:1] == "2" or userIN[0:1].lower() == "o":
+			# 	toggleOffsets()
+			elif userIN[0:1] == "2" or userIN[0:1].lower() == "2":
+				changeImageBase()
 			else:
 				print("   Invalid input. Enter " + red + "x"+res+" to exit Style.\n")
 		except Exception as e:
@@ -11516,45 +12039,76 @@ def getBadBytesSubmenu():
 
 def uiShowBadBytes():
 	global opt
-	if opt["acceptCFG"]:
-		togCFG=res+"["+gre+"X"+res+"]"
-	else:
-		togCFG=res+"["+gre+" "+res+"]"
-	if opt["acceptSEH"]:
-		togSEH=res+"["+gre+"X"+res+"]"
-	else:
-		togSEH=res+"["+gre+" "+res+"]"
-	if opt["acceptSystemWin"]:
-		togSystemWin=res+"["+gre+"X"+res+"]"
-	else:
-		togSystemWin=res+"["+gre+" "+res+"]"
-	if opt["acceptASLR"]:
-		togASLR=res+"["+gre+"X"+res+"]"
-	else:
-		togASLR=res+"["+gre+" "+res+"]"
+	
 	if opt["checkForBadBytes"]:
 		togBad=res+"["+gre+" "+res+"]"
 	else:
 		togBad=res+"["+gre+"X"+res+"]"
 
+	if opt["bad_bytes_imgbase"]:
+		togBadIm=res+"["+gre+"X"+res+"]"
+	else:
+		togBadIm=res+"["+gre+" "+res+"]"
+	togBadOf=res+"["+gre+"X"+res+"]"
+	
 	bad=opt["badBytes"]
 
 	curBadBytes=binaryToStr(bad)
 	if len(curBadBytes)==0:
 		curBadBytes="None"
-	text = "  If you decide to {} certain exclusion criteria, toggle it.\n  {} means it will be excluded. {} means it will be included.\n\n".format(gre+"accept"+res,gre+"No check"+res, gre+"Check"+res)
-	text +="\n  Current Bad Bytes: {}\n\n".format(cya+curBadBytes+res)
+	text = "  {} can be highly impactful in exploitation. We can exclude gadget addresses\n  or other bytes (such as values) from having bad bytes in search results or gadget chains.\n  Generally, one should be checked, or most bad bytes would be ignored.\n\n".format(gre+"Bad bytes or bad chars"+res)
+	text +=mag+"  Find Bad Bytes in Offsets: \t\t\t\t {}\n".format(togBadOf)
+	text +="  \tOffsets include virtual address. This cannot be disabled. \t\t{}\n".format("")
+	text +=mag+"  Find Bad Bytes in ImageBase + VirtualAddress + Offset: {}\n".format(togBadIm)
+	text +=mag+"  Default ImageBase: {}\t VirtualAddress: {}\n".format(cya+hex(pe[n].ImageBase)+mag, cya+hex(pe[n].VirtualAdd)+mag)
+
+	text +=mag+"  Current Bad Bytes: {}\n\n".format(cya+curBadBytes+res)
+	
 	
 	# text+=yel+"  {}\t {}             {} {} Include gadgets with ASLR in results.\n".format(cya+"1"+res,mag+"ASLR" +res, togASLR, "-"+yel)
 	# text+=yel+"  {}\t {}              {} {} Include gadgets with CFG in results.\n".format(cya+"2"+res,mag+"CFG" +res, togCFG, "-"+yel)
 	# text+=yel+"  {}\t {}              {} {} Include gadgets with SEH in results.\n".format(cya+"3"+res,mag+"SEH" +res, togSEH, "-"+yel)
 	# text+=yel+"  {}\t {}          {} {} Include gadgets that are Windows DLLs in results.\n".format(cya+"4"+res,mag+"Windows" +res, togSystemWin, "-"+yel)
 	# text+=yel+" {}\t {}        {} {} Include gadgets with bad bytes in results.\n".format(cya+"5"+res,mag+"Bad bytes" +res, togBad, "-"+yel)
-	text+=yel+"  {}\t {}  {} {} Clear all bad bytes.\n".format(cya+"1"+res,mag+"Clear bad bytes" +res, "   ", "-"+yel)
-	text+=yel+"  {}\t {}    {} {} Add additional bad bytes to exclude.\n".format(cya+"2"+res,mag+"Add bad bytes" +res, "   ", "-"+yel)
-	text+=yel+"  {}\t {} {} {} Remove bad bytes from exclusion criteria.\n".format(cya+"3"+res,mag+"Remove bad bytes" +res, "   ", "-"+yel)
+	text+=yel+"  {}\t {}          {} {} Clear all bad bytes.\n".format(cya+"c"+res,mag+"Clear bad bytes" +res, "   ", "-"+yel)
+	text+=yel+"  {}\t {}            {} {} Add additional bad bytes to exclude.\n".format(cya+"b"+res,mag+"Add bad bytes" +res, "   ", "-"+yel)
+	text+=yel+"  {}\t {}         {} {} Remove bad bytes from exclusion criteria.\n".format(cya+"r"+res,mag+"Remove bad bytes" +res, "   ", "-"+yel)
+	text+=yel+"  {}\t {} {}           {} Toggle bad bytes in ImgBase.\n".format(cya+"1"+res,mag+"Toggle ImgBase" +res, "   ", "-"+yel)
+	# text+=yel+"  {}\t {} {}           {} Toggle bad bytes in Offsets.\n".format(cya+"2"+res,mag+"Toggle Offsets" +res, "   ", "-"+yel)
+	text+=yel+"  {}\t {} {} {} Change ImageBase.\n".format(cya+"2"+res,mag+"Change default ImageBase" +res, "   ", "-"+yel)
+
+
 
 	print (text)
+def changeImageBase():
+	# print ("  Enter new ImageBase in hexadecimal:"
+
+	print("  Enter new ImageBase in hexadecimal:  \n")
+	print (yel+"  ImageBase:  "+cya, end="")
+	imageBase=input()
+
+	if "0x" not in imageBase:
+		"0x"+imageBase
+	try:
+		imageBase2= int(imageBase,16)
+	except:
+		print (res,"  This input was not accepted:", imageBase)
+	pe[n].ImageBase=imageBase2
+	pe[n].startLoc=imageBase2 + pe[n].VirtualAdd
+	print (mag,"   ImageBase + VirtualAddress: ",res, hex(pe[n].startLoc))
+	print (res)
+def toggleImgBase():
+	global opt
+	if opt["bad_bytes_imgbase"]:
+		opt["bad_bytes_imgbase"]=False
+	else:
+		opt["bad_bytes_imgbase"]=True
+def toggleOffsets():
+	global opt
+	if opt["bad_bytes_offset"]:
+		opt["bad_bytes_offset"]=False
+	else:
+		opt["bad_bytes_offset"]=True
 
 def uiAddBadBytes():
 	global opt
@@ -12171,6 +12725,7 @@ def uiShowObfSettings():
 	text+=gre+"\n      Obfuscating ROP Gadgets            \n"
 	# text+=yel+"   {}\t {}    {} {} Change the lookup module.\n".format(cya+"1"+res,mag+"Lookup Module" +res, "   ", "-"+yel, cya+"fs:[0x30]"+yel)
 	
+	text+=yel+"   {}\t {} {} {} Set first register where result will be stored.\n".format(cya+"0"+res,mag+"Set first register" +res, "   ", "-"+yel)
 	
 	text+=yel+"   {}\t {} {} {} Obfuscate with integer overflow.\n".format(cya+"1"+res,mag+"Integer overflow" +res, "   ", "-"+yel)
 
@@ -12196,6 +12751,54 @@ def uiShowObfSettings():
 
 	return text
 
+def setFirstReg():
+	global opt
+	try:
+		if opt["first_reg_enabled"]:
+			togFR=res+"["+gre+"X"+res+"]"
+		else:
+			togFR=res+"["+gre+" "+res+"]"
+	except:
+		opt["first_reg_enabled"]=False
+		togFR=res+"["+gre+"  "+res+"]"
+
+
+	# print(yel + "   Exclude_Regs: " +mag, end="")
+	# userIN = input()
+	try:
+		text=yel+"\n  First Register: \t{}.\n".format(gre+opt["first_reg"]+res)
+	except:
+		text=yel+"\n  First Register: \t{}.\n".format(gre+"None"+res)
+
+	text+=yel+"  First Register Enabled: {}\n".format(togFR)
+	
+	text+=res+"\n  The first register is where the result of obfuscation is stored.\n  E.g. {} - the result is in {}.\n".format(gre+"xor eax, edx"+res, gre+"eax"+res)
+	text+=res+"\n  If not set, then it will attempt any combination of registers not excluded {}.\n".format(gre+"xor eax, edx"+res, gre+"eax"+res)
+
+	text+=res+"\n  Set the register to be the first register. {}\n".format("")
+	text+= res+"  Hit enter to end input." +" Type {} to {}.\n".format(gre+"d"+res, gre+"disable first reg"+res)
+	print (text)
+
+	print (yel+"  First Register: "+mag, end="")
+	userIN = input()
+	if userIN =="d":
+		opt["first_reg_enabled"]=False
+		print ("  First register disabled.")
+		return
+	# print ("userIN", userIN)
+	# selections = userIN.replace(",", " ")
+	# print ("selections", selections)
+	# newRegs = selections.split()
+	# print ("newBytes", newBytes)
+	print(res)
+	
+	opt["first_reg"]=userIN
+	opt["first_reg_enabled"]=True
+
+	
+
+	text=gre+"\n  FirstReg: {}\n".format(cya+opt["first_reg"]+res)
+	print (text)
 def printObfMenu():
 	print(uiShowObfSettings())
 	global opt
@@ -12209,6 +12812,16 @@ def printObfMenu():
 			# excludeRegs=badRegs
 			excludeRegs=opt['regsExc']
 			bad=opt['badBytes']
+			try:
+				first_reg_enabled=opt["first_reg_enabled"]
+			except:
+				first_reg_enabled=False
+				opt["first_reg_enabled"]=False
+			try:
+				opt["first_reg"]=opt["first_reg"]
+			except:
+				firstReg=None
+				opt["first_reg"]=None
 			if userIN[0:4] == "1234" or userIN[0:1] == "l":
 				
 				print(cya+"  Capitalization or abbreviation does not matter. E.g. kernel32 or kern.\n  Enter new module name: " +mag, end="")
@@ -12229,7 +12842,10 @@ def printObfMenu():
 				print(res) 
 				
 
-				intSuccess, p5 =buildIntOverflowPR(excludeRegs,bad,desired,"",bb,True)
+				if not opt["first_reg_enabled"]:
+					intSuccess, p5 =buildIntOverflowPR(excludeRegs,bad,desired,"",bb,True)
+				else:
+					intSuccess, p5 =buildIntOverflowPR(excludeRegs,bad,desired,"",bb,True,opt["first_reg"])
 				if intSuccess:
 					cOut,out=genOutput(p5)
 					print (cOut)
@@ -12240,7 +12856,10 @@ def printObfMenu():
 				userLines = input()
 				desired= int(userLines,16)
 				print(res) 
-				intSuccess,p6 = buildFoundIntOv(desired,excludeRegs,bad,True)
+				if not opt["first_reg_enabled"]:
+					intSuccess,p6 = buildFoundIntOv(desired,excludeRegs,bad,True)
+				else:
+					intSuccess,p6 = buildFoundIntOv(desired,excludeRegs,bad,True,opt["first_reg"])
 				
 				if intSuccess:
 					cOut,out=genOutput(p6)
@@ -12251,7 +12870,10 @@ def printObfMenu():
 				userLines = input()
 				desired= int(userLines,16)
 				print(res) 
-				intSuccess, p3=buildXor(desired,excludeRegs,bad,bb)
+				if not opt["first_reg_enabled"]:
+					intSuccess, p3=buildXor(desired,excludeRegs,bad,bb,True)
+				else:
+					intSuccess, p3=buildXor(desired,excludeRegs,bad,bb,True,opt["first_reg"])
 				if intSuccess:
 					cOut,out=genOutput(p3)
 					print (cOut)
@@ -12260,7 +12882,11 @@ def printObfMenu():
 				userLines = input()
 				desired= int(userLines,16)
 				print(res) 
-				intSuccess, p4=buildFoundXor(desired,excludeRegs,bad,bb, False)
+
+				if not opt["first_reg_enabled"]:
+					intSuccess, p4=buildFoundXor(desired,excludeRegs,bad,bb, True)
+				else:
+					intSuccess, p4=buildFoundXor(desired,excludeRegs,bad,bb, True,opt["first_reg"])
 				if intSuccess:
 					cOut,out=genOutput(p4)
 					print (cOut)
@@ -12269,7 +12895,10 @@ def printObfMenu():
 				userLines = input()
 				desired= int(userLines,16)
 				print(res) 
-				intSuccess, p1=buildNeg(desired,excludeRegs, bad, True)  
+				if not opt["first_reg_enabled"]:
+					intSuccess, p1=buildNeg(desired,excludeRegs, bad, True)  
+				else:
+					intSuccess, p1=buildNeg(desired,excludeRegs, bad, True) ,opt["first_reg"] 
 				if intSuccess:
 						cOut,out=genOutput(p1)
 						print (cOut)
@@ -12278,7 +12907,10 @@ def printObfMenu():
 				userLines = input()
 				desired= int(userLines,16)
 				print(res) 
-				intSuccess, p2=buildNot(desired,excludeRegs,bad, True)
+				if not opt["first_reg_enabled"]:
+					intSuccess, p2=buildNot(desired,excludeRegs,bad, True)
+				else:
+					intSuccess, p2=buildNot(desired,excludeRegs,bad, True,opt["first_reg"])
 				if intSuccess:
 						cOut,out=genOutput(p2)
 						print (cOut)
@@ -12292,6 +12924,8 @@ def printObfMenu():
 				uiRemoveBadBytes()
 			elif userIN[0:1] == "9" or userIN[0:1] == "r":
 				uiChangeExcludedRegs()
+			elif userIN[0:1] == "0" or userIN[0:1] == "0":
+				setFirstReg()
 			# elif userIN[0:1] == "3" or userIN[0:1] == "n":
 			# 	print(cya+" Enter max num. of lines per gadget. Ret does NOT count: " +res, end="")
 			# 	userLines = input()
@@ -12345,14 +12979,16 @@ def saveConf(con):
 
 def modConf():
 	global configOptions
-	listofStrings=["x86_get", "x64_get", "bytes_max", "img_exc", "system_dlls", "other_dlls", "x86_print", "x64_print", "len_max", "accept_aslr", "accept_seh", "accept_system_windows_dlls", "accept_cfg", "check_for_bad_bytes"]
 
-	listofBools=[opt["bx86Get"],opt["bx64Get"],opt["bytesMax"],opt["bImgExc"],opt["bSystemDlls"],opt["bOtherDlls"],opt["bx86Print"],opt["bx64Print"],opt["lenMax"],opt["acceptASLR"],opt["acceptSEH"],opt["acceptSystemWin"],opt["acceptCFG"],opt["checkForBadBytes"]]		
+	listofStrings=["x86_get", "x64_get", "bytes_max", "img_exc", "system_dlls", "other_dlls", "bad_bytes_imgbase","x86_print", "x64_print", "len_max", "accept_aslr", "accept_seh", "accept_system_windows_dlls", "accept_cfg", "check_for_bad_bytes"]
+
+	listofBools=[opt["bx86Get"],opt["bx64Get"],opt["bytesMax"],opt["bImgExc"],opt["bSystemDlls"],opt["bOtherDlls"], opt["bad_bytes_imgbase"],opt["bx86Print"],opt["bx64Print"],opt["lenMax"],opt["acceptASLR"],opt["acceptSEH"],opt["acceptSystemWin"],opt["acceptCFG"],opt["checkForBadBytes"]]		
 	t=0
 	for each in listofBools:
 		if type(each)!=str:
 			listofBools[t]=str(each)
 		t+=1
+
 
 	try:
 		for booli, boolStr in zip(listofBools, listofStrings):
@@ -12361,6 +12997,7 @@ def modConf():
 				booli=(str(booli))
 			configOptions[boolStr] = booli
 		# print (configOptions)
+	
 	except Exception as e:
 		print (e)
 		print(traceback.format_exc())
@@ -12382,6 +13019,8 @@ def readConf():
 	opt["bImgExc"] = conr.getboolean('Getting Gadgets', "img_exc")
 	opt["bSystemDlls"] = conr.getboolean('Getting Gadgets', "system_dlls")
 	opt["bOtherDlls"] = conr.getboolean('Getting Gadgets', "other_dlls")
+	# opt["bad_bytes_offset"] = conr.getboolean('Getting Gadgets', "bad_bytes_offset")
+	opt["bad_bytes_imgbase"] = conr.getboolean('Getting Gadgets', "bad_bytes_imgbase")
 	opt["bx86Print"] = conr.getboolean('Printing', 'x86_print')
 	opt["bx64Print"] = conr.getboolean('Printing', 'x64_print')
 	try:

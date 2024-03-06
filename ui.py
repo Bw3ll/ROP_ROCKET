@@ -97,7 +97,7 @@ def uiShowOptionsMainMenu(x86,x64):
 
 	text += "  {}        \n".format(cya + "m"+res+" -"+gre+"  Generate Mov Dereference:"+yel+" VirtualProtect."+ res)
 	text += "  {}        \n".format(cya + "o"+res+" -"+gre+"  Obfuscate gadget/value."+ res)
-	text += "  {}        \n".format(cya + "b"+res+" -"+gre+"  Set Bad bytes / Bad chars."+ res)
+	text += "  {}        \n".format(cya + "b"+res+" -"+gre+"  Set Bad bytes / Bad chars and ImageBase."+ res)
 
 	text += "  {}        \n".format(cya + "p"+res+" -"+gre+"  Print gadgets found."+ res)
 
