@@ -43,7 +43,7 @@ def truncate(num, bits):
 	return int(v,16)
 
 
-def checkFreeBadBytes(address, bad,myDict=None,pe=None,checkImg=False,isVal=False):
+def checkFreeBadBytes(address, bad,myDict=None,pe=None,n=None, checkImg=False,isVal=False):
 	dp("checkFreeBadBytes helpers", address,hx(address) )
 	# print("checkFreeBadBytes helpers", address,hx(address) )
 	checkOffset=True
