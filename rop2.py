@@ -11741,7 +11741,7 @@ def getBaseDir(filename=None, alt=None):
 	if ".exe" in filename:
 		filename =filename.replace(".exe", "")
 	base=os.getcwd()
-	baseDir  = os.path.join(base, filename, "outputs")
+	baseDir  = os.path.join(base, filename, filename)
 	if not os.path.isdir(baseDir):
 		# print("Creating..")
 		os.makedirs(baseDir)
@@ -11751,6 +11751,7 @@ def getBaseDir(filename=None, alt=None):
 	# if not os.path.exists(base):
 	# 	os.makedirs(base)
 	# # outputs="outputs\\"
+	# print ("baseDir",baseDir)
 	return baseDir
 
 def printGadgetChain(gadgetTxt, chainType):
@@ -11763,6 +11764,7 @@ def printGadgetChain(gadgetTxt, chainType):
 	outputs=getBaseDir(filename2)
 	restorePoint = sys.stdout
 	sys.stdout = open(outputs+"_"+chainType+".txt", 'w')
+
 	print("")
 	sys.stdout = open(outputs+"_"+chainType+".txt", 'a')
 	print (gadgetTxt)
@@ -11791,7 +11793,7 @@ def printGadgetsx86():
 	printOutputs()
 	sys.stdout.close()
 	sys.stdout = restorePoint
-	print ("   Saved to "+ cya + outputs+filename2+"_x86_gadgets.txt"+res)
+	print ("   Saved to "+ cya + outputs+"_x86_gadgets.txt"+res)
 
 def printGadgetsx64():
 	outputs=getBaseDir(filename2)
@@ -11802,7 +11804,7 @@ def printGadgetsx64():
 	printOutputs64()
 	sys.stdout.close()
 	sys.stdout = restorePoint
-	print ("   Saved to "+ cya + outputs+filename2+"_x64_gadgets.txt"+res)
+	print ("   Saved to "+ cya + outputs+"_x64_gadgets.txt"+res)
 def getGadgets():
 	genBasesForEm()
 
