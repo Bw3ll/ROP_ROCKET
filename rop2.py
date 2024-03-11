@@ -5539,9 +5539,14 @@ def img(p, fg2=None):
 		global fg  #not sure why global needed
 		img=fg.rop[p].offset + pe[n].startLoc
 	else:
-		fg=fg2
-		img=fg.rop[p].offset + pe[n].startLoc
+		try:
 
+			fg=fg2
+			img=fg.rop[p].offset + pe[n].startLoc
+		except:
+			print (red+"error -> img:", p, res)
+			print (hex(p))
+			return p
 	return img
 def showChain(myDict,printYes=False):
 	t=0
@@ -6230,6 +6235,19 @@ def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
 		package=[gM]
 		showChain(package)
 		return True, package
+	foundT, x1 = xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement)
+	if foundT:
+		gM=chainObj(x1, comment, [])
+		package=[gM]
+		showChain(package)
+		return True, package
+	foundT, x1 = xchgMovReg(op2,reg, bad,length1,excludeRegs,espDesiredMovement)
+	if foundT:
+		gM=chainObj(x1, comment, [])
+		package=[gM]
+		showChain(package)
+		return True, package
+	# print ("GT returning False")
 	return False, 0
 def xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement):
 	dp ("xchgMovReg", reg, op2)
@@ -6396,6 +6414,8 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 	comment=com1+com2
 	
 	dp ("loadRegP__", z,i, curPat,rValStr)
+	# print (red+"loadRegP__", z,i, curPat,rValStr,res)
+	 
 
 	if rValStr=="targetDllString":
 		FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr,pk,reg,"loc1")
@@ -6412,6 +6432,7 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 				pass
 		
 		foundT, gT = findUniTransfer(reg,"eax", bad,length1,excludeRegs,0, "Transfer to " + reg)
+		# print ("foundT", foundT, gT, "desired reg",reg)
 		pkTransfer=pkBuild([gT])
 		if rValStr=="hModule":
 			comment="  get hModule"
