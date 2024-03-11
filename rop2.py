@@ -95,7 +95,6 @@ loadP=False
 availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
 
 # fg = foundGadgets()
-
 if len(sys.argv)==1:
 	filename= sys.argv[1]
 	dp("numargs")
@@ -103,6 +102,8 @@ if len(sys.argv) >1:
 	if len(sys.argv) > 1:			# to get full functionality, need to put file location for binary that is installed (may need to find some DLLs in that directory)
 		peName= sys.argv[1] 
 		matchObj = re.match( r'^[a-z]+:[\\|/]+', peName, re.M|re.I)
+		# if "\\" in filename:
+
 		if matchObj:
 			isPe=True
 			head, tail = os.path.split(peName)
@@ -11735,12 +11736,22 @@ def clearGadgets():
 def printGadgets():
 	printSubMenu()
 
-def getBaseDir(filename, alt=None):
-	base="outputs"+"\\"+filename+"\\"
-	if not os.path.exists(base):
-		os.makedirs(base)
-	# outputs="outputs\\"
-	return base
+def getBaseDir(filename=None, alt=None):
+	filename=peName
+	if ".exe" in filename:
+		filename =filename.replace(".exe", "")
+	base=os.getcwd()
+	baseDir  = os.path.join(base, filename, "outputs")
+	if not os.path.isdir(baseDir):
+		# print("Creating..")
+		os.makedirs(baseDir)
+	print ("baseDir",baseDir)
+	# base+="outputs"+"\\"+filename+"\\"
+	# print (red+"base", base,res)
+	# if not os.path.exists(base):
+	# 	os.makedirs(base)
+	# # outputs="outputs\\"
+	return baseDir
 
 def printGadgetChain(gadgetTxt, chainType):
 
@@ -11751,13 +11762,13 @@ def printGadgetChain(gadgetTxt, chainType):
 		gadgetTxt=gadgetTxt2
 	outputs=getBaseDir(filename2)
 	restorePoint = sys.stdout
-	sys.stdout = open(outputs+filename2+"_"+chainType+".txt", 'w')
+	sys.stdout = open(outputs+"_"+chainType+".txt", 'w')
 	print("")
-	sys.stdout = open(outputs+filename2+"_"+chainType+".txt", 'a')
+	sys.stdout = open(outputs+"_"+chainType+".txt", 'a')
 	print (gadgetTxt)
 	sys.stdout.close()
 	sys.stdout = restorePoint
-	print ("   Saved to "+ cya +outputs+filename2+"_"+chainType+".txt"+res)
+	print ("   Saved to "+ cya +outputs+"_"+chainType+".txt"+res)
 
 def printWilds(myDict, searchStr):
 	outputs=getBaseDir(filename2)
@@ -11817,10 +11828,15 @@ def getGadgets():
 	except:	
 		pass
 	
-	filename=filenameRaw+"_pi.obj"
-	file_pi = open(filename, 'wb') 
+	filename2=filenameRaw+"_pi.obj"
+	# filename3=getBaseDir()+"objfiles"+"\\"+"_pi.obj"
+
+	file_pi = open(filename2, 'wb') 
 	pickle.dump(fg, file_pi)
 	dp ("done pickle getGadgets!")
+
+	file_pi = open(filename3, 'wb') 
+	pickle.dump(fg, file_pi)
 
 def getGadgetsx6486():
 	genBasesForEm()
@@ -13315,7 +13331,7 @@ if __name__ == "__main__":
 		# buildPushad(excludeRegs,bad, "HG32" )
 		# exit()
 		sysNtAllocParams=["tbd","tbd",0xFFFFFFFF,"ptr",0,"ptr",0x3000,0x40,0x6000]
-		buildMovDerefSyscall([],bad, sysNtAllocParams,8 )
+		# buildMovDerefSyscall([],bad, sysNtAllocParams,8 )
 
 		sysNtProtectParms=["tbd", "tbd", 0xffffffff,"ptr", 1, 0x40, "ptr"]
 		# buildMovDerefSyscallProtect([],bad, sysNtProtectParms,6 )
