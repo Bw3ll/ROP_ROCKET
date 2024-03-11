@@ -11745,7 +11745,7 @@ def getBaseDir(filename=None, alt=None):
 	if not os.path.isdir(baseDir):
 		# print("Creating..")
 		os.makedirs(baseDir)
-	print ("baseDir",baseDir)
+	# print ("baseDir",baseDir)
 	# base+="outputs"+"\\"+filename+"\\"
 	# print (red+"base", base,res)
 	# if not os.path.exists(base):
@@ -11773,9 +11773,9 @@ def printGadgetChain(gadgetTxt, chainType):
 def printWilds(myDict, searchStr):
 	outputs=getBaseDir(filename2)
 	restorePoint = sys.stdout
-	# sys.stdout = open(outputs+filename2+"_find_gadgets.txt", 'w')
+	# sys.stdout = open(outputs+"_find_gadgets.txt", 'w')
 	# print("")
-	sys.stdout = open(outputs+filename2+"_find_gadgets.txt", 'a')
+	sys.stdout = open(outputs+"_find_gadgets.txt", 'a')
 	printRetDict(searchStr, "", myDict)
 	sys.stdout.close()
 	sys.stdout = restorePoint
@@ -11785,9 +11785,9 @@ def printWilds(myDict, searchStr):
 def printGadgetsx86():
 	outputs=getBaseDir(filename2)
 	restorePoint = sys.stdout
-	sys.stdout = open(outputs+filename2+"_x86_gadgets.txt", 'w')
+	sys.stdout = open(outputs+"_x86_gadgets.txt", 'w')
 	print("")
-	sys.stdout = open(outputs+filename2+"_x86_gadgets.txt", 'a')
+	sys.stdout = open(outputs+"_x86_gadgets.txt", 'a')
 	printOutputs()
 	sys.stdout.close()
 	sys.stdout = restorePoint
@@ -11796,9 +11796,9 @@ def printGadgetsx86():
 def printGadgetsx64():
 	outputs=getBaseDir(filename2)
 	restorePoint = sys.stdout
-	sys.stdout = open(outputs+filename2+"_x64_gadgets.txt", 'w')
+	sys.stdout = open(outputs+"_x64_gadgets.txt", 'w')
 	print("")
-	sys.stdout = open(outputs+filename2+"_x64_gadgets.txt", 'a')
+	sys.stdout = open(outputs+"_x64_gadgets.txt", 'a')
 	printOutputs64()
 	sys.stdout.close()
 	sys.stdout = restorePoint
