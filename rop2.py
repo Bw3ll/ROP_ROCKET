@@ -4322,8 +4322,8 @@ def printRetDictMini(myDict, limit, arch=32):
 		length=myDict[q].length
 		mod=myDict[q].mod
 		if opt["checkForBadBytes"]:
-			# if not checkFreeBadBytes(off,bad,fg.rop,pe):
-			if not checkFreeBadBytes(q,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
+			# if not checkFreeBadBytes(opt,fg,off,bad,fg.rop,pe):
+			if not checkFreeBadBytes(opt,fg,q,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
 
 				continue
 		n="rop_tester.exe"
@@ -4355,8 +4355,8 @@ def printRetDict(op, reg, myDict, arch=32):
 		# dp (n)
 		bad=opt["badBytes"]
 		if opt["checkForBadBytes"]:
-			# if not checkFreeBadBytes(off,bad,fg.rop,pe):
-			if not checkFreeBadBytes(q,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
+			# if not checkFreeBadBytes(opt,fg,off,bad,fg.rop,pe):
+			if not checkFreeBadBytes(opt,fg,q,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
 				continue
 		addy = myDict[q].addressRet
 		off = myDict[q].offset
@@ -4678,9 +4678,9 @@ def getFSIndex(obj):
 
 def findPopLength1(myPops,bad, isVal=False):
 	for p in myPops:
-		# freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+		# freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
-		freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+		freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 
 		if myPops[p].length ==1 and myPops[p].opcode=="c3" and freeBad:
 			return True,p
@@ -4688,9 +4688,9 @@ def findPopLength1(myPops,bad, isVal=False):
 
 def findPushLength1(myPushs,bad, isVal=False):
 	for p in myPushs:
-		# freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+		# freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
-		freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+		freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 
 		if myPushs[p].length ==1 and myPushs[p].opcode=="c3" and freeBad:
 			return True,p
@@ -4772,7 +4772,7 @@ def rop_testerFindClobberFree(myDict, excludeRegs,bad, c3,espDesiredMovement, fi
 		if not freeOfClobbering:
 			dp ("not free of Clobbering, hit the continue")
 			continue
-		freeBad=checkFreeBadBytes(addy,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+		freeBad=checkFreeBadBytes(opt,fg,addy,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 
 		if findEspPops:
@@ -4829,7 +4829,7 @@ def rop_testerFindClobberFreeRegReg(myDict, excludeRegs, bad,c3,espDesiredMoveme
 			continue
 		if findEspPops:
 			goodWithPops=outEmObj.checkForPops(findEspPops)
-		freeBad=checkFreeBadBytes(addy,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+		freeBad=checkFreeBadBytes(opt,fg,addy,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 		if c3 =="c3":
 			 if myDict[addy].opcode=="c3":
@@ -4882,7 +4882,7 @@ def rop_testerFindClobberFreeRegRegOld(myDict, excludeRegs, bad,c3,espDesiredMov
 			continue
 		if findEspPops:
 			goodWithPops=outEmObj.checkForPops(findEspPops)
-		freeBad=checkFreeBadBytes(addy,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+		freeBad=checkFreeBadBytes(opt,fg,addy,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 		if c3 =="c3":
 			 if myDict[p].opcode=="c3":
@@ -4908,7 +4908,7 @@ def findGeneric(instruction,reg,bad,length1, excludeRegs,espDesiredMovement=0):
 		dp ("it exists")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				# print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
@@ -4917,7 +4917,7 @@ def findGeneric(instruction,reg,bad,length1, excludeRegs,espDesiredMovement=0):
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
@@ -4988,7 +4988,7 @@ def findXorOffset(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				print("just checking: op1",myDict[p].op1, "op2", myDict[p].op2, isReg32(myDict[p].op1),"\n\t", disOffset(p)) 
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and isReg32(myDict[p].op1):
@@ -5008,7 +5008,7 @@ def findXorOffset(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 	# if bExists:
 	# 	if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 	# 		for p in myDict:
-	# 			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+	# 			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 	# 			print("just checking pt 2: op1",myDict[p].op1, "op2", myDict[p].op2, isReg32(myDict[p].op1),isReg32(myDict[p].op2),"\n\t", disOffset(p)) 
 	# 			if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and isReg32(myDict[p].op1) and isReg32(myDict[p].op2) and myDict[p].op1==reg:
@@ -5026,7 +5026,7 @@ def findXchg(op2, reg,bad,length1, excludeRegs,espDesiredMovement=0):
 	if bExists or bExistsOp2:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and ((myDict[p].op2==op2 and myDict[p].op1==reg ) or (myDict[p].op1==op2 and myDict[p].op2==reg )):
 					dp ("found ",instruction, reg)
 					return True,p
@@ -5034,7 +5034,7 @@ def findXchg(op2, reg,bad,length1, excludeRegs,espDesiredMovement=0):
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
 					dp ("found ", instruction, reg)
@@ -5059,7 +5059,7 @@ def findGenericOp1Op2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredM
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op1==op1 and myDict[p].op2==op2:
 					dp ("found ",instruction, reg)
 					return True,p
@@ -5067,7 +5067,7 @@ def findGenericOp1Op2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredM
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op1==op1 and myDict[p].op2==op2:
 					dp ("found ", instruction, reg)
@@ -5090,7 +5090,7 @@ def findGenericOp2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMove
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
 					dp ("found ",instruction, reg)
 					return True,p
@@ -5098,7 +5098,7 @@ def findGenericOp2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMove
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
@@ -5121,7 +5121,7 @@ def findGeneric64(instruction,fgReg,reg,bad,length1, excludeRegs,espDesiredMovem
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found ",instruction, reg) 
@@ -5129,7 +5129,7 @@ def findGeneric64(instruction,fgReg,reg,bad,length1, excludeRegs,espDesiredMovem
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
@@ -5154,7 +5154,7 @@ def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDes
 		# dp ("It exists")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 
 				# dp ("here", myDict[p].length, myDict[p].op2)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
@@ -5164,7 +5164,7 @@ def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDes
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
@@ -5187,7 +5187,7 @@ def findMovEsp(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="esp":
 					dp ("found findMovEsp", reg)
@@ -5195,7 +5195,7 @@ def findMovEsp(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="esp":
@@ -5219,7 +5219,7 @@ def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 		dp ("findMovDeref exists")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2==op2:
 					dp ("found movDword", reg)
@@ -5227,7 +5227,7 @@ def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2==op2:
@@ -5260,14 +5260,14 @@ def findMovDeref2(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="dword ptr ["+reg+"]":
 					return True,p
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="dword ptr ["+reg+"]":
@@ -5290,7 +5290,7 @@ def findPush(reg,bad,length1, excludeRegs,espDesiredMovement=-4):
 		# length1=False
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget, push eax / ret
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				# print ("p",p)
 				# print(myDict[p].length,myDict[p].opcode, freeBad)
@@ -5300,7 +5300,7 @@ def findPush(reg,bad,length1, excludeRegs,espDesiredMovement=-4):
 			return False,0,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
@@ -5327,7 +5327,7 @@ def findRet(bad, mode64=False):
 	# dp ("dict size", reg, len(myDict))
 	if bExists:
 		for p in myDict:
-			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 			if  myDict[p].opcode=="c3" and freeBad:
 				dp ("found ret")
@@ -5344,7 +5344,7 @@ def findRetf(bad, mode64=False):
 	# dp ("dict size", reg, len(myDict))
 	if bExists:
 		for p in myDict:
-			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 			if  myDict[p].opcode=="c3" and freeBad:
 				dp ("found retf")
@@ -5391,7 +5391,7 @@ def findPushad(bad,length1, excludeRegs,espDesiredMovement=4):
 		dp ("pushad exists")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget, pop eax / ret
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				if myDict[p].length ==1 and myDict[p].opcode=="c3":
 					dp ("found findPushad")
@@ -5402,7 +5402,7 @@ def findPushad(bad,length1, excludeRegs,espDesiredMovement=4):
 						return False, backupPushad, myDict
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
@@ -5427,7 +5427,7 @@ def findPop(reg,bad,length1, excludeRegs,espDesiredMovement=4,isVal=False):
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget, pop eax / ret
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found findpop", reg)
@@ -5435,7 +5435,7 @@ def findPop(reg,bad,length1, excludeRegs,espDesiredMovement=4,isVal=False):
 			return False,0,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
@@ -5462,7 +5462,7 @@ def findAddRegReg(reg,bad,availableRegs, excludeRegs, espDesiredMovement):
 			# dp ("\tpossible", myDict[p].op1, myDict[p].op2, "length", myDict[p].length, hex(p))
 			# dp ("\t-->",disMini(myDict[p].raw, myDict[p].offset))
 			if myDict[p].length ==1 and myDict[p].opcode=="c3":
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				if any(item in myDict[p].op2 for item in availableRegs) and myDict[p].op2!=reg and freeBad:
 					dp ("yes!", myDict[p].op2)
@@ -5500,7 +5500,7 @@ def findAddValtoESP(val,bad, excludeRegs):
 			# dp ("\tval", val, "len", type(val))
 			if myDict[p].length ==1 and myDict[p].opcode=="c3" and myDict[p].op2==val:
 				# dp ("bad", binaryToStr(bad))
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				if freeBad:
 					dp ("\tadd",disMini(myDict[p].raw, myDict[p].offset))
@@ -5990,7 +5990,7 @@ def findPushOold2(reg,bad,length1, excludeRegs,espDesiredMovement=-4):
 	if bExists:
 		if length1 or not length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget, push eax / ret
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found findpush", reg)
@@ -6122,7 +6122,7 @@ def getHGandPops(hgExcludeRegs,excludeRegs,bad,availableRegs,pu1, destination):
 	p2Found=False
 
 	for p in fg.hgGadgets:
-		freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+		freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 		first=fg.hgGadgets[p].hg1
 		second=fg.hgGadgets[p].hg2
@@ -6149,11 +6149,11 @@ def getHGandPops(hgExcludeRegs,excludeRegs,bad,availableRegs,pu1, destination):
 	for p in fg.hgGadgets:
 		package=[]
 		if hFound:
-			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 		if not hFound:
-			# freeBad=checkFreeBadBytes(p,giveBad(bad,hFound))  
-			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			# freeBad=checkFreeBadBytes(opt,fg,p,giveBad(bad,hFound))  
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 		first=fg.hgGadgets[p].hg1
 		second=fg.hgGadgets[p].hg2
@@ -6293,8 +6293,8 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
 	# print (yel,"--> the bad",binaryToStr(bad), "val",hexVal,val, "target reg",reg,res)
 	if val=="skip":
 		return True, 0,0
-	# freeBadGoalVal=checkFreeBadBytes(val,bad)
-	freeBadGoalVal=checkFreeBadBytes(val,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+	# freeBadGoalVal=checkFreeBadBytes(opt,fg,val,bad)
+	freeBadGoalVal=checkFreeBadBytes(opt,fg,val,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 
 	# if freeBadGoalVal:
 	# 	print (val, "freebadbytes")
@@ -6334,7 +6334,7 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
 def loadRegOld(reg,bad,length1,excludeRegs,val,comment=None):
 	if val=="skip":
 		return True, 0,0
-	freeBadGoalVal=checkFreeBadBytes(val,bad)
+	freeBadGoalVal=checkFreeBadBytes(opt,fg,val,bad)
 	# if freeBadGoalVal:
 	# 	# print (val, "freebadbytes")
 	# else:
@@ -6965,7 +6965,7 @@ def findJmpDword(reg,bad):
 	bExists, myDict=fg.getFg("jmpDword",reg)
 	if bExists:
 		for p in myDict:
-			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 			if freeBad:
 				# dp ("returning ", hex(p))
@@ -6975,7 +6975,7 @@ def findJmp(reg,bad):
 	bExists, myDict=fg.getFg("jmp",reg)
 	if bExists:
 		for p in myDict:
-			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 			if freeBad:
 				dp ("returning ", hex(p))
@@ -9587,7 +9587,7 @@ def getRetf(bad):
 		dp ("bExistsR")
 		for r in retfOut:
 			dp ("r",hex(r))
-			freeBad=checkFreeBadBytes(r,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			freeBad=checkFreeBadBytes(opt,fg,r,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 			if freeBad:
 				rf=r
@@ -9625,7 +9625,7 @@ def buildHGDouble(hgExcludeRegs,excludeRegs):
 	skipOtherSearches=False
 	dp ("num fg.hgGadgets", len(fg.hgGadgets))
 	for p in fg.hgGadgets:
-		freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+		freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 		if fg.hgGadgets[p].hgDiff==0 and freeBad:
 			first=fg.hgGadgets[p].hg1
@@ -9764,7 +9764,7 @@ def buildHGDouble(hgExcludeRegs,excludeRegs):
 		dp ("bExistsR")
 		for r in retfOut:
 			dp ("r",hex(r))
-			freeBad=checkFreeBadBytes(r,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			freeBad=checkFreeBadBytes(opt,fg,r,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 			if freeBad:
 				rf=r
@@ -9828,7 +9828,7 @@ def foundIntOverflows(myDict, desired,bad):
 		# dp (myDict[g].op2, "    ---------       ",disOffset2(g,fg) )
 		try:
 			if myDict[g].length ==1 and len(myDict[g].op2) > 4:
-				if checkFreeBadBytes(g,bad,fg.rop, pe, opt["bad_bytes_imgbase"]):
+				if checkFreeBadBytes(opt,fg,g,bad,fg.rop, pe, opt["bad_bytes_imgbase"]):
 					# dp ("\n\n************", myDict[g].op2)
 					foundOverflow,target=	foundIntOverflows2(myDict[g].op2, desired,bad)
 					if foundOverflow:
@@ -9896,13 +9896,13 @@ def findingNeg1(myDict, desired,bad):
 			dp (myDict[g].op2, "    ---------       ",disOffset(g) )
 		
 			if myDict[g].length ==1:
-				if checkFreeBadBytes(g,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
+				if checkFreeBadBytes(opt,fg,g,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
 
 					target=	twos_complement_neg(desired)
 					dp ("neg/not target:",hex(target))
 					ans=twos_complement_neg(target)
 					dp ("ans", hex(ans), hex(desired))
-					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True):
+					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(opt,fg,target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True):
 
 						return True, target, g
 					# else:
@@ -9936,7 +9936,7 @@ def findingXor1(myDict, desired,bad,availableRegs,bb):
 
 		try:
 			if myDict[g].length ==1:
-				if checkFreeBadBytes(g,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
+				if checkFreeBadBytes(opt,fg,g,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
 
 					special=bb.giveXor()
 					target=	xor_(desired,special)
@@ -9946,8 +9946,8 @@ def findingXor1(myDict, desired,bad,availableRegs,bb):
 					dp ("ans", hex(ans), hex(desired), "\t",disOffset(g))
 					isRegOp1= re.match( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p',(myDict[g].op1), re.M|re.I)
 					# print ("myDict[g].op2 for item in availableRegs",any(item in myDict[g].op2 for item in availableRegs), blu+"isRegOp1",isRegOp1, res )
-					# print ("checkingforbadbytes",checkFreeBadBytes(target,bad), hex(ans), "bad",bad)
-					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True) and any(item in myDict[g].op2 for item in availableRegs) and isRegOp1:
+					# print ("checkingforbadbytes",checkFreeBadBytes(opt,fg,target,bad), hex(ans), "bad",bad)
+					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(opt,fg,target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True) and any(item in myDict[g].op2 for item in availableRegs) and isRegOp1:
 						dp ("return true")
 						return True, target, g, special, myDict[g].op2
 		
@@ -9982,9 +9982,9 @@ def findingFoundXor1(myDict, desired,bad,availableRegs,bb,enforceNoBadBytes):
 				ans=xor_(target,special)
 				# print ("ans", hex(ans), "special", hex(special), "target",hex(target), hex(desired), disOffset(g))
 				dp ("ans", hex(ans), hex(desired), "\t",disOffset(g))
-				if ans==desired and checkFreeBadBytes(target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True):
+				if ans==desired and checkFreeBadBytes(opt,fg,target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True):
 					dp ("return true")
-					# print (checkFreeBadBytes(g,bad), g, hex(g), hex(img(g)))
+					# print (checkFreeBadBytes(opt,fg,g,bad), g, hex(g), hex(img(g)))
 					return True, target, g
 		except Exception as e:
 			dp ("exception findingXor1:")
@@ -10003,14 +10003,14 @@ def findingNot1(myDict, desired,bad):
 		# dp (myDict[g].op2, "    ---------       ",disOffset(g) )
 		try:
 			if myDict[g].length ==1:
-				if checkFreeBadBytes(g,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
+				if checkFreeBadBytes(opt,fg,g,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
 
 					target=	not_(desired)
 					# target+=1
 					dp ("not target:",hex(target))
 					ans=not_(target)
 					dp ("ans", hex(ans), hex(desired))
-					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True):
+					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(opt,fg,target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True):
 						return True, target, g
 					# else:
 					# 	dp("unacceptable size")
@@ -11554,7 +11554,7 @@ def findGadget():
 		# print ("bExists")
 		t=0
 		for p in myDict:
-			freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 			if freeBad:
 				myDis=disOffset(p)
@@ -11652,7 +11652,7 @@ def findGadget():
 		dp ("it exists")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				# print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
@@ -11661,7 +11661,7 @@ def findGadget():
 			return False,0
 		if not length1: # was else
 			for p in myDict:
-				freeBad=checkFreeBadBytes(p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				freeBad=False
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:

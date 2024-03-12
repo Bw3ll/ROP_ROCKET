@@ -144,7 +144,7 @@ def buildObfValuesIntOverflow(goal,bad,bb, maxL=10000):   ### only works with a 
 				dp("evil1 and evil 4",hex(evil1L[t]), "+", hex(evil4))			
 				if len(hex(evil1L[t])) >8  and len(hex(evil1L[t])) <11:
 					if len(hex(evil4)) >8  and len(hex(evil4)) <11:
-						if checkFreeBadBytes(evil4,bad) and checkFreeBadBytes(evil1L[t],bad):
+						if checkFreeBadBytes2(evil4,bad) and checkFreeBadBytes2(evil1L[t],bad):
 							# dp ("     *****         no bad chars")
 							return True, evil1L[t],evil4
 						# else:
@@ -172,7 +172,7 @@ def buildObfValuesIntOverflow(goal,bad,bb, maxL=10000):   ### only works with a 
 				if len(hex(evil4)) >8  and len(hex(evil4)) <11:
 					dp ("\t\t\t\t!!!            it is a match3", hex(truncate(evil1L[t]+evil4,32)))
 					# dp("\t\t-> evil1 and evil 4",hex(evil1L[t]), "+", hex(evil4))
-					if checkFreeBadBytes(evil1L[t],bad):
+					if checkFreeBadBytes2(evil1L[t],bad):
 						# dp ("yes, free bad bytes!")
 						return True, evil1L[t], evil4
 		t=t+1
@@ -189,7 +189,7 @@ def buildXORStart(goal,bad,bb, maxL=10000):   ### only works with a 0x00 in fron
 		special=bb.giveXor()
 		result=special ^ goal
 		if len(hex(result)) >8  and len(hex(result)) <11:	
-			if checkFreeBadBytes(result,bad):
+			if checkFreeBadBytes2(result,bad):
 				dp("got xor", hex(goal), hex(special), hex(result), hex(special^result))
 				return True, special, result
 			# else:
