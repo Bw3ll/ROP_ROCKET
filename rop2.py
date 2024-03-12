@@ -4719,6 +4719,7 @@ def checkFreeBadBytesOld(address, bad): # in helpers now
 		dp ("bad none, true")
 		return True
 def hx(val, length=8):
+	# print (val)
 	hex_str = format(val, 'x').zfill(length) 
 	return hex_str
 
@@ -5022,8 +5023,8 @@ def findXchg(op2, reg,bad,length1, excludeRegs,espDesiredMovement=0):
 	dp ("xchg", reg, op2)
 	instruction="xchg"
 	bExists, myDict=fg.getFg(instruction,reg)
-	bExistsOp2, myDict=fg.getFg(instruction,op2)
-	if bExists or bExistsOp2:
+	# bExistsOp2, myDict=fg.getFg(instruction,op2)
+	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
@@ -6739,26 +6740,213 @@ def findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement, dist
 
 		return True, test2, test2b,test2c, distFinalESP,bYes,oldDESP
 	return False, None,0, False,-0x6969696,-0x6969696,-0x6969696,
+def findXchgMovRegSpecial(reg1, bad,length1,excludeRegs,espDesiredMovement):
+	#reg 1 - the one we want
+	#reg2 = secondary - will transfer
+
+	dp ("xchg", reg1)
+	instruction="xchg"
+	bExists, myDict=fg.getFg(instruction,reg1)
+	if bExists:
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
+			for p in myDict:
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and ((myDict[p].op2==reg1 and not myDict[p].op1==reg1 ) or (myDict[p].op1==reg1 and myDict[p].op2==reg1 )):
+					dp ("found ",instruction, reg1, "ops", myDict[p].op1, myDict[p].op2)
+					if reg1 not in myDict[p].op1:
+						return True,p, myDict[p].op1
+					else:
+						return True,p, myDict[p].op2
+
+			dp ("findXchg returning False" )
+			return False,0
+		if not length1: # was else
+			for p in myDict:
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=False
+				if myDict[p].opcode=="c3" and freeBad and ((myDict[p].op2==reg1 and not myDict[p].op1==reg1 ) or (myDict[p].op1==reg1 and myDict[p].op2==reg1 )):
+					return True,p, myDict
+				dp (instruction," clob")
+				mdExist, m1, myDict, rObj = rop_testerFindClobberFree((instruction,reg1), excludeRegs,bad, "c3", espDesiredMovement,[])
+				if mdExist and myDict[p].op2==op2:
+					dp ("found alt", instruction, reg1)
+					
+					if reg1 not in myDict[p].op1:
+						return True,m, myDict[p].op1
+					else:
+						return True,m, myDict[p].op2
+				else:
+					return False,0,0
+	else:
+		# dp ("return false ", instruction)
+		return False,0,0
+def getPushPopESP(reg,excludeRegs,espDesiredMovement, getSpecificReg=True):
+	# do excluded regs
+	instruction="push"
+	excludeRegs=["ebx"]
+	excludeRegsSet=set(excludeRegs)
+	bExists, myDict=fg.getFg(instruction,"esp")
+	stackPivotAmount=0
+	newReg=None
+	if bExists:
+		for p in myDict:
+			continueFlag=False
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			out =disOffset(p)
+			out+=""
+			# out="push esp # mov eax, edi # pop edi # add edi, 0x4 # pop esi # ret"
+			if re.search( r'^pop [fg]* | pop es ', out, re.M|re.I):
+				continue
+			if "pop" in out and  "[" not in out and  "add esp" not in out and  "sub esp" not in out and  "adc esp" not in out and  "sbb esp" not in out:
+				pushInstances = re.findall('push', out)
+				if len((pushInstances))>1:
+					# print ("continueFlag1")
+					continue
+				popInstances = re.findall('pop [\w]+', out)
+				for pReg in popInstances:
+					test=pReg.split("pop ")
+					if test[1] in excludeRegsSet:
+						# print (cya+"got a bad one", excludeRegsSet, res)
+						continueFlag=True
+				if continueFlag:
+					# print ("continueFlag2")
+					continue
+				transferReg=popInstances[0].split("pop ")
+				newReg=transferReg[1]
+				if getSpecificReg:
+					if reg!=newReg:
+						continueFlag=True
+				if continueFlag:
+					# print ("continueFlag4", reg, newReg)
+					continue
+				checkForClobber=out.split("pop "+transferReg[1])
+				# print ("checkForClobber", checkForClobber, "transferReg", transferReg[1])
+				if transferReg[1] in checkForClobber[1]:
+					# print ("it gets clobbered!", checkForClobber[1])
+					# print ("continueFlag3")
+					continue
+				c2Amt=0
+				c2Search=re.findall('ret 0x[0-9a-f]+|ret \d', out)
+				if c2Search:
+					# print ("c2Search:", c2Search)
+					c2Ret=c2Search[0].split("ret ")
+					# print ("c2Ret:", c2Ret)
+					try:
+						c2Amt=int(c2Ret[1],16)
+					except:
+						c2Amt=int(c2Ret[1])
+				stackPivotAmount=(len(popInstances)-1)*4 +c2Amt
+				modulo=stackPivotAmount % 4
+				if modulo!=0:
+					continue
+				# print (red+"\n--> possible",res)
+				# print ("transferReg",transferReg[1], "stackPivotAmount", stackPivotAmount, hex(stackPivotAmount))
+				# print (out)
+
+				return True, p, newReg, stackPivotAmount
+	return False, 0,0,0
+def findMovRegSpecial(reg1, bad,length1,excludeRegs,espDesiredMovement):
+	#reg 1 - the one we want
+	#reg2 = secondary - will transfer
+	findXchgMovRegSpecial
+
+
+	##### THIS HAS NOT BEEN BUILT YET, JUST COPIED SOME OVER FROM findXchgMovRegSpecial
+	###!!!!!!!!!!!!!!!!!!!!!!!!!!
+	###!!!!!!!!!!!!!!!!!!!!!!!!!!	
+	###!!!!!!!!!!!!!!!!!!!!!!!!!!	
+	###!!!!!!!!!!!!!!!!!!!!!!!!!!	
+
+
+	dp ("mov", reg1)
+	instruction="mov"
+	bExists, myDict=fg.getFg(instruction,reg1)
+	if bExists:
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
+			for p in myDict:
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and ((myDict[p].op2==reg1 and not myDict[p].op1==reg1 ) or (myDict[p].op1==reg1 and myDict[p].op2==reg1 )):
+					dp ("found ",instruction, reg1, "ops", myDict[p].op1, myDict[p].op2)
+					if reg1 not in myDict[p].op1:
+						return True,p, myDict[p].op1
+					else:
+						return True,p, myDict[p].op2
+
+			dp ("findXchg returning False" )
+			return False,0,0
+		if not length1: # was else
+			for p in myDict:
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				freeBad=False
+				if myDict[p].opcode=="c3" and freeBad and ((myDict[p].op2==reg1 and not myDict[p].op1==reg1 ) or (myDict[p].op1==reg1 and myDict[p].op2==reg1 )):
+					return True,p, myDict
+				dp (instruction," clob")
+				mdExist, m1, myDict, rObj = rop_testerFindClobberFree((instruction,reg1), excludeRegs,bad, "c3", espDesiredMovement,[])
+				if mdExist and myDict[p].op2==op2:
+					dp ("found alt", instruction, reg1)
+					
+					if reg1 not in myDict[p].op1:
+						return True,m, myDict[p].op1
+					else:
+						return True,m, myDict[p].op2
+				else:
+					return False,0,0
+	else:
+		# dp ("return false ", instruction)
+		return False,0,0
+def genFiller(fillerAmt):
+	fillerAmt+=1
+	fillers=[]
+	need=fillerAmt /4
+	# modulo=fillerAmt % 4
+	# print ("modulo", modulo)
+	for x in range(4):
+		fillers.append(0x41414141)		
+	return fillers
 
 def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distEsp):
 	dp ("findMovDerefGetStack", reg)
 
 	dp ("***regsNotUsed", regsNotUsed)
 	for op2 in regsNotUsed:
-		foundL1, p2, chP = loadReg(op2,bad,length1,excludeRegs,distEsp)
+		excludeRegs2= copy.deepcopy(excludeRegs)
+		excludeRegs2.append(op2)
+		foundL1, p2, chP = loadReg(op2,bad,length1,excludeRegs2,distEsp)
 		if not foundL1:
-			# dp ("continue p2")
+			dp ("continue p2")
 			continue
-		foundMEsp, mEsp = findMovEsp(reg,bad,length1, excludeRegs,espDesiredMovement)
-		if not foundMEsp:
-			# dp ("continue mEsp")
+		foundMEsp, mEsp = findMovEsp(reg,bad,length1, excludeRegs2,espDesiredMovement)
+		if foundMEsp:
+			cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
+		# if not foundMEsp:
+		if 1==1:
+			# foundT, mEsp = xchgMovReg("esp",reg, bad,length1,excludeRegs2,espDesiredMovement)
+			# 	cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
+			# if not foundT:				
+			# foundT, mEsp,newReg = findMovRegSpecial("esp", bad,length1,excludeRegs2,espDesiredMovement)
+			dp ("continue mEsp")
+			foundT, mEsp,newReg, stackPivotAmount = getPushPopESP(reg,excludeRegs2,espDesiredMovement)
+			if foundT:
+				# print ("got one", op2)
+				if stackPivotAmount ==0:
+					cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
+				else:
+					filler=genFiller(stackPivotAmount)
+					cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
+				# showChain(pkBuild([cMEsp]),True)
+				# print ("stackPivotAmount", stackPivotAmount)
+				# print ("regsNotUsed", regsNotUsed)
+				# print ("excludeRegs2", excludeRegs2)
+				# home
+		if not foundT:
+			dp ("continue foundT")
 			continue
-		foundAdd, a1 = findGenericOp2("add", op2,reg,bad,length1, excludeRegs,espDesiredMovement)
+		foundAdd, a1 = findGenericOp2("add", op2,reg,bad,length1, excludeRegs2,espDesiredMovement)
 		if not foundAdd:
-			# dp ("continue a1")
+			dp ("continue a1")
 			continue
 		if foundL1 and foundAdd and foundMEsp:
-			cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
+			# cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
 			cA=chainObj(a1, "Adjust " +reg +" to parameter", [])
 			
 			package=pkBuild([cMEsp,chP,cA])
@@ -8231,7 +8419,11 @@ def buildMovDeref(excludeRegs,bad, myArgs ,numArgs):
 
 		foundStart, pkStart=findMovDerefGetStack(reg,bad,length1, excludeRegs2,regsNotUsed2,espDesiredMovement,distEsp)
 		pkFlOld=pkBuild([chP,cM, cI,cI,cI,cI])
+		if not foundStart:
+			# print ("not foundStart continue")
+			continue
 
+		# print ("values", pkStart,pkFlOld,pkFn,pkDW)
 		pk=pkBuild([pkStart,pkFlOld,pkFn,pkDW])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
 		# distParam, apiReached=getDistanceParamReg(pe,n,pk,distEsp,IncDec,numP,1, reg, destAfter)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter
 
@@ -8244,6 +8436,12 @@ def buildMovDeref(excludeRegs,bad, myArgs ,numArgs):
 		foundVP,pkVP= buildLPWinAPI(fg.rop[m1].op2,reg,bad,length1, excludeRegs2,regsNotUsed2,espDesiredMovement,pVP, cI,cM,commentVP)
 		if foundVP:
 			dp ("have pointer to VirtualProtect")
+		if not foundLR:
+			print ("not foundLR continue")
+			continue
+		if not foundVP:
+			print ("not foundvp continue")
+			continue
 		#pattern 2
 		# curPk=pkBuild([pkStart,pkFlOld,pkFn,pkLP, pkRA,pkVP])
 		curPk=pkBuild([pkStart,pkFlOld,pkFn,pkDW,pkLP,pkRA,pkVP]) #pkFn,pkDW
@@ -9643,12 +9841,12 @@ def buildHGDouble(hgExcludeRegs,excludeRegs):
 					dp("\tpop exists", first, hex(p1))
 					dp ("\t",disMini(d1[p1].raw, d1[p1].offset))
 				else:
-					dp ("\tbaby honey, it ain't there. but here is one.")
+					dp ("\tit ain't there. but here is one.")
 				if popExists2:
 					dp("\tpop exists", first, hex(p2))
 					dp ("\t",disMini(d2[p2].raw, d2[p2].offset))
 				else:
-					dp ("\tbaby honey, it ain't there. but here is one.")
+					dp ("\tit ain't there. but here is one.")
 				if popExists and popExists2:
 					skipOtherSearches=True
 
@@ -13295,7 +13493,7 @@ if __name__ == "__main__":
 		t=0
 
 		# bad=b'\x0d\x0a'
-		bad=b'\x99'
+		bad=b''
 		frc=foundRopChains()
 		rc2.sort(fg.retC2)
 
