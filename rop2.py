@@ -406,6 +406,8 @@ def extractDlls():
 		out=pool.map(extractDLLsEachParallel, myArgs)
 		
 		for each in out:
+			if each==None:
+				continue
 			newPE=each[0]
 			newDLLName=each[1]
 			pe[newDLLName]=newPE
@@ -464,6 +466,7 @@ def extractDLLsEachParallel(args):
 	# dp ("pe", pe, type(pe))
 	newPE=PEInfo()
 	global peName, n
+	# print ("dll",dll)
 	try:
 		dllPath=pe[dll].path
 		dllName=pe[dll].modName
@@ -492,7 +495,9 @@ def extractDLLsEachParallel(args):
 		newPE.setExtracted(True)
 		return newPE,dll
 	except Exception as e:
-		dp (e)
+		print (" Extraction did not suceed for ", dll)
+
+		dp (red+"extractDLLsEachParallel error", e,res)
 		dp(traceback.format_exc())
 
 def extractDll():
@@ -4460,11 +4465,17 @@ def generateArgsParallel():
 	totalNumIncrements=totalSize/totalIncrementAmount
 	totalNumIncrements=math.ceil(totalNumIncrements)
 
+	if totalSize==0:
+		print(red+"No executable code extracted! Program exiting",res)
+		exit()
 	dp ("totalSize", totalSize,"totalIncrementAmount", totalIncrementAmount, "totalNumIncrements", totalNumIncrements)
 	for d in pe:
-		dp (d)
 		if not pe[d].skipDll:#not pe[d].systemWin:
 			size=len(pe[d].data)
+			# print (cya+"size", size, res)
+			if size ==0 or size==1:
+				# print ("doing continue")
+				continue
 			num = size/(cpu_count-1)
 			incrementAmount=int(num)
 			numIncrements=size/incrementAmount
