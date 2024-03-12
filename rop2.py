@@ -6918,15 +6918,15 @@ def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMove
 		foundMEsp, mEsp = findMovEsp(reg,bad,length1, excludeRegs2,espDesiredMovement)
 		if foundMEsp:
 			cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
-		# if not foundMEsp:
-		if 1==1:
+		if not foundMEsp:
+		# if 1==1:
 			# foundT, mEsp = xchgMovReg("esp",reg, bad,length1,excludeRegs2,espDesiredMovement)
 			# 	cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
 			# if not foundT:				
 			# foundT, mEsp,newReg = findMovRegSpecial("esp", bad,length1,excludeRegs2,espDesiredMovement)
 			dp ("continue mEsp")
-			foundT, mEsp,newReg, stackPivotAmount = getPushPopESP(reg,excludeRegs2,espDesiredMovement)
-			if foundT:
+			foundMEsp, mEsp,newReg, stackPivotAmount = getPushPopESP(reg,excludeRegs2,espDesiredMovement)
+			if foundMEsp:
 				# print ("got one", op2)
 				if stackPivotAmount ==0:
 					cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
@@ -6938,8 +6938,8 @@ def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMove
 				# print ("regsNotUsed", regsNotUsed)
 				# print ("excludeRegs2", excludeRegs2)
 				# home
-		if not foundT:
-			dp ("continue foundT")
+		if not foundMEsp:
+			dp ("continue foundMEsp2")
 			continue
 		foundAdd, a1 = findGenericOp2("add", op2,reg,bad,length1, excludeRegs2,espDesiredMovement)
 		if not foundAdd:
