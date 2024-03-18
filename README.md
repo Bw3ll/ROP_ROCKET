@@ -64,7 +64,7 @@ This tool was inspired by the much older [JOP ROCKET](https://github.com/Bw3ll/J
 # Updates
 09/18/2023 - Various enhancements; further support for variant ways of leaking the far jump that leads to the Windows syscall.
 
-3/2024 - Many important updates - please try to keep the most current copy if possible, if you intend to actively use ROP ROCKET.
+3/2024 - Many important updates on a somewhat regular basis - please try to keep the most current copy if possible, if you intend to actively use ROP ROCKET. Individual changes will not be listed. Minor changes and updates are likely to be ongoing. Only major new features will be described. (Some minor new featurs have already been addded.)
 
 # Acknowledgement
 
