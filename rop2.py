@@ -261,7 +261,7 @@ def Extraction():
 		findEvilImports(myPE)
 		for x in myPE.sections:
 			name= stripWhite(myPE.sections[t].Name.decode())
-			# dp (name, len(name))
+			# print (name, len(name))
 			matchObj = re.match( r'.text$|.code$|.TEXT$|.CODE$', name, re.M|re.I)
 			if matchObj	:
 				thereIsATextLabelled=True
@@ -298,7 +298,8 @@ def Extraction():
 		pe[n].setSEHStatus((seh()))		
 		pe[n].setCFGStatus((CFG()))		
 		pe[n].setMagic(myPE.OPTIONAL_HEADER.Magic)
-				
+		
+
 		try:
 			for entry in myPE.DIRECTORY_ENTRY_IMPORT:
 				name = entry.dll.decode()
@@ -5484,15 +5485,17 @@ def findAddRegReg(reg,bad,availableRegs, excludeRegs, espDesiredMovement):
 		#OTHER less desirable gadgets
 		# for p in myDict:
 		
+	### skip for now
+	if 2==3:
 		addExists, p, myDict, rObj = rop_testerFindClobberFreeRegReg(myDict, excludeRegs,bad,"c3",espDesiredMovement,[])
 		if addExists and len(myDict[p].op2)==3:
 			dp ("\tpossible", myDict[p].op1, myDict[p].op2, "length", myDict[p].length, hex(p))
 			dp ("myDict[p].op1 -->",myDict[p].op1, len(myDict[p].op1))
 			dp("myDict[p].op2 -->", myDict[p].op2, len(myDict[p].op2))
-			dp ("\t-->",disMini(myDict[p].raw, myDict[p].offset))
+			print ("\t-->",disMini(myDict[p].raw, myDict[p].offset))
 			
 			if any(item in myDict[p].op2 for item in availableRegs) and myDict[p].op2!=reg:
-				dp ("yes alt!", myDict[p].op2)
+				print ("yes alt!", myDict[p].op2)
 				dp ("\tadd alt",disMini(myDict[p].raw, myDict[p].offset))
 				return True,p,myDict, reg, myDict[p].op2,0
 
@@ -6300,6 +6303,7 @@ def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement,isVal=False):
 
 def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
 	hexVal=""
+	checkAll=False
 	if val!="skip":
 		hexVal= hex(val)
 	# print (yel,"--> the bad",binaryToStr(bad), "val",hexVal,val, "target reg",reg,res)
@@ -6307,21 +6311,13 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
 		return True, 0,0
 	# freeBadGoalVal=checkFreeBadBytes(opt,fg,val,bad)
 	freeBadGoalVal=checkFreeBadBytes(opt,fg,val,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
-
+	if freeBadGoalVal:
+		checkAll=True
 	# if freeBadGoalVal:
 	# 	print (val, "freebadbytes")
 	# else:
 	# 	print ("\t",hex(val),val, "has badbytes")
 
-	if not freeBadGoalVal:
-		tThis=""
-		# bb=""
-		# print ("tryObfMethods", reg, "comment", comment)
-		success, tryPackage = tryObfMethods(excludeRegs,bad,val,tThis, bb, False,reg,comment, isVal)
-		if success:
-			# print ("found tryObfMethods")
-			# showChain(tryPackage, True)
-			return success, 0x99, tryPackage
 
 	if freeBadGoalVal:
 		foundP1, p1,pDict=findPop(reg,bad,length1,excludeRegs,isVal)
@@ -6332,16 +6328,24 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
 			chP=chainObj(p1, comment2, [val])
 			return foundP1, p1, chP
 
-	
-	foundX, chX=lXorAdd(reg,val,bad,length1,excludeRegs,0,isVal)
-	if foundX:
-		return True, 0,chX
-	# if foundP1:
-	# 	return foundP1, p1, chP
-	else:
-		# return foundP1, 0x99, chP
+	if not freeBadGoalVal or checkAll:
+		tThis=""
+		# bb=""
+		# print ("tryObfMethods", reg, "comment", comment)
+		success, tryPackage = tryObfMethods(excludeRegs,bad,val,tThis, bb, False,reg,comment, isVal)
+		if success:
+			# print ("found tryObfMethods")
+			# showChain(tryPackage, True)
+			return success, 0x99, tryPackage
 
-		return False, 0,0
+	if freeBadGoalVal:
+		foundX, chX=lXorAdd(reg,val,bad,length1,excludeRegs,0,isVal)
+		if foundX:
+			return True, 0,chX
+		# if foundP1:
+		# 	return foundP1, p1, chP
+		
+	return False, 0,0
 
 def loadRegOld(reg,bad,length1,excludeRegs,val,comment=None):
 	if val=="skip":
@@ -6853,7 +6857,6 @@ def getPushPopESP(reg,excludeRegs,espDesiredMovement, getSpecificReg=True):
 				# print (red+"\n--> possible",res)
 				# print ("transferReg",transferReg[1], "stackPivotAmount", stackPivotAmount, hex(stackPivotAmount))
 				# print (out)
-
 				return True, p, newReg, stackPivotAmount
 	return False, 0,0,0
 def findMovRegSpecial(reg1, bad,length1,excludeRegs,espDesiredMovement):
@@ -6911,7 +6914,8 @@ def genFiller(fillerAmt):
 	need=fillerAmt /4
 	# modulo=fillerAmt % 4
 	# print ("modulo", modulo)
-	for x in range(4):
+	need=int(need)
+	for x in range(need):
 		fillers.append(0x41414141)		
 	return fillers
 
@@ -6958,7 +6962,7 @@ def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMove
 			continue
 		if foundL1 and foundAdd and foundMEsp:
 			# cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
-			cA=chainObj(a1, "Adjust " +reg +" to parameter", [])
+			cA=chainObj(a1, "Adjust " +reg +" to parameter ", [])
 			
 			package=pkBuild([cMEsp,chP,cA])
 			showChain(package)
@@ -12067,8 +12071,8 @@ def getGadgets():
 	pickle.dump(fg, file_pi)
 	dp ("done pickle getGadgets!")
 
-	file_pi = open(filename3, 'wb') 
-	pickle.dump(fg, file_pi)
+	# file_pi = open(filename3, 'wb') 
+	# pickle.dump(fg, file_pi)
 
 def getGadgetsx6486():
 	genBasesForEm()
@@ -13428,9 +13432,23 @@ if __name__ == "__main__":
 				print (gre+"   ROP ROCKET is starting. It will extract gadgets, if this has not already been done.\n   These will be saved for subsequent runs."+res)
 			Extraction()
 		else:
-			filehandlerPE = open(filenamePE, 'rb') 
-			pe = pickle.load(filehandlerPE)
-			loadP=True
+			try:
+				filehandlerPE = open(filenamePE, 'rb') 
+				pe = pickle.load(filehandlerPE)
+				filehandler = open(filename, 'rb') 
+				fg = pickle.load(filehandler)
+
+				file_dllDict = open(filenameDLL, 'rb') 
+				dllDict = pickle.load(file_dllDict)
+
+				loadP=True
+			except:
+				print ("Error loading previously saved - extraction restarting.")
+				Extraction()
+				useSaved=False
+				print ("set false")
+
+
 		if not useSaved:
 			
 			noneBox=[]
@@ -13474,7 +13492,8 @@ if __name__ == "__main__":
 
 		genBasesForEm()
 
-		n=peName
+		n =peName
+
 		# start2 = timeit.default_timer()
 		if not useSaved:
 			if not doParallel:
@@ -13489,12 +13508,12 @@ if __name__ == "__main__":
 			pickle.dump(fg, file_pi)
 		else:
 			# start3 = timeit.default_timer()
+			pass
+			# filehandler = open(filename, 'rb') 
+			# fg = pickle.load(filehandler)
 
-			filehandler = open(filename, 'rb') 
-			fg = pickle.load(filehandler)
-
-			file_dllDict = open(filenameDLL, 'rb') 
-			dllDict = pickle.load(file_dllDict)
+			# file_dllDict = open(filenameDLL, 'rb') 
+			# dllDict = pickle.load(file_dllDict)
 						
 			# stop = timeit.default_timer()
 			# dp("Time P: " + str(stop - start3))
