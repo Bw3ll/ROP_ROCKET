@@ -6301,8 +6301,142 @@ def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement,isVal=False):
 	return False,0x666
 
 
+def findDoubleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, comment=""):
+	availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
+	try:
+		excludeRegs.remove("esp")
+	except:
+		pass
+	try:
+		excludeRegs.append(reg2)
+		excludeRegs.append(reg1)
+
+	except:
+		pass
+	for d in excludeRegs:
+		try:
+			availableRegs.remove(d)
+		except:
+			pass
+	
+	for r in availableRegs:
+		foundT, gT = findUniTransfer(r,reg2, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +reg2+" to " + r)
+		if foundT:
+			excludeRegs2= copy.deepcopy(excludeRegs)
+			excludeRegs2.append(r)
+
+			foundT2, gT2 = findUniTransfer(reg1,r, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " + r +" to " + reg1)
+			if foundT2:
+				pkg=pkBuild([gT,gT2])
+				# showChain(pkg,True)
+				return True, pkg
+	return False,0
+def findTripleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, comment=""):
+	print ("findTripleTransfer")
+	availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
+	try:
+		excludeRegs.remove("esp")
+	except:
+		pass
+	try:
+		excludeRegs.append(reg2)
+		excludeRegs.append(reg1)
+
+	except:
+		pass
+	for d in excludeRegs:
+		try:
+			availableRegs.remove(d)
+		except:
+			pass
+	
+	# print ("start availableRegs", availableRegs)
+	# print ("start excludeRegs", excludeRegs)
+
+	for r in availableRegs:
+		foundT, gT = findUniTransfer(r,reg2, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +reg2+" to " + r)
+		if foundT:
+
+			excludeRegs2= copy.deepcopy(excludeRegs)
+			excludeRegs2.append(r)
+			availableRegs2= copy.deepcopy(availableRegs)
+			availableRegs2.remove(r)
+			# print (red, "found1 ", r, res)
+			# print ("now available2 ", availableRegs2)
+			# print ("now excludeRegs2  ", excludeRegs2 )
+
+			for r2 in availableRegs2:
+
+				foundT2, gT2 = findUniTransfer(r2,r, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " + r +" to " + r2)
+				if foundT2:
+					# print ("found2 ", r2)
+					
+
+					excludeRegs3= copy.deepcopy(excludeRegs)
+					excludeRegs3.append(r2)
+					# print ("now excludeRegs2  ", excludeRegs3 )
+
+					foundT3, gT3 = findUniTransfer(reg1,r2, bad,length1,excludeRegs3,espDesiredMovement, "Transfer " + r2 +" to " + reg1)
+					if foundT3:
+						pkg=pkBuild([gT,gT2,gT3])
+						# showChain(pkg,True)
+						return True, pkg
+						# exit()
+	return False,0
+
+
+def findTryObfMethTransfer(excludeRegs,bad,val,tThis, bb, withPR,reg,comment, isVal=False):
+	availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
+	try:
+		excludeRegs.remove("esp")
+	except:
+		pass
+	for d in excludeRegs:
+		try:
+			availableRegs.remove(d)
+		except:
+			pass
+	length1=True
+	espDesiredMovement=0
+	for r in availableRegs:
+		foundT, gT = findUniTransfer(reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
+		if not foundT:
+			continue
+		success, tryPackage = tryObfMethods(excludeRegs,bad,val,tThis, bb, False,r,comment, isVal)
+		if success:
+			pkg=pkBuild([tryPackage,gT])
+			return success, pkg
+	return False, 0
+
+def findPopTransfer(reg,val, bad,length1,excludeRegs, espDesiredMovement, comment, isVal):
+	availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
+	try:
+		excludeRegs.remove("esp")
+	except:
+		pass
+	for d in excludeRegs:
+		try:
+			availableRegs.remove(d)
+		except:
+			pass
+	print ("availableRegs", availableRegs)
+	print ("excludeRegs", excludeRegs)
+	for r in availableRegs:
+		foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs,isVal)
+		foundT, gT = findUniTransfer(reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
+
+		if foundP1 and foundT:
+			comment2="indirectly load " + reg
+			if comment!=None:
+				comment2+= ", " + comment
+			chP=chainObj(p1, comment2, [val])
+			pkg=[chP,gT]
+			return foundP1, 0x99,pkg
+	return False
+
 def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
 	hexVal=""
+	espDesiredMovement=0
 	checkAll=False
 	if val!="skip":
 		hexVal= hex(val)
@@ -6328,6 +6462,35 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
 			chP=chainObj(p1, comment2, [val])
 			return foundP1, p1, chP
 
+	if freeBadGoalVal:
+		foundPT1, p3, ptPkg= findPopTransfer(reg,val, bad,length1,excludeRegs,espDesiredMovement, comment, isVal)
+		if foundPT1:
+			return foundPT1, p3, ptPkg
+		# availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
+		# try:
+		# 	excludeRegs.remove("esp")
+		# except:
+		# 	pass
+		# for d in excludeRegs:
+		# 	try:
+		# 		availableRegs.remove(d)
+		# 	except:
+		# 		pass
+		# print ("availableRegs", availableRegs)
+		# print ("excludeRegs", excludeRegs)
+		# for r in availableRegs:
+		# 	foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs,isVal)
+		# 	foundT, gT = findUniTransfer(reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
+
+		# 	if foundP1 and foundT:
+		# 		comment2="indirectly load " + reg
+		# 		if comment!=None:
+		# 			comment2+= ", " + comment
+		# 		chP=chainObj(p1, comment2, [val])
+		# 		pkg=[chP,gT]
+		# 		return foundP1, 0x99,pkg
+
+
 	if not freeBadGoalVal or checkAll:
 		tThis=""
 		# bb=""
@@ -6337,8 +6500,16 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
 			# print ("found tryObfMethods")
 			# showChain(tryPackage, True)
 			return success, 0x99, tryPackage
+		success, tryPackage2 =findTryObfMethTransfer(excludeRegs,bad,val,tThis, bb, False,reg,comment, isVal)
+		if success:
+			print ("found tryObfMethodsSpecial")
+			print (tryPackage2)
+			pk2=pkBuild([tryPackage2])
 
-	if freeBadGoalVal:
+			showChain(tryPackage2, True)
+			return success, 0x99, tryPackage2
+
+	if freeBadGoalVal or checkAll:
 		foundX, chX=lXorAdd(reg,val,bad,length1,excludeRegs,0,isVal)
 		if foundX:
 			return True, 0,chX
@@ -6449,7 +6620,20 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 		
 		foundT, gT = findUniTransfer(reg,"eax", bad,length1,excludeRegs,0, "Transfer to " + reg)
 		# print ("foundT", foundT, gT, "desired reg",reg)
-		pkTransfer=pkBuild([gT])
+		# foundT=False
+		if foundT:
+			pkTransfer=pkBuild([gT])
+		else:
+			foundDT, gDT=findDoubleTransfer(reg, "eax", bad,length1,excludeRegs,0, "")
+			# foundDT=False
+			if foundDT:
+				pkTransfer=pkBuild([gDT])
+				
+			else:
+				foundTT, gTT=findTripleTransfer(reg, "eax", bad,length1,excludeRegs,0, "")
+				if foundTT:
+					pkTransfer=pkBuild([gTT])
+
 		if rValStr=="hModule":
 			comment="  get hModule"
 		elif rValStr=="SystemPTR":
@@ -6538,11 +6722,11 @@ def findChangeESP(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,di
 	stopDistanceEmu=False
 	dp ("findChangeESP", reg, targetP, "numpP", numP)
 	foundAdd, package,packageb, packagec,dEsp,bYes,oldDESP = findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distFinalESP,curPk,distEsp,destAfter,IncDec,numP,compensate,targetP,sysTarget,PWinApi, False,0)
-	
-	dp ("end packages")
-	showChain(package)
-	showChain(packageb)
-	showChain(packagec)
+	if foundAdd:
+		dp ("end packages")
+		showChain(package)
+		showChain(packageb)
+		showChain(packagec)
 	if foundAdd:
 		dp ("package findChangeESP")
 		showChain(package)
@@ -13416,7 +13600,7 @@ if __name__ == "__main__":
 	filenamePE=filenameRaw+"_PEs.obj"
 	filenameDLL=filenameRaw+"_DllDict.obj"
 
-		
+			
 	try:
 		doParallel=True
 		skipSystemDlls=False
