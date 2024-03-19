@@ -5003,7 +5003,7 @@ def findXorOffset(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 			for p in myDict:
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
-				print("just checking: op1",myDict[p].op1, "op2", myDict[p].op2, isReg32(myDict[p].op1),"\n\t", disOffset(p)) 
+				# print("just checking: op1",myDict[p].op1, "op2", myDict[p].op2, isReg32(myDict[p].op1),"\n\t", disOffset(p)) 
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and isReg32(myDict[p].op1):
 					try: 
 						num=int(myDict[p].op2,16)
@@ -6466,29 +6466,6 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
 		foundPT1, p3, ptPkg= findPopTransfer(reg,val, bad,length1,excludeRegs,espDesiredMovement, comment, isVal)
 		if foundPT1:
 			return foundPT1, p3, ptPkg
-		# availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
-		# try:
-		# 	excludeRegs.remove("esp")
-		# except:
-		# 	pass
-		# for d in excludeRegs:
-		# 	try:
-		# 		availableRegs.remove(d)
-		# 	except:
-		# 		pass
-		# print ("availableRegs", availableRegs)
-		# print ("excludeRegs", excludeRegs)
-		# for r in availableRegs:
-		# 	foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs,isVal)
-		# 	foundT, gT = findUniTransfer(reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
-
-		# 	if foundP1 and foundT:
-		# 		comment2="indirectly load " + reg
-		# 		if comment!=None:
-		# 			comment2+= ", " + comment
-		# 		chP=chainObj(p1, comment2, [val])
-		# 		pkg=[chP,gT]
-		# 		return foundP1, 0x99,pkg
 
 
 	if not freeBadGoalVal or checkAll:
@@ -6498,15 +6475,17 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
 		success, tryPackage = tryObfMethods(excludeRegs,bad,val,tThis, bb, False,reg,comment, isVal)
 		if success:
 			# print ("found tryObfMethods")
+			tryPackage=pkBuild([tryPackage])
+
 			# showChain(tryPackage, True)
 			return success, 0x99, tryPackage
 		success, tryPackage2 =findTryObfMethTransfer(excludeRegs,bad,val,tThis, bb, False,reg,comment, isVal)
 		if success:
-			print ("found tryObfMethodsSpecial")
-			print (tryPackage2)
-			pk2=pkBuild([tryPackage2])
+			# print ("found tryObfMethodsSpecial")
+			# print (tryPackage2)
+			tryPackage2=pkBuild([tryPackage2])
 
-			showChain(tryPackage2, True)
+			# showChain(tryPackage2, True)
 			return success, 0x99, tryPackage2
 
 	if freeBadGoalVal or checkAll:
@@ -6597,11 +6576,12 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 	excludeRegs.extend(rExclude)
 	excludeRegs=list(set(excludeRegs))
 
+
 	found, val,com2=pv.get(rValStr, excludeRegs,reg,r1b,bad,pk)
 	comment=com1+com2
 	
 	dp ("loadRegP__", z,i, curPat,rValStr)
-	# print (red+"loadRegP__", z,i, curPat,rValStr,res)
+	# print (red+"loadRegP__", reg, z,i, curPat,rValStr,res, val)
 	 
 
 	if rValStr=="targetDllString":
@@ -6689,11 +6669,13 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 
 	# foundP1, p1,pDict=findPop(reg,bad,length1,excludeRegs)
 	# chP=chainObj(p1, comment2, [val])
+	if rValStr=="skip":
+		return True, None, None,reg
+
 	foundP1, p1, chP = loadReg(reg,bad,length1,excludeRegs,val,comment2)
 	
 
-	if rValStr=="skip":
-		return True, None, None,reg
+	
 	if (rValStr=="targetDllString" or rValStr=="lpProcName" or rValStr=="Command") and FoundDistG:
 		return True, 0, pk2,reg
 
@@ -9424,6 +9406,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 
 		length1=True
 		pk=[]
+
 		foundL1, pl1, lr1,r1 = loadRegP(1,i, bad,True,excludeRegs2,pk)
 		if foundL1:
 			excludeRegs2=addExRegs(excludeRegs2, r1)
@@ -9483,6 +9466,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 			continue
 
 		foundL8, pl8, lr8,r8 = loadRegP(8,i, bad,True,excludeRegs2,pk)
+		
 		if foundL8:
 			excludeRegs2=addExRegs(excludeRegs2, r8)
 			pk=pkBuild([pk,lr8])
@@ -9529,6 +9513,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 		# showChain(pkAll)	
 		cOut,out= (genOutput(pkAll,winApi))
 		outputsTxt.append(out)
+		print ("999", cOut)
 		outputsTxtC.append(cOut)
 		outputsPk.append(pkAll)
 		dp(len(outputsTxt))
