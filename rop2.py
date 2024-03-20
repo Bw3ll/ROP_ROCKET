@@ -6239,14 +6239,38 @@ def getHGandPops(hgExcludeRegs,excludeRegs,bad,availableRegs,pu1, destination):
 
 	# exit()
 	return False,[]
+def findAddTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,comment):
+	availableRegs={"eax","ebx","ecx","edx", "esi","edi","ebp"}
+	for d in excludeRegs:
+		try:
+			availableRegs.remove(d)
+		except:
+			pass
+	# availableRegs=list(availableRegs)
+	# print ("reg1", reg1, "reg2",reg2)
+	# print ("excludeRegs",excludeRegs)
+	# print ("availableRegs",availableRegs)
+	foundM1, m1 = findGenericOp2("add",reg2,reg1,bad,length1, excludeRegs,espDesiredMovement)
+	if foundM1:
+		val=0xfffffff 
+		foundP1, p1, chP = loadReg(reg1,bad,length1,excludeRegs,val,comment)
+		if foundP1:
+			foundInc, iP = findGeneric("inc",reg1,bad,length1, availableRegs,espDesiredMovement)
+			if foundInc:
+				gM=chainObj(m1, comment, [])
+				package=pkBuild([chP,iP, gM])
+				# showChain(package, True)
+				return True, package
 
-def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment):
+	return False,0
+
+def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment=""):
+	# print (red,"findTransfer", reg, op2,res)
 	if comment==None:
 		comment=""
 	foundM1, m1 = findGenericOp2("mov",op2,reg,bad,length1, excludeRegs,espDesiredMovement)
 	if foundM1:
 		gM=chainObj(m1, comment, [])
-
 		package=[gM]
 		showChain(package)
 		return True, package
@@ -6256,13 +6280,18 @@ def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
 		package=[gM]
 		showChain(package)
 		return True, package
-	foundT, x1 = xchgMovReg(op2,reg, bad,length1,excludeRegs,espDesiredMovement)
-	if foundT:
-		gM=chainObj(x1, comment, [])
-		package=[gM]
-		showChain(package)
-		return True, package
-	# print ("GT returning False")
+	# foundT, x1 = xchgMovReg(op2,reg, bad,length1,excludeRegs,espDesiredMovement)
+	# if foundT:
+	# 	gM=chainObj(x1, comment, [])
+	# 	package=[gM]
+	# 	showChain(package)
+	# 	return True, package
+	
+	foundAT, gAT= findAddTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+	if foundAT:
+		return True, gAT
+
+	# print ("Returning False")
 	return False, 0
 def xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement):
 	dp ("xchgMovReg", reg, op2)
@@ -6561,14 +6590,15 @@ def getDistanceGadget(excludeRegs,rValStr,pk,reg,loc,patType=None):
 		dp ("transfer gadget")
 		showChain(pkStart)
 		foundT, gT = findUniTransfer(reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
-		pk2=pkBuild([pkStart,gT])
-		pk3=pkBuild([pk,pk2])
-		dp ("checking on the transfer")
-		distParam, apiReached=getDistanceParamReg(pe,n,pk3,distParam,"dec",2,"loc1", "esp", True,0x9ba00,0,rValStr,True,patType)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter
-		return True, 0, pk2,reg
-	else:
-		dp ("transfer gadget not found")
-		return False, 0,0,reg
+		if foundT:
+			pk2=pkBuild([pkStart,gT])
+			pk3=pkBuild([pk,pk2])
+			dp ("checking on the transfer")
+			distParam, apiReached=getDistanceParamReg(pe,n,pk3,distParam,"dec",2,"loc1", "esp", True,0x9ba00,0,rValStr,True,patType)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter
+			return True, 0, pk2,reg
+	
+	dp ("transfer gadget not found")
+	return False, 0,0,reg
 
 def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 	global curPat
@@ -8848,7 +8878,7 @@ class getParamVals:
 		comment=""
 		if foundJ:
 			return True, j1,comment
-		return False,0,"JMP DWORD NOT FOUND"
+		return False,0xffffadd,"JMP DWORD NOT FOUND"
 	def get_VPPtr(self,name,excludeRegs,r,r2,bad,pk):
 		dp ("get VPPtr")
 		l=0x30000
