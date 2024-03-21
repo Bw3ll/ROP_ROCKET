@@ -6264,32 +6264,188 @@ def findAddTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 
 	return False,0
 
-def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment=""):
+def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,comment):
+	# print (gre, "findXorTransfer", "reg1",reg1, "reg2",reg2, res)
+	if reg1==reg2:
+		return False,0
+
+	availableRegs={"eax","ebx","ecx","edx", "esi","edi","ebp"}
+	for d in excludeRegs:
+		try:
+			availableRegs.remove(d)
+		except:
+			pass
+	# availableRegs=list(availableRegs)
+	# print ("reg1", reg1, "reg2",reg2)
+	# print ("excludeRegs",excludeRegs)
+	# print ("availableRegs",availableRegs)
+	instruction ="xor"
+	# xor ebx, ecx/key   (but could be: ebx, edx   -   as long as edx had key, etc)   ebx = reg2 - is is what is being transferred - ecx = reg1 -- will hold the transfered result
+	# xor ecx, ebx  --- ecx holds what was in ebx
+	excludeRegs=set(excludeRegs)
+
+	bExists, myDict=fg.getFg(instruction,reg2)
+	bExists2, myDict2=fg.getFg(instruction,reg1)
+	hexaPattern = re.compile(r'(0x[0-9a-fA-F]+)|[0-9]+')
+	isReg= re.compile( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p', re.M|re.I)
+
+
+	keyVal = 0x41424344
+	
+	if bExists and bExists2 and length1:	
+		for p in myDict:
+			isR=False
+			isHex=False
+			continueFlag=True
+			continueFlag2=False
+			# if continueFlag2:
+			# 	break
+
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			isRegOp1= re.search( isReg,myDict[p].op1)
+			# if isRegOp1:
+			# 	print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
+			if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and isRegOp1:
+				dp ("found ",instruction, reg1) 
+				# print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
+				# print ("   --> reg2", myDict[p].op2)
+				isHex = re.search(hexaPattern, myDict[p].op2)
+				if isHex:
+					# print ("isHex",myDict[p].op2)
+					try:
+						keyVal = int(myDict[p].op2,16)
+					except:
+						keyVal = int(myDict[p].op2)
+					freeBad2=checkFreeBadBytes(opt,fg,keyVal,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True)
+					if freeBad2:
+						continueFlag=False
+				else:
+					isR = re.search(isReg, myDict[p].op2)
+					if isR:
+						if myDict[p].op2 not in excludeRegs:
+						# print (cya,"isReg",myDict[p].op2, res)
+							continueFlag=False
+			if continueFlag:
+				# print ("continueFlag",myDict[p].op2, disOffset(p))
+				continue
+
+
+
+			
+			for q in myDict2:
+				if isR:
+					keyVal = 0x41424344
+					freeBad3=checkFreeBadBytes(opt,fg,keyVal,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+					if not freeBad3:
+						# print("Key value for XOR has bad bytes.")
+						break
+
+
+				freeBad=checkFreeBadBytes(opt,fg,q,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				isRegOp1b= re.search( isReg,myDict2[q].op1)
+				if myDict2[q].length ==1 and myDict2[q].opcode=="c3" and freeBad and isRegOp1b and myDict2[q].op2==reg2 and myDict2[q].op1==reg1:
+					if isHex:
+						# print ("ok1 p",cya,myDict[p].op1,disOffset(p),res,p)
+						# print ("ok2 q",red, myDict2[q].op1,disOffset(q),res,q)
+						foundP1, p1, chP = loadReg(reg1,bad,length1,excludeRegs, keyVal,comment)
+						if foundP1:
+							pk=pkBuild([p,chP,q])
+							# print (blu,"This is a good one0",res)
+							# showChain(pk,True)
+							return True, pk
+						pass
+					elif isR:
+						# print ("ok1 p",gre,myDict[p].op1,disOffset(p),res,p)
+						# print ("ok2 q",red, myDict2[q].op1,disOffset(q),res,q)
+						if myDict[p].op2 == reg1:
+							pk=pkBuild([p,q])
+							# print ("This is a good one1")
+							# showChain(pk,True)
+							return True, pk
+						else:	
+							# print ("ok1 p",gre,myDict[p].op1,disOffset(p),res,p)
+							# print ("ok2 q",red, myDict2[q].op1,disOffset(q),res,q)						
+							foundT, gT = findUniTransfer(reg1,myDict[p].op1, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +myDict[p].op1+" to " + reg1,True)
+							# foundT=False
+							if foundT:
+								pk=pkBuild([p,gT,q])
+								# print ("This is a good one2")
+								# showChain(pk,True)
+								return True, pk
+
+							else:
+								if myDict[p].op2 != "esp" and myDict2[q].op1 != "esp":
+									foundP2, p2, chP2 = loadReg(myDict[p].op2,bad,length1,excludeRegs, keyVal,comment)
+									foundP3, p3, chP3 = loadReg(myDict2[q].op1,bad,length1,excludeRegs, keyVal,comment)
+
+									if foundP2:
+										pk=pkBuild([chP2,p,chP3,q])
+										# print ("This is a good one3")
+										# showChain(pk,True)
+										return True, pk
+			
+			continueFlag2=True
+		return False,0
+
+	#not set up below
+	if bExists and bExists2 and not length1:
+		for p in myDict:
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+
+			freeBad=False
+			if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
+				dp ("found ", instruction, reg1)
+				return True,p, myDict
+			dp (instruction," clob")
+			mdExist, m1, myDict, rObj = rop_testerFindClobberFree((instruction,reg1), excludeRegs,bad, "c3", espDesiredMovement,[])
+			if mdExist:
+				dp ("found alt", instruction, reg1)
+				return True,m1
+			else:
+				return False,0
+	else:
+		dp ("it does not exist")
+		# dp ("return false ", instruction)
+		return False,0
+
+
+	foundM1, m1 = findGenericOp2("add",reg2,reg1,bad,length1, excludeRegs,espDesiredMovement)
+	if foundM1:
+		val=0xfffffff 
+		foundP1, p1, chP = loadReg(reg1,bad,length1,excludeRegs,val,comment)
+		if foundP1:
+			foundInc, iP = findGeneric("inc",reg1,bad,length1, availableRegs,espDesiredMovement)
+			if foundInc:
+				gM=chainObj(m1, comment, [])
+				package=pkBuild([chP,iP, gM])
+				# showChain(package, True)
+				return True, package
+
+	return False,0
+def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment="", excludeXor=False):
 	# print (red,"findTransfer", reg, op2,res)
 	if comment==None:
 		comment=""
-	foundM1, m1 = findGenericOp2("mov",op2,reg,bad,length1, excludeRegs,espDesiredMovement)
-	if foundM1:
-		gM=chainObj(m1, comment, [])
-		package=[gM]
-		showChain(package)
-		return True, package
-	foundT, x1 = xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement)
-	if foundT:
-		gM=chainObj(x1, comment, [])
-		package=[gM]
-		showChain(package)
-		return True, package
-	# foundT, x1 = xchgMovReg(op2,reg, bad,length1,excludeRegs,espDesiredMovement)
-	# if foundT:
-	# 	gM=chainObj(x1, comment, [])
-	# 	package=[gM]
-	# 	showChain(package)
-	# 	return True, package
-	
-	foundAT, gAT= findAddTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
-	if foundAT:
-		return True, gAT
+	if 2==2 or excludeXor:
+		foundM1, m1 = findGenericOp2("mov",op2,reg,bad,length1, excludeRegs,espDesiredMovement)
+		if foundM1:
+			gM=chainObj(m1, comment, [])
+			package=[gM]
+			showChain(package)
+			return True, package
+		foundT, x1 = xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement)
+		if foundT:
+			gM=chainObj(x1, comment, [])
+			package=[gM]
+			showChain(package)
+			return True, package
+		foundAT, gAT= findAddTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+		if foundAT:
+			return True, gAT
+	if not excludeXor:
+		foundXT, gXT= findXorTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+		if foundXT:
+			return True, gXT
 
 	# print ("Returning False")
 	return False, 0
@@ -6331,6 +6487,7 @@ def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement,isVal=False):
 
 
 def findDoubleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, comment=""):
+	# print (blu,"findDoubleTransfer", findDoubleTransfer, reg1, reg2,res)
 	availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
 	try:
 		excludeRegs.remove("esp")
@@ -6361,7 +6518,7 @@ def findDoubleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, co
 				return True, pkg
 	return False,0
 def findTripleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, comment=""):
-	print ("findTripleTransfer")
+	# print (cya,"findTripleTransfer", reg1, reg2,res)
 	availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
 	try:
 		excludeRegs.remove("esp")
@@ -6461,7 +6618,7 @@ def findPopTransfer(reg,val, bad,length1,excludeRegs, espDesiredMovement, commen
 			chP=chainObj(p1, comment2, [val])
 			pkg=[chP,gT]
 			return foundP1, 0x99,pkg
-	return False
+	return False,0,0
 
 def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False):
 	hexVal=""
@@ -6617,6 +6774,7 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 	if rValStr=="targetDllString":
 		FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr,pk,reg,"loc1")
 	elif rValStr=="hModule":
+		# print ("hModule start")
 		availableRegs=["ebx","ecx","edx", "esi","edi","ebp"]
 		try:
 			excludeRegs.remove("esp")
@@ -6627,7 +6785,6 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 				availableRegs.remove(d)
 			except:
 				pass
-		
 		foundT, gT = findUniTransfer(reg,"eax", bad,length1,excludeRegs,0, "Transfer to " + reg)
 		# print ("foundT", foundT, gT, "desired reg",reg)
 		# foundT=False
@@ -6642,7 +6799,13 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 			else:
 				foundTT, gTT=findTripleTransfer(reg, "eax", bad,length1,excludeRegs,0, "")
 				if foundTT:
+					print (6)
 					pkTransfer=pkBuild([gTT])
+				else:
+					print (" Lacking gadget to transfer hModule")
+					return False, 0,0,0
+
+					pass
 
 		if rValStr=="hModule":
 			comment="  get hModule"
@@ -6656,8 +6819,12 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 		foundStart, gT=findMovDerefGetStackNotReg(reg,bad,length1, excludeRegs,availableRegs,0,0xFFFFFE68)  ## - 0x198 - we will put a dereference there for it.
 		# foundM1, gT = findMovDeref2(reg,"eax",bad,length1, availableRegs,0)
 		
+		if foundStart:
+			pkTransfer=pkBuild([gT])
+		else:
+			print ("  Need a mov dereference gadget.")
+			return False, 0,0,0
 
-		pkTransfer=pkBuild([gT])
 
 	elif rValStr=="lpProcName":
 		rValStr2="targetDllString"
@@ -6994,7 +7161,7 @@ def findXchgMovRegSpecial(reg1, bad,length1,excludeRegs,espDesiredMovement):
 def getPushPopESP(reg,excludeRegs,espDesiredMovement, getSpecificReg=True):
 	# do excluded regs
 	instruction="push"
-	excludeRegs=["ebx"]
+	# excludeRegs=["ebx"]
 	excludeRegsSet=set(excludeRegs)
 	bExists, myDict=fg.getFg(instruction,"esp")
 	stackPivotAmount=0
@@ -8539,14 +8706,15 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 				if foundStart and foundSys:
 					pk=pkBuild([pkStart,gTbase,pkBA,pkNBforPtr,gT1, gT3,pkP5,pkP4,pkP3,pkP2,pkP1,pkRA1,pkRA2,pkSysSetup])
 					
-				dp ("\nsyscall chain\n")
-				showChain(pk)
-				cOut,out=genOutput(pk)	
-				print (cOut)
-				fgc.addNtProtect(fChainObj(pk,out,cOut))
-				printGadgetChain(out, "w_syscall_NtProtectVirtualMemory")
+					dp ("\nsyscall chain\n")
+					showChain(pk)
+					cOut,out=genOutput(pk)	
+					print (cOut)
+					fgc.addNtProtect(fChainObj(pk,out,cOut))
+					printGadgetChain(out, "w_syscall_NtProtectVirtualMemory")
 
-				return
+					return
+	print ("No chains found.")
 
 def get_VirtualProtectPTR():		
 		vp=0x77666999
@@ -9492,7 +9660,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 			# print (cya+"adding to excludeRegs2 7", excludeRegs2,res)
 			pk=pkBuild([pk,lr7])
 		else:
-			# print ("continue 7")
+			print ("continue 7")
 			continue
 
 		foundL8, pl8, lr8,r8 = loadRegP(8,i, bad,True,excludeRegs2,pk)
@@ -9501,7 +9669,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 			excludeRegs2=addExRegs(excludeRegs2, r8)
 			pk=pkBuild([pk,lr8])
 		else:
-			# print ("continue 8")
+			print ("continue 8")
 			continue
 
 		fRet, pR,rDict=findRet(bad)
@@ -9543,7 +9711,7 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 		# showChain(pkAll)	
 		cOut,out= (genOutput(pkAll,winApi))
 		outputsTxt.append(out)
-		print ("999", cOut)
+		# print ("999", cOut)
 		outputsTxtC.append(cOut)
 		outputsPk.append(pkAll)
 		dp(len(outputsTxt))
