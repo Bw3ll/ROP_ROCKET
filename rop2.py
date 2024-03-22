@@ -6263,7 +6263,121 @@ def findAddTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 				return True, package
 
 	return False,0
+def findSubTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,comment):
+	# print (gre, "findXorTransfer", "reg1",reg1, "reg2",reg2, res)
+	if reg1==reg2:
+		return False,0
 
+	availableRegs={"eax","ebx","ecx","edx", "esi","edi","ebp"}
+	for d in excludeRegs:
+		try:
+			availableRegs.remove(d)
+		except:
+			pass
+	# availableRegs=list(availableRegs)
+	# print ("reg1", reg1, "reg2",reg2)
+	# print ("excludeRegs",excludeRegs)
+	# print ("availableRegs",availableRegs)
+	instruction ="sub"
+	# xor ebx, ecx/key   (but could be: ebx, edx   -   as long as edx had key, etc)   ebx = reg2 - is is what is being transferred - ecx = reg1 -- will hold the transfered result
+	# xor ecx, ebx  --- ecx holds what was in ebx
+	excludeRegs=set(excludeRegs)
+
+	bExists, myDict=fg.getFg(instruction,reg2)
+	bExists2, myDict2=fg.getFg("add",reg1)
+	hexaPattern = re.compile(r'(0x[0-9a-fA-F]+)|[0-9]+')
+	isReg= re.compile( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p', re.M|re.I)
+
+
+	keyVal = 0x41424344
+	
+	if bExists and bExists2 and length1:	
+		for p in myDict:
+			isR=False
+			isHex=False
+			continueFlag=True
+			continueFlag2=False
+			# if continueFlag2:
+			# 	break
+
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+			isRegOp1= re.search( isReg,myDict[p].op1)
+			# if isRegOp1:
+			# 	print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
+			if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and isRegOp1:
+				dp ("found ",instruction, reg1) 
+				# print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
+				# print ("   --> reg2", myDict[p].op2)
+				isHex = re.search(hexaPattern, myDict[p].op2)
+				if isHex:
+					# print ("isHex",myDict[p].op2)
+					try:
+						keyVal = int(myDict[p].op2,16)
+					except:
+						keyVal = int(myDict[p].op2)
+					freeBad2=checkFreeBadBytes(opt,fg,keyVal,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True)
+					if freeBad2:
+						continueFlag=False
+				else:
+					isR = re.search(isReg, myDict[p].op2)
+					if isR:
+						if myDict[p].op2 not in excludeRegs:
+						# print (cya,"isReg",myDict[p].op2, res)
+							continueFlag=False
+			if continueFlag:
+				# print ("continueFlag",myDict[p].op2, disOffset(p))
+				continue
+
+			for q in myDict2:
+				if isR:
+					keyVal = 0x41424344
+					freeBad3=checkFreeBadBytes(opt,fg,keyVal,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+					if not freeBad3:
+						# print("Key value for XOR has bad bytes.")
+						break
+				freeBad=checkFreeBadBytes(opt,fg,q,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				isRegOp1b= re.search( isReg,myDict2[q].op1)
+				if myDict2[q].length ==1 and myDict2[q].opcode=="c3" and freeBad and isRegOp1b and myDict2[q].op2==reg2 and myDict2[q].op1==reg1:
+					if isHex:
+						# print ("ok1 p",cya,myDict[p].op1,disOffset(p),res,p)
+						# print ("ok2 q",red, myDict2[q].op1,disOffset(q),res,q)
+						foundP1, p1, chP = loadReg(reg1,bad,length1,excludeRegs, keyVal,comment)
+						if foundP1:
+							pk=pkBuild([p,chP,q])
+							# print (blu,"This is a good one0",res)
+							# showChain(pk,True)
+							return True, pk
+						pass
+					elif isR:
+						# print ("ok1 p",gre,myDict[p].op1,disOffset(p),res,p)
+						# print ("ok2 q",red, myDict2[q].op1,disOffset(q),res,q)
+						if myDict[p].op2 == reg1:
+							pk=pkBuild([p,q])
+							# print (red, "This is a good one1")
+							# showChain(pk,True)
+							# print (res)
+							return True, pk
+				if myDict2[q].length ==1 and myDict2[q].opcode=="c3" and freeBad and isRegOp1b and myDict2[q].op2!=reg2 and myDict2[q].op1==reg1 and isR and myDict2[q].op2==myDict[p].op2:
+						
+						if myDict[p].op2 != myDict[p].op1:
+							# print ("ok1 p",gre,myDict[p].op1,disOffset(p),res,p)
+							# print ("ok2 q",red, myDict2[q].op1,disOffset(q),res,q)						
+							excludeRegs2= copy.deepcopy(excludeRegs)
+							excludeRegs2.add(reg1)
+							excludeRegs2.add(myDict[p].op1)
+
+							foundT, gT = findUniTransfer(reg1,myDict[p].op1, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " +myDict[p].op1+" to " + reg1,True, True,True)
+							# foundT=False
+							if foundT:
+								pk=pkBuild([p,gT,q])
+								# print (cya,"This is a good one2", reg1,reg2)
+								# showChain(pk,True)
+								# print(res)
+								# exit()
+								return True, pk
+			
+			continueFlag2=True
+		return False,0
 def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,comment):
 	# print (gre, "findXorTransfer", "reg1",reg1, "reg2",reg2, res)
 	if reg1==reg2:
@@ -6329,8 +6443,6 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 				# print ("continueFlag",myDict[p].op2, disOffset(p))
 				continue
 
-
-
 			
 			for q in myDict2:
 				if isR:
@@ -6339,7 +6451,6 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 					if not freeBad3:
 						# print("Key value for XOR has bad bytes.")
 						break
-
 
 				freeBad=checkFreeBadBytes(opt,fg,q,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 				isRegOp1b= re.search( isReg,myDict2[q].op1)
@@ -6352,7 +6463,7 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 							pk=pkBuild([p,chP,q])
 							# print (blu,"This is a good one0",res)
 							# showChain(pk,True)
-							return True, pk
+							# return True, pk
 						pass
 					elif isR:
 						# print ("ok1 p",gre,myDict[p].op1,disOffset(p),res,p)
@@ -6361,17 +6472,22 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 							pk=pkBuild([p,q])
 							# print ("This is a good one1")
 							# showChain(pk,True)
-							return True, pk
+							# return True, pk
 						else:	
 							# print ("ok1 p",gre,myDict[p].op1,disOffset(p),res,p)
-							# print ("ok2 q",red, myDict2[q].op1,disOffset(q),res,q)						
-							foundT, gT = findUniTransfer(reg1,myDict[p].op1, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +myDict[p].op1+" to " + reg1,True)
+							# print ("ok2 q",red, myDict2[q].op1,disOffset(q),res,q)	
+							excludeRegs2= copy.deepcopy(excludeRegs)
+							excludeRegs2.add(myDict2[q].op1)
+							excludeRegs2.add(myDict[p].op2)
+
+							foundT, gT = findUniTransfer(myDict2[q].op1,myDict[p].op2, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " +myDict[p].op1+" to " + reg1,True)
 							# foundT=False
 							if foundT:
 								pk=pkBuild([p,gT,q])
-								# print ("This is a good one2")
+								# print ("This is a good one2",red)
 								# showChain(pk,True)
-								return True, pk
+								# print(res)
+								# return True, pk
 
 							else:
 								if myDict[p].op2 != "esp" and myDict2[q].op1 != "esp":
@@ -6382,7 +6498,7 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 										pk=pkBuild([chP2,p,chP3,q])
 										# print ("This is a good one3")
 										# showChain(pk,True)
-										return True, pk
+										# return True, pk
 			
 			continueFlag2=True
 		return False,0
@@ -6422,32 +6538,39 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 				return True, package
 
 	return False,0
-def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment="", excludeXor=False):
+def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment="", excludeXor=False,excludeXchg=False, excludeSub=False):
 	# print (red,"findTransfer", reg, op2,res)
 	if comment==None:
 		comment=""
-	if 2==2 or excludeXor:
-		foundM1, m1 = findGenericOp2("mov",op2,reg,bad,length1, excludeRegs,espDesiredMovement)
-		if foundM1:
-			gM=chainObj(m1, comment, [])
-			package=[gM]
-			showChain(package)
-			return True, package
+	# if 2==3 or excludeXor or excludeXchg:
+	foundM1, m1 = findGenericOp2("mov",op2,reg,bad,length1, excludeRegs,espDesiredMovement)
+	if foundM1:
+		gM=chainObj(m1, comment, [])
+		package=[gM]
+		showChain(package)
+		return True, package
+	if not excludeXchg:
 		foundT, x1 = xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement)
 		if foundT:
 			gM=chainObj(x1, comment, [])
 			package=[gM]
 			showChain(package)
 			return True, package
-		foundAT, gAT= findAddTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
-		if foundAT:
-			return True, gAT
-	if not excludeXor:
-		foundXT, gXT= findXorTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
-		if foundXT:
-			return True, gXT
+	foundAT, gAT= findAddTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+	if foundAT:
+		return True, gAT
+	
 
-	# print ("Returning False")
+	if not excludeXor:
+			foundXT, gXT= findXorTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+			if foundXT:
+				return True, gXT
+
+	if not excludeSub:
+		foundST, gST= findSubTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+		if foundST:
+			return True, gST
+		# print ("Returning False")
 	return False, 0
 def xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement):
 	dp ("xchgMovReg", reg, op2)
