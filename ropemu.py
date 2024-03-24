@@ -27,7 +27,15 @@ new=b'\x5d\xc3'
 
 shellList=[]
 
-
+red ='\u001b[31;1m'
+gre = '\u001b[32;1m'
+yel = '\u001b[33;1m'
+blu = '\u001b[34;1m'
+mag = '\u001b[35;1m'
+cya = '\u001b[36;1m'
+whi = '\u001b[37m'
+res = '\u001b[0m'
+res2 = '\u001b[0m'
 
 # callback for tracing basic blocks
 # def hook_block(uc, address, size, user_data):
@@ -36,6 +44,7 @@ shellList=[]
 
 # callback for tracing instructions
 def hook_code(uc, address, size, user_data):
+    
     dp ("eip:", hex(address), size)
     global maxAddress
     r_eip = int(uc.reg_read(UC_X86_REG_EIP))
@@ -74,7 +83,7 @@ def hook_code(uc, address, size, user_data):
 def handle_exit(signum,frame):
     global stopProcess
     stopProcess=True
-    dp ("graceful handle_exit")
+    # print ("graceful handle_exit")
     sys.exit(0)
 
 signal.signal(signal.SIGINT, handle_exit)
@@ -159,15 +168,33 @@ class gadgetRegs:
             self.diffEsi = esi - self.esi
             self.diffEdi = edi - self.edi
 
+            self.diffs = {}
+
+            self.diffs["eax"]=self.diffEax
+            self.diffs["ebx"]=self.diffEbx
+            self.diffs["ecx"]=self.diffEcx
+            self.diffs["edx"]=self.diffEdx
+            self.diffs["edi"]=self.diffEdi
+            self.diffs["esi"]=self.diffEsi
+
+
             try:
                 self.diffEbp = ebp -self.ebp
+                self.diffs["ebp"]=self.diffEbp
+
             except:
-                self.diffEbp=0
+                self.diffEbp=0xdeaddead
+                self.diffs["ebp"]=0xdeaddead
+
             try:
                 self.diffEsp = esp -self.esp
+                self.diffs["esp"]=self.diffEsp
+
                 dp ("diffesp", hex(self.diffEsp), "Esp", hex(esp), "self.esp", hex(self.esp))
             except:
-                self.diffEsp=0
+                self.diffEsp=0xdeaddead
+                self.diffs["esp"]=0xdeadead
+
             if self.diffEax + self.diffEbx + self.diffEcx + self.diffEdx + self.diffEbp + self.diffEdi + self.diffEsi == 0:
                 self.clobberFree=True
             else:
@@ -180,10 +207,36 @@ class gadgetRegs:
         self.edi = edi
         self.ebp = ebp
         self.esp = esp
+        self.reg = {}
+        self.reg["eax"]=eax
+        self.reg["ebx"]=ebx
+        self.reg["ecx"]=ecx
+        self.reg["edx"]=edx
+        self.reg["edi"]=edi
+        self.reg["esi"]=esi
+        self.reg["ebp"]=ebp
+        self.reg["esp"]=esp
         self.error=False
         # dp ("set ebp", (self.ebp))
         # dp ("set esp", (self.esp))
 
+    def setRegWrit(self,regSet,newVal):
+        # print ("setRegWrit", regSet, newVal)
+        if regSet=="eax":
+            self.eax = newVal
+        elif regSet=="ebx":
+            self.ebx = newVal
+        elif regSet=="ecx":
+            self.ecx = newVal
+        elif regSet=="edx":
+            self.edx = newVal
+        elif regSet=="esi":
+            self.esi = newVal
+        elif regSet=="edi":
+            self.edi = newVal
+        else:
+            pass
+        
     def giveRegLoc(self,r):
         rLookup={"eax":self.eax, "ebx":self.ebx, "ecx":self.ecx, "edx":self.edx, "edi":self.edi, "esi":self.esi, "ebp":self.ebp, "esp":self.esp}
         returnVal=rLookup[r]   
@@ -206,12 +259,68 @@ class gadgetRegs:
         self.error=True
         self.errorType=val
     def show(self):
-        dp ("Final results:")
+        print ("Final results:")
         if not self.error:
-            dp ("\teax", hex(self.eax),"ebx", hex(self.ebx), "ecx",hex(self.ecx), "edx",hex(self.edx), "esi",hex(self.esi), "edi",hex(self.edi),"ebp", hex(self.ebp), "esp", hex(self.esp))
-            dp ("\teax", hex(self.diffEax),"diff ebx", hex(self.diffEbx), "diff ecx",hex(self.diffEcx), "diff edx",hex(self.diffEdx), "diff esi",hex(self.diffEsi), "diff edi",hex(self.diffEdi),"diff ebp", hex(self.diffEbp), "diff esp", hex(self.diffEsp))
+            print ("\teax", hex(self.eax),"ebx", hex(self.ebx), "ecx",hex(self.ecx), "edx",hex(self.edx), "esi",hex(self.esi), "edi",hex(self.edi),"ebp", hex(self.ebp), "esp", hex(self.esp))
+            print ("\tdiff eax", hex(self.diffEax),"diff ebx", hex(self.diffEbx), "diff ecx",hex(self.diffEcx), "diff edx",hex(self.diffEdx), "diff esi",hex(self.diffEsi), "diff edi",hex(self.diffEdi),"diff ebp", hex(self.diffEbp), "diff esp", hex(self.diffEsp))
         else:
-            dp ("*Error:", self.errorType)
+            print ("*Error:", self.errorType)
+    def checkFree(self,regs, remExc=None, espGuard=0x100):
+        # print ("checkFree", regs, remExc)
+        
+        try:
+            regs=set(regs)
+        except:
+            pass
+        if remExc!=None:
+            try:
+                for r1 in remExc:
+                    regs.remove(r1)
+            except:
+                pass
+        try:
+            for r in regs:
+                try:
+                    if self.diffs[r]!=0:
+                        # print (yel,"bads",r, hex(self.diffs[r]),res)
+                        return False,0
+                except:
+                    print (yel,"checkfree except",res)
+                    return False,0
+                    break
+                    pass
+            try:       
+                if self.diffEsp <= espGuard:
+                    return True, self.diffEsp
+                # print ("returning false")
+            except:
+                pass
+            return False,0
+        except Exception as e:
+            print("cfree ERROR: %s" % e)
+            print(traceback.format_exc())
+            print ("returning false")
+            return False,0
+            
+    def verifyValSame(self,reg1,reg2):
+        # print ("verifyValSame",reg1, reg2)
+        if rVal[reg1] ==self.reg[reg2]:
+            # print ("it is the same")
+            return True
+        else:
+            # print ("it is not the same", hex(self.reg[reg1]),hex(rVal[reg2]), reg1, reg2)
+            return False
+
+    def verifyRegUnchanged(self,reg):
+        # print ("verifyValSame",reg1, reg2)
+
+        dict_look_up={"eax": self.diffEax, "ebx": self.diffEbx, "ecx":self.diffEcx, "edx":self.diffEdx,"edi":self.diffEdi,"esi":self.diffEsi,"ebp":self.diffEbp,"esp":self.diffEsp}
+        if dict_look_up[reg]==0:
+            # print ("it is the same")
+            return True
+        else:
+            # print ("it is not the same", hex(self.reg[reg1]),hex(rVal[reg2]), reg1, reg2)
+            return False
     def start(self,gRegsObj):
         self.eax = gRegsObj.eax
         self.ebx = gRegsObj.ebx
@@ -223,6 +332,8 @@ class gadgetRegs:
         self.esp = gRegsObj.esp
     def setEbp(self,ebpVal):
         self.ebp=ebpVal
+        rVal["ebp"]=ebpVal
+
     def setEsp(self,espVal):
         self.esp=espVal
         # regs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
@@ -317,7 +428,21 @@ def disMini(CODED2, offset):
 
 
 gRegs=gadgetRegs()
-gRegs.set(1,2,3,4,5,6,None,None)
+# gRegs.set(1,2,3,4,5,6,None,None)
+# def set(self,eax,ebx,ecx,edx,edi,esi,ebp,esp, changed=False):
+
+rVal={}
+rVal["eax"]=0x111aaa
+rVal["ebx"]=0x222bbb
+rVal["ecx"]=0x333ccc
+rVal["edx"]=0x444ddd
+rVal["edi"]=0x555eee
+rVal["esi"]=0x666eee
+rVal["ebp"]=0xdeaddead
+
+
+gRegs.set(rVal["eax"], rVal["ebx"], rVal["ecx"], rVal["edx"], rVal["edi"], rVal["esi"], None,None)
+
 
 
 def doGC():
@@ -335,7 +460,40 @@ def doGC():
 # def roundup1000(x):
 #     return int(math.ceil(x / 1000.0)) * 1000
 
+def giveStack(uc, arch):
+    # print ("giveStack")
+    # 0x55667799
+    goBackDistance=0x180
+    goForwardDistance=0x100
+    pattern = b'\x99\x77\x66\x55'
+    pattern2 = b'\x55\x66\x77\x99'
 
+    # mem=(uc.mem_read(uc.reg_read(UC_X86_REG_ESP-goBackDistance), 0x150))
+    mem1=uc.mem_read(uc.reg_read(UC_X86_REG_ESP), goForwardDistance)
+    mem2=uc.mem_read(uc.reg_read(UC_X86_REG_ESP-goBackDistance), goBackDistance)
+    # mem=mem1+mem2
+    mem=mem2+mem1
+    # print (cya,binaryToStr(mem),res)
+    
+    if pattern in mem:
+        # print (cya,binaryToStr(mem),res)
+
+        # print (red,"yes",res)
+        start=0
+
+        start = mem.find(pattern , start)
+        # print (hex(start))
+        # print (hex(start -goBackDistance))
+        # print (gre,hex(start-goBackDistance),res)
+        return True,start-goBackDistance
+    return False,0xdeadc0de
+    # stacky1=binaryToStr(uc.mem_read(uc.reg_read(UC_X86_REG_ESP-0x50), 0x50))
+
+    # stacky=binaryToStr(uc.mem_read(uc.reg_read(UC_X86_REG_ESP), 0x100))
+
+
+    # print (cya,stacky1,res)
+    # print (stacky)
 def giveRegs(uc, arch):
     instructLine = "\n\t>>> "
     if arch == 32:
@@ -363,6 +521,10 @@ stopProcess=False
 outFile = open(os.path.join(os.path.dirname(__file__), 'emulationLog.txt'), 'w')
 oldEsp=0x0
 winApiSyscallReached=False
+finalPivotGadgetG=0x6812345
+doAfterPivot=False
+givStDistance=0xdeadc0de
+
 def hook_code2(uc, address, size, user_data):
     global winApiSyscallReached
     global maxCount
@@ -371,7 +533,7 @@ def hook_code2(uc, address, size, user_data):
     global ApiSyscall
     global sysTarget2
     if stopProcess:
-        dp ("** StopProces --> stopping")
+        # print ("** StopProces --> stopping")
         uc.emu_stop()
     
     global outFile
@@ -380,6 +542,11 @@ def hook_code2(uc, address, size, user_data):
     instructLine=""
     global RP
     global targetP
+    global doAfterPivot
+    global finalPivotGadgetG
+    global bGiveStack
+    global givStDistance
+
     r_esp = uc.reg_read(UC_X86_REG_ESP)
     r_eip = uc.reg_read(UC_X86_REG_EIP)
     oldEsp=r_esp
@@ -394,12 +561,22 @@ def hook_code2(uc, address, size, user_data):
 
     except:
         pass
+   
+    if 2==2:
+        # print ("finalPivotGadgetG", hex(finalPivotGadgetG))
+        if doAfterPivot:
+            # print ("address:", hex(address))
+            bGiveStack, givStDistance= giveStack(uc,32)
+            doAfterPivot=False
+        if address==finalPivotGadgetG:
+            # print (red, "this is it!!!!",res)
+            doAfterPivot=True
 
 
     # dp ("locParam2", binaryToStr(bytes(locParam2)))
     maxCount+=1
-    if maxCount > 2000:
-        dp ("Emulation max exceeded. Stopping.")
+    if maxCount > 20000:
+        print ("Emulation max exceeded. Stopping.")
         stopProcess=True
     try:
 
@@ -408,7 +585,7 @@ def hook_code2(uc, address, size, user_data):
     except:
         stopPoint=0x9999999
     if stopPoint==r_eip and stopPoint !=0:
-        dp ("special stopping process: EIP is at ", hex(r_eip))
+        # print ("special stopping process: EIP is at ", hex(r_eip))
         outFile.write("special stopping process: EIP is at " + hex(r_eip))
         
         dp (hex(stopPoint),hex(r_eip))
@@ -416,9 +593,17 @@ def hook_code2(uc, address, size, user_data):
         stopProcess=True
         if stopPoint !=0:
             winApiSyscallReached=True
+            print (gre, "winApiSyscallReached=True!!!!!!!!!!!!!!!!!!!",res)
     elif (sysTarget2==r_eip and ApiSyscall=="syscall"):
-        dp ("special stopping process: EIP is at WinAPI or Syscall")
-        outFile.write("special stopping process: EIP is at WinAPI or Syscall " + hex(r_eip))
+        # print ("special stopping process: EIP is at WinAPI (simulated at 0x55667799) or gadget to invoke Syscall")
+        outFile.write("special stopping process: EIP is at WinAPI (simulated at 0x55667799) or gadget to invoke Syscall - EIP at " + hex(r_eip))
+        
+        dp (hex(sysTarget2),hex(r_eip))
+        stopProcess=True
+        winApiSyscallReached=True
+    elif r_eip == 0x55667799:
+        # print ("special stopping process: EIP is at WinAPI (simulated at 0x55667799) or gadget to invoke Syscall!!")
+        outFile.write("special stopping process: EIP is at WinAPI (simulated at 0x55667799) or gadget to invoke Syscall - EIP at " + hex(r_eip))
         
         dp (hex(sysTarget2),hex(r_eip))
         stopProcess=True
@@ -432,17 +617,13 @@ def hook_code2(uc, address, size, user_data):
         # dp(traceback.format_exc())
         instructLine += " size: 0x%x" % size + '\t'  # size is overflow - why so big?
         outFile.write("abrupt end:  " + instructLine)
-        dp("abrupt end: error reading line of shellcode")
+        # print("abrupt end: error reading line of shellcode")
         stopProcess = True
         # return # terminate func early   --don't comment - we want to see the earlyrror
     programCounter=0  # just temp 0
     bad_instruct = False
 
-    if shells == b'\x00\x00':
-        bad_instruct_count += 1
-        if bad_instruct_count > 5:
-            bad_instruct = True
-
+ 
     verbose=True
     if verbose:
         instructLine += giveRegs(uc,32)
@@ -464,14 +645,81 @@ def hook_code2(uc, address, size, user_data):
             break
         t += 1
 
+    if shells == b'\x00\x00':
+        # print ("increment bad instruction by 1")
+        bad_instruct_count += 1
+        # print (instructLine)
+        if bad_instruct_count > 5:
+            bad_instruct = True
+
     if bad_instruct:
+        # print ("bad instruction-stopping")
         stopProcess = True
 
+def checkRetStart(pe):
+    highest=0x1005000
+    start=0x1005000
+    startRet=0x900000
+    itIsCaught=False
+    for q in pe:
+        if pe[q].emBase !=0:     
+            topSizeForMod=pe[q].emBase + len(pe[q].data)+0x40000
+            # print (q, hex(pe[q].emBase),    "topSizeForMod", hex(topSizeForMod))
+            if startRet >= pe[q].emBase and startRet <= topSizeForMod:
+                # print (red,"it is caught here!!",res)
+                itIsCaught=True
+            if topSizeForMod > highest:
+                highest=topSizeForMod
+    # print ("highest", hex(highest))
+    if itIsCaught:
+        highestTxt=hex(highest)
+        highestTxt=highestTxt[:-3]
+        highestTxt+="000"
+        highest=int(highestTxt,16)
+        # print (hex(highest), highestTxt)
+        # exit()
+        newRet=highest-0x2000
+        return True, newRet
+    else:
+        return False, 0
+def checkNeeds(pe):
+    highest=0x1005000
+    start=0x1005000
+
+    startRet=0x900000
+
+    for q in pe:
+        if pe[q].emBase !=0:     
+            topSizeForMod=pe[q].emBase + len(pe[q].data)+0x40000
+            # print (q, hex(pe[q].emBase),    "topSizeForMod", hex(topSizeForMod))
+            
+            if topSizeForMod > highest:
+                highest=topSizeForMod
+    # print ("highest", hex(highest))
+    if highest!=start:
+        highestTxt=hex(highest)
+        highestTxt=highestTxt[:-3]
+        highestTxt+="000"
+        highest=int(highestTxt,16)
+        # print (hex(highest), highestTxt)
+        # exit()
+        return True, highest
+    else:
+        return False, 0
 def addImgsToEmulation(pe,mu):   
+    # lowest=None
+    
     dp("addImgsToEmulation") 
     for q in pe:
-        if pe[q].emBase !=0:        
-            mu.mem_write(pe[q].emBase, pe[q].data)
+        if pe[q].emBase !=0:     
+            # print (red,q,  "trying    ", res,hex(pe[q].emBase), "size", hex(len(pe[q].data)))   
+
+            try:
+                mu.mem_write(pe[q].emBase, pe[q].data)
+            except:
+          
+            # except:
+                print ("********memory loading erorr*********")
             # dp (binaryToStr(mu.mem_read(pe[q].emBase, 0x10)), pe[q].modName)
             # dp ("adding ", hex(pe[q].emBase), hex(pe[q].emBase + len(pe[q].data)))
 distanceDict={ 
@@ -861,8 +1109,8 @@ targetP=None
 fakeWinAPIInner=b'\x99\x77\x66\x55'
 ApiSyscall="winApi"
 sysTarget2=0
-def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR,PWinApi,sysTarget,rValStr=None):
-    dp("rop_testerRunROP", rValStr)
+def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi,sysTarget,finalPivotGadget1, rValStr=None):
+    # print(blu,"rop_testerRunROP", rValStr,res)
     global maxCount
     global winApiSyscallReached
     global oldEsp
@@ -871,6 +1119,7 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR,PWinApi,
     global sysTarget2
     global RP
     global targetP
+    global finalPivotGadgetG
     maxCount=0
     targetP=targetP2
     sysTarget2=sysTarget
@@ -880,10 +1129,23 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR,PWinApi,
     global stopProcess
     global outFile
     global stack2
+    global doAfterPivot
+    global bGiveStack
+    global givStDistance
+    global bad_instruct_count
+
+    bad_instruct_count=0
+
+    
+    bGiveStack=False
+    givStDistance=0xdeadc0de
+    finalPivotGadgetG=finalPivotGadget1
+    doAfterPivot=False
+
     winApiSyscallReached=False
     stopProcess=False
     sizeG=len(gadgets)
-    outFile.write("New Emulation\n\n\n*************************************************************************************************    "+     "         " +  str(sizeG) + "      " +hex(sizeG))
+    outFile.write("New Emulation\n\n\n*************************************************************************************************    "+     "         length gadgets: " +  str(sizeG) + "      " +hex(sizeG))
 
     dp ("rop_testerRunROP", targetP, targetR)
     dp("*************************************************************************************************")
@@ -899,12 +1161,16 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR,PWinApi,
         # Initialize emulator in X86-32bit mode
         global maxAddress
         mu = Uc(UC_ARCH_X86, UC_MODE_32)
-
         maxCode=0x1005000
+
+        bChkNeeds,highest= checkNeeds(pe)
+        if bChkNeeds:
+            maxCode=highest
+            # print ("highest", hex(highest))
         try:
             mu.mem_map(0x00000000, maxCode)
         except:
-            dp ("********memory loading erorr*********")
+            print (red,"********memory loading erorr*********",res)
         # mu.mem_map(ADDRESS, 2 * 1024 * 1024)
         stack=0x150000
         stack2=stack
@@ -925,7 +1191,6 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR,PWinApi,
         stackT=stack-0x1000
         EXTRA_ADDR=0x50000
         startB=b"\x68\x00\x00\x05\x00"
-        beginTesting=b"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3"
         beginTesting=b"\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3"
 
         # mu.mem_map(stackT, 2 * 1024 * 5024)
@@ -969,16 +1234,19 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR,PWinApi,
                 except:
                     tempF=int(tempF)
 
-                dp ("tempF", hex(tempF))
+                # dp ("tempF", hex(tempF))
                 mu.mem_map(tempF, 0x10000)
                 mu.mem_write(fakeInner2,b'\x00\x00\x00\x00\x00')
                 dp ("succeeded")
             except:
-                dp("memory writing error2!")
+                print("memory writing error2!")
         
 
 
         image2=0x900000
+        bCheckRetStart,newRet= checkRetStart(pe)
+        if bCheckRetStart:
+            image2=newRet
         mu.mem_write(image2,beginTesting)
 
         addImgsToEmulation(pe,mu)
@@ -1029,7 +1297,6 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR,PWinApi,
         # mu.emu_start(image2, image2+200)
 
 
-
         # now dp out some registers
         dp(">>> Emulation done. Below is the CPU context")
 
@@ -1065,6 +1332,7 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR,PWinApi,
         RP.show(mu,ApiSyscall)
 
         # dp ("locShell", hex(locShell))
+        # giveStack(mu,32)
 
         try:
 
@@ -1084,10 +1352,10 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR,PWinApi,
         uc_err = mu.hook_del(hook2)
         # mu.hook_add(UC_HOOK_CODE, hook_code2)
         dp ("uc_err", uc_err)
-
         stopProcess = False
 
-        return gOutput, locParam, locReg, winApiSyscallReached
+
+        return gOutput, locParam, locReg, winApiSyscallReached, givStDistance
 
     except UcError as e:
         dp("ERROR: %s" % e)
@@ -1102,12 +1370,19 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR,PWinApi,
             locParam=RP.giveParamLocOnStack(targetP,"syscall")
         else:
             locParam=RP.giveParamLocOnStack(targetP,"winApi")
-        return gOutput, locParam,oldEsp,winApiSyscallReached
+        return gOutput, locParam,oldEsp,winApiSyscallReached,givStDistance
 
+rop_testerCalled=0
+prevRop_testerCalled=0
 
-def rop_tester(testCode):
+def rop_tester(testCode, ID=False, regWritable=False):
     dp("*************************************************************************************************")
- 
+    global rop_testerCalled
+    global prevRop_testerCalled
+    checkDoGC=prevRop_testerCalled-rop_testerCalled
+    if checkDoGC==20:
+        prevRop_testerCalled=rop_testerCalled
+        doGC()  ## manual garbage collection - memory problems
 
     gOutput=gadgetRegs()
     gOutput.start(gRegs)
@@ -1116,12 +1391,14 @@ def rop_tester(testCode):
         global maxAddress
 
         # testCode=shellList[0]
+        try:
+            mu = Uc(UC_ARCH_X86, UC_MODE_32)
+        except Exception as e:
+            print(yel,"ERROR: %s" % e)
+            print(traceback.format_exc(),res)
 
-        mu = Uc(UC_ARCH_X86, UC_MODE_32)
-        
         # map 2MB memory for this emulation
         mu.mem_map(ADDRESS, 2 * 1024 * 1024)
-
         stack=0x440000
         stackT=stack-0x1000
         EXTRA_ADDR=0x50000
@@ -1140,12 +1417,14 @@ def rop_tester(testCode):
         mu.mem_write(ADDRESS, testCode)
 
         # initialize machine registers
-        mu.reg_write(UC_X86_REG_EAX, gRegs.eax)
-        mu.reg_write(UC_X86_REG_EBX, gRegs.ebx)
-        mu.reg_write(UC_X86_REG_ECX, gRegs.ecx)
-        mu.reg_write(UC_X86_REG_EDX, gRegs.edx)
-        mu.reg_write(UC_X86_REG_ESI, gRegs.esi)
-        mu.reg_write(UC_X86_REG_EDI, gRegs.edi)
+        if regWritable != False:
+            gOutput.setRegWrit(regWritable, stack-0x200)
+        mu.reg_write(UC_X86_REG_EAX, gOutput.eax)
+        mu.reg_write(UC_X86_REG_EBX, gOutput.ebx)
+        mu.reg_write(UC_X86_REG_ECX, gOutput.ecx)
+        mu.reg_write(UC_X86_REG_EDX, gOutput.edx)
+        mu.reg_write(UC_X86_REG_ESI, gOutput.esi)
+        mu.reg_write(UC_X86_REG_EDI, gOutput.edi)
         # mu.reg_write(UC_X86_REG_XMM0, 0x000102030405060708090a0b0c0d0e0f)
         # mu.reg_write(UC_X86_REG_XMM1, 0x00102030405060708090a0b0c0d0e0f0)
 
@@ -1195,13 +1474,16 @@ def rop_tester(testCode):
         return gOutput
 
     except UcError as e:
-        dp("ERROR: %s" % e)
-        dp(traceback.format_exc())
+        dp(yel,"ERROR: %s" % e)
+        dp(traceback.format_exc(),res)
+        doGC()
+        if ID!="special":
+            gOutput=  rop_tester(testCode,"special")
+            return gOutput
         giveRegOuts(mu)
         gOutput.setError(e)
         # errorESP(mu)
         giveRegOuts(mu)
-
         return gOutput
 
 
