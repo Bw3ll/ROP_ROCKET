@@ -53,9 +53,8 @@ def checkFreeBadBytes(opt,fg,address, bad,myDict=None,pe=None,n=None, checkImg=F
 		if not acceptASLR:
 			mod=fg.rop[address].mod
 			pe[mod].aslrStatus
-			# print ("ASLR", mod, pe[mod].aslrStatus)
 			if pe[mod].aslrStatus:
-				# print ("bad ASLR")
+				# print ("ASLR", mod, pe[mod].aslrStatus)
 				return False
 	except:
 		pass

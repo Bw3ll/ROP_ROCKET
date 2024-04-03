@@ -153,8 +153,6 @@ class gadgetChains:
 		self.sr_system=None
 		self.sr_getProcAddress=None
 		self.md_virtualProtect=None
-	def sayHi(self):
-		print ("hi")
 	def addHg32to64(self,val):
 		self.hg32to64=val
 	def addHg64to32(self,val):
@@ -191,6 +189,12 @@ class ropChainObj:
 		pass
 	def modStack(self,new):
 		self.stack=new
+	def modStackAddFirst(self,new):
+		old=self.stack
+		nList=new
+		nList.extend(old)
+		self.stack=nList
+
 	# def copy(self):
 	# 	__init__(self, self.gadget,self.comment,self.stack,self.index)
 	# 	#rop cahin object
@@ -277,7 +281,6 @@ class gadgets:
 		else:
 			self.opcode="c2"
 	def setFSIndex(self,val):
-		# print ("setFSIndex", val)
 		self.FSIndex=val
 	def addHg1(self,val):
 		self.hg1=val			
@@ -2385,7 +2388,7 @@ class PEInfo:
 		self.pe = "pe" #pefile.PE(self.peName)
 		self.data = b'\x00'
 		self.VirtualAdd = 0
-		self.ImageBase = 0
+		self.imageBase = 0
 		self.vSize = 0
 		self.SizeOfRawData = 0
 		self.isDLL=True
@@ -2412,6 +2415,8 @@ class PEInfo:
 		self.extracted=False
 		self.dllDict={}
 		self.emBase=0  # emulated base - nothing to do with actual bases used - these are allocated in emulation to avoid conflicts
+		self.emBaseOld=0  # emulated base - nothing to do with actual bases used - these are allocated in emulation to avoid conflicts
+
 
 	def setExtracted(self,val):
 		self.extracted=True
@@ -2439,14 +2444,14 @@ class PEInfo:
 		self.pe = val
 	def setVirtualAdd(self, val):		
 		self.VirtualAdd = val
-	def setImageBase(self, val):		
-		self.ImageBase = val
 	def setVSize(self, val):		
 		self.vSize = val
 	def setSizeOfRawData(self, val):		
 		self.SizeOfRawData = val
 	def setStartLoc(self, val):		
 		self.startLoc = val
+	def setImageBase(self,val):
+		self.imageBase=val
 	def setEndAddy(self, val):		
 		self.endAddy = val
 	def setEntryPoint(self, val):		

@@ -20,6 +20,7 @@ import os
 import sys
 import struct
 import signal
+
 # memory address where emulation starts
 ADDRESS = 0x1000000
 
@@ -267,7 +268,8 @@ class gadgetRegs:
             print ("*Error:", self.errorType)
     def checkFree(self,regs, remExc=None, espGuard=0x100):
         # print ("checkFree", regs, remExc)
-        
+        if remExc=="ds" or remExc=="fs" or remExc=="es" :
+            return False,0
         try:
             regs=set(regs)
         except:
@@ -285,7 +287,7 @@ class gadgetRegs:
                         # print (yel,"bads",r, hex(self.diffs[r]),res)
                         return False,0
                 except:
-                    print (yel,"checkfree except",res)
+                    # print (yel,"checkfree except",res)
                     return False,0
                     break
                     pass
@@ -297,13 +299,14 @@ class gadgetRegs:
                 pass
             return False,0
         except Exception as e:
-            print("cfree ERROR: %s" % e)
-            print(traceback.format_exc())
-            print ("returning false")
+            dp("cfree ERROR: %s" % e)
+            dp(traceback.format_exc())
             return False,0
             
     def verifyValSame(self,reg1,reg2):
         # print ("verifyValSame",reg1, reg2)
+        if reg1=="ds" or reg1=="fs" or reg1=="es" or reg2=="ds" or reg2=="fs" or reg2=="es" :
+            return False,0
         if rVal[reg1] ==self.reg[reg2]:
             # print ("it is the same")
             return True
@@ -333,7 +336,9 @@ class gadgetRegs:
     def setEbp(self,ebpVal):
         self.ebp=ebpVal
         rVal["ebp"]=ebpVal
-
+    def setEsp(self,espVal):
+        self.esp=espVal
+        rVal["esp"]=espVal
     def setEsp(self,espVal):
         self.esp=espVal
         # regs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
@@ -439,6 +444,8 @@ rVal["edx"]=0x444ddd
 rVal["edi"]=0x555eee
 rVal["esi"]=0x666eee
 rVal["ebp"]=0xdeaddead
+rVal["esp"]=0xdeaddead
+
 
 
 gRegs.set(rVal["eax"], rVal["ebx"], rVal["ecx"], rVal["edx"], rVal["edi"], rVal["esi"], None,None)
@@ -459,18 +466,28 @@ def doGC():
 
 # def roundup1000(x):
 #     return int(math.ceil(x / 1000.0)) * 1000
-
-def giveStack(uc, arch):
-    # print ("giveStack")
+def rg(val):
+    # dp ("val", val, type(val))
+    rg=struct.pack("<I", val)
+    return rg
+def giveStackSys(uc, arch):
+    # print (gre,"giveStackSys",res)
+    global ApiSyscall
+    global sysTarget2
+    if ApiSyscall!="syscall":
+        return False, 0x696969699
+    
     # 0x55667799
-    goBackDistance=0x180
-    goForwardDistance=0x100
-    pattern = b'\x99\x77\x66\x55'
-    pattern2 = b'\x55\x66\x77\x99'
-
+    pattern=rg(sysTarget2)
+    # print ("pattern:",binaryToStr(pattern), hex(sysTarget2))
+    goBackDistance=0x2800
+    goForwardDistance=0x3000
     # mem=(uc.mem_read(uc.reg_read(UC_X86_REG_ESP-goBackDistance), 0x150))
     mem1=uc.mem_read(uc.reg_read(UC_X86_REG_ESP), goForwardDistance)
     mem2=uc.mem_read(uc.reg_read(UC_X86_REG_ESP-goBackDistance), goBackDistance)
+    mem3=uc.mem_read(uc.reg_read(UC_X86_REG_ESP), 20)
+
+
     # mem=mem1+mem2
     mem=mem2+mem1
     # print (cya,binaryToStr(mem),res)
@@ -485,6 +502,44 @@ def giveStack(uc, arch):
         # print (hex(start))
         # print (hex(start -goBackDistance))
         # print (gre,hex(start-goBackDistance),res)
+        if start-goBackDistance==0:
+            # print(yel,binaryToStr(mem3),res)
+            pass
+        return True,start-goBackDistance
+    return False,0xdeadc0de
+
+def giveStack(uc, arch):
+    global ApiSyscall
+    if ApiSyscall=="syscall":
+        return False, 0x696969699
+    # print (gre,"giveStack",res)
+    # 0x55667799
+    global  fakeWinAPIInner
+    goBackDistance=0x2800
+    goForwardDistance=0x3000
+    # mem=(uc.mem_read(uc.reg_read(UC_X86_REG_ESP-goBackDistance), 0x150))
+    mem1=uc.mem_read(uc.reg_read(UC_X86_REG_ESP), goForwardDistance)
+    mem2=uc.mem_read(uc.reg_read(UC_X86_REG_ESP-goBackDistance), goBackDistance)
+    mem3=uc.mem_read(uc.reg_read(UC_X86_REG_ESP), 20)
+
+
+    # mem=mem1+mem2
+    mem=mem2+mem1
+    # print (cya,binaryToStr(mem),res)
+    
+    if fakeWinAPIInner in mem:
+        # print (cya,binaryToStr(mem),res)
+
+        # print (red,"yes",res)
+        start=0
+
+        start = mem.find(fakeWinAPIInner , start)
+        # print (hex(start))
+        # print (hex(start -goBackDistance))
+        # print (gre,hex(start-goBackDistance),res)
+        if start-goBackDistance==0:
+            # print(yel,binaryToStr(mem3),res)
+            pass
         return True,start-goBackDistance
     return False,0xdeadc0de
     # stacky1=binaryToStr(uc.mem_read(uc.reg_read(UC_X86_REG_ESP-0x50), 0x50))
@@ -521,11 +576,12 @@ stopProcess=False
 outFile = open(os.path.join(os.path.dirname(__file__), 'emulationLog.txt'), 'w')
 oldEsp=0x0
 winApiSyscallReached=False
-finalPivotGadgetG=0x6812345
+finalPivotGadgetG=0xbadddddd
 doAfterPivot=False
 givStDistance=0xdeadc0de
 
 def hook_code2(uc, address, size, user_data):
+    # print ("hook_code2")
     global winApiSyscallReached
     global maxCount
     global stopProcess
@@ -546,6 +602,7 @@ def hook_code2(uc, address, size, user_data):
     global finalPivotGadgetG
     global bGiveStack
     global givStDistance
+    global ApiSyscall
 
     r_esp = uc.reg_read(UC_X86_REG_ESP)
     r_eip = uc.reg_read(UC_X86_REG_EIP)
@@ -562,11 +619,20 @@ def hook_code2(uc, address, size, user_data):
     except:
         pass
    
-    if 2==2:
-        # print ("finalPivotGadgetG", hex(finalPivotGadgetG))
+    if ApiSyscall!="syscall":
+        # print ("finalPivotGadgetG",hex(finalPivotGadgetG))
+
+        if doAfterPivot:
+            # print (red,"doAfterPivot address:", hex(address))
+            bGiveStack, givStDistance= giveStack(uc,32)
+            doAfterPivot=False
+        if address==finalPivotGadgetG:
+            # print (red, "this is it!!!!",res)
+            doAfterPivot=True
+    else:
         if doAfterPivot:
             # print ("address:", hex(address))
-            bGiveStack, givStDistance= giveStack(uc,32)
+            bGiveStack, givStDistance= giveStackSys(uc,32)
             doAfterPivot=False
         if address==finalPivotGadgetG:
             # print (red, "this is it!!!!",res)
@@ -576,7 +642,7 @@ def hook_code2(uc, address, size, user_data):
     # dp ("locParam2", binaryToStr(bytes(locParam2)))
     maxCount+=1
     if maxCount > 20000:
-        print ("Emulation max exceeded. Stopping.")
+        # print ("Emulation max exceeded. Stopping.")
         stopProcess=True
     try:
 
@@ -593,7 +659,7 @@ def hook_code2(uc, address, size, user_data):
         stopProcess=True
         if stopPoint !=0:
             winApiSyscallReached=True
-            print (gre, "winApiSyscallReached=True!!!!!!!!!!!!!!!!!!!",res)
+            # print (gre, "winApiSyscallReached=True!!!!!!!!!!!!!!!!!!!",res)
     elif (sysTarget2==r_eip and ApiSyscall=="syscall"):
         # print ("special stopping process: EIP is at WinAPI (simulated at 0x55667799) or gadget to invoke Syscall")
         outFile.write("special stopping process: EIP is at WinAPI (simulated at 0x55667799) or gadget to invoke Syscall - EIP at " + hex(r_eip))
@@ -706,22 +772,49 @@ def checkNeeds(pe):
         return True, highest
     else:
         return False, 0
+
+saveForLater=""
 def addImgsToEmulation(pe,mu):   
     # lowest=None
-    
+    global saveForLater
+    saveForLater=""
     dp("addImgsToEmulation") 
     for q in pe:
         if pe[q].emBase !=0:     
             # print (red,q,  "trying    ", res,hex(pe[q].emBase), "size", hex(len(pe[q].data)))   
 
             try:
+                # print(mag,q, hex(pe[q].emBase),res)
+
                 mu.mem_write(pe[q].emBase, pe[q].data)
+                # print ("   ===>    succeded\n\t",hex(pe[q].emBase, + hex(pe[q].emBase+len(pe[q].data))))
+                saveForLater+= q + ": succeded --> \t" + hex(pe[q].emBase) + " " + hex(pe[q].emBase+len(pe[q].data))+"\n"
             except:
-          
-            # except:
-                print ("********memory loading erorr*********")
-            # dp (binaryToStr(mu.mem_read(pe[q].emBase, 0x10)), pe[q].modName)
-            # dp ("adding ", hex(pe[q].emBase), hex(pe[q].emBase + len(pe[q].data)))
+                # end=pe[q].emBase+len(pe[q].data)
+                # print (q,"********memory loading error1*********\n\t",hex(pe[q].emBase), hex(end))
+                
+                topSizeForMod=len(pe[q].data)+0x40000
+                highestTxt=hex(topSizeForMod)
+                highestTxt=highestTxt[:-3]
+                highestTxt+="000"
+                maxSize=int(highestTxt,16)
+                try:
+                    mu.mem_map(pe[q].emBase, maxSize)
+                    mu.mem_write(pe[q].emBase, pe[q].data)
+                    # print ("Mapped and wrote")
+                    saveForLater+= q +":  TRY AGAIN --> \t" + hex(pe[q].emBase) + " " + hex(pe[q].emBase+len(pe[q].data))
+
+                except Exception as e:
+                    dp (red,q, "********memory loading error2*********",res)
+                    qS=pe[q].emBase+len(pe[q].data)
+                    dp ("\n\t",hex(pe[q].emBase), hex(qS))
+
+                    dp(yel,"ERROR: %s" % e)
+                    dp(traceback.format_exc(),res)
+
+
+    # print ("press any key")
+    # input()
 distanceDict={ 
     'targetDllString':{'distanceToPayload':0x400, 'numLoc':2,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'msvcrt.dll','size':12,'NullAfterString':True,'isStruct':False},
@@ -1133,6 +1226,8 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
     global bGiveStack
     global givStDistance
     global bad_instruct_count
+    global ApiSyscall
+    outFile.write(saveForLater)
 
     bad_instruct_count=0
 
@@ -1150,7 +1245,6 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
     dp ("rop_testerRunROP", targetP, targetR)
     dp("*************************************************************************************************")
     doGC()
-
     try:
         outFile.write(rValStr)
     except:
@@ -1161,16 +1255,21 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         # Initialize emulator in X86-32bit mode
         global maxAddress
         mu = Uc(UC_ARCH_X86, UC_MODE_32)
-        maxCode=0x1005000
-
-        bChkNeeds,highest= checkNeeds(pe)
-        if bChkNeeds:
-            maxCode=highest
-            # print ("highest", hex(highest))
+        maxCode=0x5005000
+                # 0x900000
+        # bChkNeeds,highest= checkNeeds(pe)
+        # if bChkNeeds and 2==3:
+        #     maxCode=highest
+        try:
+            mu.mem_unmap(0x00000000, maxCode)
+        except:
+            # print ("no need to unmap")
+            pass
         try:
             mu.mem_map(0x00000000, maxCode)
         except:
-            print (red,"********memory loading erorr*********",res)
+            print (red,"********memory loading erorr: emulation will fail*********",res)
+            # exit()
         # mu.mem_map(ADDRESS, 2 * 1024 * 1024)
         stack=0x150000
         stack2=stack
@@ -1239,7 +1338,7 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
                 mu.mem_write(fakeInner2,b'\x00\x00\x00\x00\x00')
                 dp ("succeeded")
             except:
-                print("memory writing error2!")
+                dp("memory writing error2!")
         
 
 
@@ -1247,9 +1346,17 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         bCheckRetStart,newRet= checkRetStart(pe)
         if bCheckRetStart:
             image2=newRet
-        mu.mem_write(image2,beginTesting)
+        try:
+            mu.mem_write(image2,beginTesting)
+        except:
+            mu.mem_map(image2, 0x10000)
+            mu.mem_write(image2,beginTesting)
+
+
 
         addImgsToEmulation(pe,mu)
+        # print("press any key 2")
+        # input()
         testCode=b'\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3'
         # mu.mem_write(stack,EXTRA_ADDR.to_bytes(4, "little"))
         maxSize=len(testCode)
@@ -1273,6 +1380,8 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         # dp ("stack2B",binaryToStr(mu.mem_read(stack, 0x10)))
 
         gOutput.setEbp(stack-600)
+        gOutput.setEsp(stack)
+
         giveRegOuts(mu)
         # tracing all basic blocks with customized callback
         # mu.hook_add(UC_HOOK_BLOCK, hook_block)
@@ -1292,9 +1401,10 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         
 
         # dp ("loc 1 mem",binaryToStr(mu.mem_read(stack+0x700, 0x100)))
-
-        mu.emu_start(image2, 0xFFFFFFFF)
+        # mu.emu_start(image2, 0xFFFFF)
         # mu.emu_start(image2, image2+200)
+        mu.emu_start(image2, image2+0xFFFFF)
+
 
 
         # now dp out some registers
@@ -1324,6 +1434,7 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         # locShell=RP.giveParamLocOnStack("shellcode")
 
         # outFile.close()
+        outFile.write("finalPivotGadgetG: " + hex(finalPivotGadgetG)+"\n" )
 
         diffPR=locParam-locReg
         dp ("API or Syscall Reached?", winApiSyscallReached)
@@ -1345,8 +1456,11 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
             pass
 
         # m = unicorn.Uc.mem_unmap(self, addr, size)
-
-        mu.mem_unmap(0x00000000, maxCode)
+        try:
+            mu.mem_unmap(0x00000000, maxCode)
+        except:
+            # print ("no need to unmap")
+            pass
         # dp ("unmapped")
         # mu.mem_write(stack,gadgets)
         uc_err = mu.hook_del(hook2)
@@ -1358,9 +1472,12 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         return gOutput, locParam, locReg, winApiSyscallReached, givStDistance
 
     except UcError as e:
-        dp("ERROR: %s" % e)
-        dp(traceback.format_exc())
+        doGC()
+        dp("ERROR rop_testerRunROP: %s" % e)
+        errorMsg=(traceback.format_exc())
+        dp(errorMsg)
         giveRegOuts(mu)
+        outFile.write(errorMsg)
         gOutput.setError(e)
         # errorESP(mu)
         giveRegOuts(mu)

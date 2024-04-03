@@ -64,7 +64,7 @@ def splash():
 /_/|_|\____/_/    /_/|_|\____/\___/_/|_/___/ /_/    
                                                     
 """+res
-	author=yel+"                   v.0.9:  Bramwell Brizendine, 2023"+res
+	author=yel+"                   v.0.9400:  Bramwell Brizendine, 2023-2024"+res
 
 	print (banner)
 	print (author)
@@ -89,13 +89,16 @@ def uiShowOptionsMainMenu(x86,x64):
 	text += "  {}        \n".format(cya + "g"+res+" -"+gre+"  Generate Heaven's Gate x32 to x64."+ res)
 	text += "  {}        \n".format(cya + "t"+res+" -"+gre+"  Generate Heaven's Gate x64 to x32."+ res)
 
-	text += "  {}        \n".format(cya + "a"+res+" -"+gre+"  Generate Windows Syscall - "+yel+
-		"NtAllocateVirtualMemory."+ res)
-	text += "  {}        \n".format(cya + "v"+res+" -"+gre+"  Generate Windows Syscall - "+yel+"NtProtectVirtualMemory."+ res)
-	text += "  {}        \n".format(cya + "s"+res+" -"+gre+"  Generate Shellcodeless ROP: "+yel+"System."+ res)
-	text += "  {}        \n".format(cya + "d"+res+" -"+gre+"  Generate Shellcodeless ROP: "+yel+"GetProcAddress."+ res)
+	text += "  {}        \n".format(cya + "a"+res+" -"+gre+"  Generate Windows Syscall: "+yel+
+		"NtAllocateVirtualMemory"+ res)
+	text += "  {}        \n".format(cya + "v"+res+" -"+gre+"  Generate Windows Syscall: "+yel+"NtProtectVirtualMemory"+ res)
+	text += "  {}        \n".format(cya + "s"+res+" -"+gre+"  Generate Shellcodeless ROP: "+yel+"System"+ res)
+	text += "  {}        \n".format(cya + "d"+res+" -"+gre+"  Generate Shellcodeless ROP: "+yel+"GetProcAddress"+ res)
 
-	text += "  {}        \n".format(cya + "m"+res+" -"+gre+"  Generate Mov Dereference:"+yel+" VirtualProtect."+ res)
+	text += "  {}        \n".format(cya + "m"+res+" -"+gre+"  Generate Mov Dereference:"+yel+" VirtualProtect"+ res)
+	text += "  {}        \n".format(cya + "!"+res+" -"+gre+"  Generate pushad:"+yel+" VirtualProtect"+ res)
+	text += "  {}        \n".format(cya + "@"+res+" -"+gre+"  Generate pushad:"+yel+" VirtualAlloc"+ res)
+
 	text += "  {}        \n".format(cya + "o"+res+" -"+gre+"  Obfuscate gadget/value."+ res)
 	text += "  {}        \n".format(cya + "b"+res+" -"+gre+"  Set Bad bytes / Bad chars and ImageBase."+ res)
 
