@@ -5281,6 +5281,7 @@ def findMovEsp(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 		return False,0
 
 def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
+	global rC
 	dp ("findMovDeref:", reg, length1)
 	# print ("findMovDeref", reg, op2)
 	bExists, myDict=fg.getFg("movDword",reg)
@@ -5303,6 +5304,7 @@ def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 			return False,0
 		if not length1: # was else
 			for p in myDict:
+				checkRopTester()
 				out=disOffset(p)
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
@@ -5310,9 +5312,10 @@ def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 					out=disOffset(p)
 					if re.search(isRegDeref, out) and "leave" not in out:
 						# print (cya, out,res, reg)
+						rC+=1
 						outEmObj=rop_tester(myDict[p].raw,"findMovDeref",reg)
 						# outEmObj.show()
-						checkedFree, stackPivotAmount= outEmObj.checkFree(excludeRegs,[reg])
+						checkedFree, stackPivotAmount= outEmObj.checkFree(excludeRegs)#,[reg])
 						# print (red,22, excludeRegs,reg,res)
 						if checkedFree:
 							if reg != op2:
@@ -6502,6 +6505,9 @@ def getHGandPops(hgExcludeRegs,excludeRegs,bad,availableRegs,pu1, destination):
 
 	return False,[]
 def findAddTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,comment):
+	
+	if reg1==reg2:
+		return False,0
 	availableRegs={"eax","ebx","ecx","edx", "esi","edi","ebp"}
 	for d in excludeRegs:
 		try:
@@ -6799,7 +6805,7 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 				return True, package
 
 	return False,0
-def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment="", excludeXor=False,excludeXchg=False, excludeSub=False,excludePushPop=False,ID=None):
+def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment="", excludeXor=False,excludeXchg=False, excludeSub=False,excludePushPop=False, excludeDeeper=False,ID=None):
 	# print (red,"findTransfer", reg, op2,res)
 	try:
 		if comment==None:
@@ -6821,7 +6827,6 @@ def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment=
 		foundAT, gAT= findAddTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
 		if foundAT:
 			return True, gAT
-		
 
 		if not excludeXor:
 				foundXT, gXT= findXorTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
@@ -6832,41 +6837,51 @@ def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment=
 			foundST, gST= findSubTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
 			if foundST:
 				return True, gST
-		
+			
 		if not excludePushPop:
 			foundMEsp, mEsp, newReg,stackPivotAmount,c3Status,c2Adjust = getPushPopReg(op2, reg,excludeRegs,espDesiredMovement)	
+			# foundMEsp=False
 			if foundMEsp:
 				if stackPivotAmount ==0:
 					cPuPo=chainObj(mEsp,  "Transfer "+op2 + " to " + reg, [])
 				else:
 					filler=genFiller(stackPivotAmount)
-					cPuPo=chainObj(mEsp,  "Transfer2 "+op2 + " to " + reg, filler)
+					cPuPo=chainObj(mEsp,  "Transfer(2) "+op2 + " to " + reg, filler)
 				cPuPo=pkBuild([cPuPo])
 				return True, cPuPo
-			if not foundMEsp:
-				foundMEsp, mEsp, newReg,stackPivotAmount,c3Status,c2Adjust = getPushPopReg(op2, reg,excludeRegs,espDesiredMovement,False,False)
-				if foundMEsp:
-					foundT, gT4 = findUniTransfer(reg,newReg, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +newReg+" to " + reg, True,True,True,False)
-					if foundT:
-						filler2=[]
-						if stackPivotAmount ==0:
-							cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
-							if c3Status!="c3":
-								cMEsp=chainObj(mEsp,  "Save esp to "+reg,[])
-								filler2=genFiller(c2Adjust)
-								gT4[0].modStackAddFirst(filler2)
-						else:
-							filler=genFiller(stackPivotAmount)
-							cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
-							if c3Status!="c3":
-								filler2=genFiller(c2Adjust)
-						pk=pkBuild([cMEsp,gT4])
-						return True, pk
+		if not excludeDeeper:
+			foundMEsp, pk = deeperGetPushPopReg(op2, reg,excludeRegs,espDesiredMovement,bad,True,	False,False)
+			if foundMEsp:
+				return True, pk
 		return False, 0
 	except Exception as e:
-		print ("exception - findUniTransfer", sysTarget)
+		print ("exception - findUniTransfer")
 		print(e)
 		print(traceback.format_exc())
+
+def deeperGetPushPopReg(op2, reg,excludeRegs,espDesiredMovement, bad,length1,regMatch=True, c3Only=True,notESP=True,):
+	foundMEsp, mEsp, newReg,stackPivotAmount,c3Status,c2Adjust = getPushPopReg(op2, reg,excludeRegs,espDesiredMovement,False,False)
+	if foundMEsp:
+		foundT, gT4 = findUniTransfer(reg,newReg, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +newReg+" to " + reg, True,True,True,True,False)
+		if foundT:
+			filler2=[]
+			if stackPivotAmount ==0:
+				cMEsp=chainObj(mEsp,  "Transfer(3) "+op2 + " to " + reg, [])
+				if c3Status!="c3":
+					cMEsp=chainObj(mEsp,  "Transfer(4) "+op2 + " to ",[])
+					filler2=genFiller(c2Adjust)
+					gT4[0].modStackAddFirst(filler2)
+			else:
+				filler=genFiller(stackPivotAmount)
+				cMEsp=chainObj(mEsp,  "Transfer(5) "+op2 + " to ", filler)
+				if c3Status!="c3":
+					filler2=genFiller(c2Adjust)
+					gT4[0].modStackAddFirst(filler2)
+			pk=pkBuild([cMEsp,gT4])
+			return True, pk
+	return False,0
+
+
 def xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement):
 	dp ("xchgMovReg", reg, op2)
 	foundX, x1 = findXchg(reg,op2,bad,length1, excludeRegs,espDesiredMovement)
@@ -7629,6 +7644,7 @@ def findXchgMovRegSpecial(reg1, bad,length1,excludeRegs,espDesiredMovement):
 		return False,0,0
 def getPushPopESP(reg,excludeRegs,espDesiredMovement,regMatch, c3Only, comment=True):
 	# print(gre,"getPushPopESP",reg,res)
+	global rC
 	instruction="push"
 	excludeRegsSet=set(excludeRegs)
 	bExists, myDict=fg.getFg(instruction,"esp")
@@ -7636,6 +7652,7 @@ def getPushPopESP(reg,excludeRegs,espDesiredMovement,regMatch, c3Only, comment=T
 	newReg=None
 	if bExists:
 		for p in myDict:
+			checkRopTester()
 			continueFlag=False
 			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 			out =disOffset(p)
@@ -7644,7 +7661,7 @@ def getPushPopESP(reg,excludeRegs,espDesiredMovement,regMatch, c3Only, comment=T
 				continue
 			if re.search( r'^pop [fg]* | pop es ', out, re.M|re.I) or not freeBad:
 				continue
-			if "pop" in out and  "[" not in out and  "add esp" not in out and  "sub esp" not in out and  "adc esp" not in out and  "sbb esp" not in out and not "div" in out and not "leave" in out and "mov esp" not in out and "fdiv" not in out:
+			if "pop" in out and  "[" not in out and  "add esp" not in out and  "sub esp" not in out and  "adc esp" not in out and  "sbb esp" not in out and not "div" in out and not "leave" in out and "mov esp" not in out and "fdiv" not in out and "push esp" in out:
 				pushInstances = re.findall('push', out)
 				if len((pushInstances))>1:
 					# print ("continueFlag1")
@@ -7682,13 +7699,16 @@ def getPushPopESP(reg,excludeRegs,espDesiredMovement,regMatch, c3Only, comment=T
 					# print ("it gets clobbered!", checkForClobber[1])
 					# print ("continueFlag3")
 					continue
+				rC+=1
 				outEmObj=rop_tester(myDict[p].raw, hex(p)+"  2")
 				# outEmObj.show()
 				
-				checkedFree, stackPivotAmount= outEmObj.checkFree(excludeRegs,[newReg])
+				checkedFree, stackPivotAmount= outEmObj.checkFree(excludeRegs)#,[newReg])
 				if not checkedFree:
 					continue
-					
+				
+				# print (mag,"checkfreed esp", disOffset(p),res)
+
 				if 2==2:
 					c2Amt=0
 					c2Search=re.findall('ret 0x[0-9a-f]+|ret \d', out)
@@ -7742,6 +7762,7 @@ def getPushPopReg(reg, reg2,excludeRegs,espDesiredMovement,regMatch=True, c3Only
 				continueFlag=False
 				if not myDict[p].opcode=="c3" and c3Only:
 					continue
+
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 				out =disOffset(p)
 				out+=""
@@ -7774,9 +7795,10 @@ def getPushPopReg(reg, reg2,excludeRegs,espDesiredMovement,regMatch=True, c3Only
 						continue
 					rC+=1
 					outEmObj=rop_tester(myDict[p].raw, hex(p)+"  2")
-					checkedFree, stackPivotAmount= outEmObj.checkFree(excludeRegs,[newTransferReg])
+					checkedFree, stackPivotAmount= outEmObj.checkFree(excludeRegs)#,[newTransferReg])
 					c2Amt=0
 					if checkedFree and not continueFlag:
+						# print (yel,"checkfreed", disOffset(p),res)
 						if reg != reg2 and reg != newTransferReg:
 							if outEmObj.verifyValSame(reg,newTransferReg):
 								# print (cya,out,res)
@@ -7883,10 +7905,100 @@ def findStackPivot(reg,bad,length1, excludeRegs,regsNotUsed,comment):
 		showChain(package)
 		return True, package
 
+def findMovDerefGetStackOld(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distEsp):
+	dp ("***regsNotUsed", regsNotUsed)
+	try:
+		for op2 in regsNotUsed:
+			excludeRegs2= copy.deepcopy(excludeRegs)
+			excludeRegs2.append(op2)
+			foundL1, p2, chP = loadReg(op2,bad,length1,excludeRegs2,distEsp)
+			if not foundL1:
+				dp ("continue p2")
+				continue
+			foundMEsp, mEsp = findMovEsp(reg,bad,length1, excludeRegs2,espDesiredMovement)
+			if foundMEsp:
+				cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
+			if not foundMEsp:
+			# if 1==1:
+				# foundT, mEsp = xchgMovReg("esp",reg, bad,length1,excludeRegs2,espDesiredMovement)
+				# 	cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
+				# if not foundT:				
+				# foundT, mEsp,newReg = findMovRegSpecial("esp", bad,length1,excludeRegs2,espDesiredMovement)
+				# print ("continue mEsp")
+				foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs2,espDesiredMovement,True,True)
+				if foundMEsp:
+					if stackPivotAmount ==0:
+						cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
+					else:
+						filler=genFiller(stackPivotAmount)
+						cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
+					# showChain(pkBuild([cMEsp]),True)
+					# print ("stackPivotAmount", stackPivotAmount)
+					# print ("regsNotUsed", regsNotUsed)
+					# print ("excludeRegs2", excludeRegs2)
+					# home
+				if not foundMEsp:
+					foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs2,espDesiredMovement,False,False)
+				if foundMEsp:
+					cMEsp=chainObj(0x56ee7f,  "Save esp to "+reg, [0xdeadc0de,0xdeadc0de])
+					foundT4, gT4 = findUniTransfer(reg,newReg, bad,length1,excludeRegs2,0, "Transfer to " + reg)
+					if foundT4:
+						filler2=[]
+						if stackPivotAmount ==0:
+							cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
+							if c3Status!="c3":
+								cMEsp=chainObj(mEsp,  "Save esp to "+reg,[])
+								filler2=genFiller(c2Adjust)
+								gT4[0].modStackAddFirst(filler2)
+						else:
+							filler=genFiller(stackPivotAmount)
+							cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
+							# showChain([cMEsp],True)
+							test=pkBuild([cMEsp])
+							# showChain(test,True)
+							if c3Status!="c3": #now
+								filler2=genFiller(c2Adjust)
+								# print (cya)
+								# temp=pkBuild([gT4])
+								# showChain(temp,True)
+								gT4[0].modStackAddFirst(filler2)
+								# temp2=pkBuild([gT4[0]])
+								# print (yel)
+								# print(33)
+								# showChain(temp2,True)
+								# print(res)
+						
+						cMEsp=pkBuild([cMEsp,gT4])
+				
+			if not foundMEsp:
+				# print ("continue foundMEsp2")
+				continue
+			foundAdd, a1 = findGenericOp2("add", op2,reg,bad,length1, excludeRegs2,espDesiredMovement)
+			if not foundAdd:
+				# print ("continue a1")
+				continue
+			if foundL1 and foundAdd and foundMEsp:
+				# cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
+				cA=chainObj(a1, "Adjust " +reg +" to parameter ", [])
+				
+				package=pkBuild([cMEsp,chP,cA])
+				# print ("get esp",gre)
+				# showChain(package,True)
+				# print(res)
+				return True, package
+		# print ("findMovDerefGetStack return false")
+		return False, -0x666
+	except Exception as e:
+		print ("exception 2", sysTarget)
+		print(e)
+		print(traceback.format_exc())
+
+
 def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distEsp):
 	dp ("***regsNotUsed", regsNotUsed)
 	try:
 		for op2 in regsNotUsed:
+			cMEsp=0
 			excludeRegs2= copy.deepcopy(excludeRegs)
 			excludeRegs2.append(op2)
 			foundL1, p2, chP = loadReg(op2,bad,length1,excludeRegs2,distEsp)
@@ -7907,6 +8019,7 @@ def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMove
 				if not foundMEsp:
 					foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs2,espDesiredMovement,False,False)
 				if foundMEsp:
+					# print ("yes")
 					# cMEsp=chainObj(0x56ee7f,  "Save esp to "+reg, [0xdeadc0de,0xdeadc0de])
 					foundT4, gT4 = findUniTransfer(reg,newReg, bad,length1,excludeRegs2,0, "Transfer to " + reg)
 					if foundT4:
@@ -7924,6 +8037,9 @@ def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMove
 								filler2=genFiller(c2Adjust)
 								gT4[0].modStackAddFirst(filler2)
 						cMEsp=pkBuild([cMEsp,gT4])
+						# print ("done", cMEsp)
+					else:
+						foundMEsp=False
 			if not foundMEsp:
 				# print ("continue foundMEsp2")
 				continue
@@ -7939,7 +8055,7 @@ def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMove
 		# print ("findMovDerefGetStack return false")
 		return False, -0x666
 	except Exception as e:
-		print ("exception 2", sysTarget)
+		print ("exception 2")
 		print(e)
 		print(traceback.format_exc())
 
@@ -10599,7 +10715,6 @@ def buildPushad(bad, patType):
 	excludeRegs=[]
 	global opt
 	bad=opt["badBytes"]
-	print ("checking", opt["acceptASLR"])
 
 	global curPat
 	global oldPat

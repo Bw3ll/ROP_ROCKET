@@ -1493,7 +1493,13 @@ rop_testerCalled=0
 prevRop_testerCalled=0
 
 def rop_tester(testCode, ID=False, regWritable=False):
+    # print (mag,"rop_tester",res)
     dp("*************************************************************************************************")
+    outFile.write("Roptester:\t")
+    outFile.write(binaryToStr(testCode)+"\n")
+
+
+    
     global rop_testerCalled
     global prevRop_testerCalled
     checkDoGC=prevRop_testerCalled-rop_testerCalled
