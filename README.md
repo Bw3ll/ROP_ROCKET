@@ -42,6 +42,12 @@ This tool was inspired by the much older [JOP ROCKET](https://github.com/Bw3ll/J
 
 *ROCKET has generated a **Windows Syscall for NtProtectVirtualMemory** for Win 10/11, printing it to screen and saving it.*
 
+
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/captureESP.png?raw=true)
+
+*Thanks to its internal emulation capabilities, ROCKET can consider many unusual combinations of gadgets. The above is intended to capture a stack pointer (ESP), and move it to ECX. It is able to find alternative means of doing so, rather than just using a single ROP gadget, which may not be available. First it moves esp to edi; edi is then moved to ebx; and ebx is then moved to esi. ECX is set to zero, via integer overflow, and then the value of esi (containing our stack pointer) is added to ecx. The result is that the stack pointer is in ecx. An equivalent, shorter gadget would be **mov ecx, esp # ret** - though such is not always possible. ROCKET also correctly handles the extra pop instructions, producing the correct filler.*
+
+
 ![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot4.png?raw=true)
 
 *ROCKET provides many options for what and how you capture gadgets. Defaults can be set in the **config.cfg** file of course. Here the user decides the only want to examine chunks of memory with a maximum of 0xa (15) bytes.*
@@ -61,11 +67,12 @@ This tool was inspired by the much older [JOP ROCKET](https://github.com/Bw3ll/J
 ![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot8.png?raw=true)
 *Here the user used obfuscation to dynamically decode at runtime the address for a **xor eax, edi # ret**, which hypothetically he could not use otherwise. Once decoded, the **push r32 / ret** causes this to be immediately executed. This is a great way to use gadgets otherwise unavailable due to bad bytes. ROCKET completes this in seconds. Its ability to do this with integer overflow is all but guaranteed to work, assuming no issues with bad bytes or lack of availble registers (i.e. the user excluded too many registers).*
 
+# Acknowledgement
+
+Shiva Shashank Kusuma works for Dr. Bramwell Brizendine as a graduate student to develop patterns for shellcodeless attacks. He has done great work, and he was also a co-speaker at DEFCON.
+
 # Updates
 09/18/2023 - Various enhancements; further support for variant ways of leaking the far jump that leads to the Windows syscall.
 
 3/2024 - Many important updates on a somewhat regular basis - please try to keep the most current copy if possible, if you intend to actively use ROP ROCKET. Individual changes will not be listed. Minor changes and updates are likely to be ongoing. Only major new features will be described. (Some minor new featurs have already been added.)
-
-# Acknowledgement
-
-Shiva Shashank Kusuma works for Dr. Bramwell Brizendine as a graduate student to develop patterns for shellcodeless attacks. He has done great work, and he was also a co-speaker at DEFCON.
+Late March -April 3, 2024 - Extensive updates to emulation to improve and enhance efficiency; support for many more possibility options for individual gadgets to be generated; correction of bugs; **new release of VirtualAlloc and VirtualProtect** via pushad. While other tools have provided support for VirtualProtect and VirtualAlloc before, which is why we did not, we now feel it would be remiss not to include these, especially as these can be enhanced by the tool's capabilities. Created full templates for VirtualAlloc and VirtualProtect via pushad, that also includes shellcode (pop a calc).
