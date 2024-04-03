@@ -3,7 +3,7 @@ This new, advanced ROP framework made it debute at at DEF CON 31 with some unpre
 
 Please note that this is still a work in progress, with some updated and enhanced capabilities to be added. Updates should be frequent in the next couple months. If you encounter issues, please put them on issues or email me with them, and I will get them sorted. Additional, alternate ways of generating certain types of gadgets will also be added in the coming weeks.
 
-![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/screenshot1.jpg?raw=true)
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/logo2024.png?raw=true)
 
 # Powerful ROP Capabilities
 ROP ROCKET is very powerful with some unique capabilities, which includes the following:
