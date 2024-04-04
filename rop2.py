@@ -5470,7 +5470,9 @@ def findMovDerefLeft(reg1,reg2,bad,length1, excludeRegs,comment,espDesiredMoveme
 			excludeRegs2= copy.deepcopy(excludeRegs)
 			excludeRegs2.append(reg1)
 			excludeRegs2.append(reg2)
-			foundT, gT = findUniTransfer(reg1,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +r+" to " + reg1 +  " - " +comment,True, True,True)
+			# foundT, gT = findUniTransferOld("1",reg1,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +r+" to " + reg1 +  " - " +comment,True, True,True)
+			foundT, gT = findUniTransfer("1",reg1,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +r+" to " + reg1 +  " - " +comment)
+
 			# foundT=False
 			if foundT:
 				# print (excludeRegs2)
@@ -6634,7 +6636,7 @@ def findSubTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 							excludeRegs2.add(reg1)
 							excludeRegs2.add(myDict[p].op1)
 
-							foundT, gT = findUniTransfer(reg1,myDict[p].op1, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " +myDict[p].op1+" to " + reg1,True, True,True)
+							foundT, gT = findUniTransfer("2",reg1,myDict[p].op1, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " +myDict[p].op1+" to " + reg1,False, False,True)
 							# foundT=False
 							if foundT:
 								pk=pkBuild([p,gT,q])
@@ -6747,7 +6749,7 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 							excludeRegs2.add(myDict2[q].op1)
 							excludeRegs2.add(myDict[p].op2)
 
-							foundT, gT = findUniTransfer(myDict2[q].op1,myDict[p].op2, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " +myDict[p].op1+" to " + reg1,True)
+							foundT, gT = findUniTransfer("3",myDict2[q].op1,myDict[p].op2, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " +myDict[p].op1+" to " + reg1,True)
 							# foundT=False
 							if foundT:
 								pk=pkBuild([p,gT,q])
@@ -6805,8 +6807,15 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 				return True, package
 
 	return False,0
-def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment="", excludeXor=False,excludeXchg=False, excludeSub=False,excludePushPop=False, excludeDeeper=False,ID=None):
-	# print (red,"findTransfer", reg, op2,res)
+def findUniTransfer(caller,reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment="", excludeXor=False,excludeXchg=False, excludeSub=False,excludePushPop=False, excludeDeeper=False,ID=None):
+	# print (red,"findTransfer", caller, reg, op2,res, yel,"excludeXor", gre,excludeXor, yel,"excludeSub", gre,excludeSub,yel,"excludePushPop", gre,excludePushPop, yel,"excludeDeeper", gre,excludeDeeper, yel,"ID",gre,ID,res)
+	global prevCaller
+	global deeperLimit
+
+	if prevCaller != caller:
+		deeperLimit=0
+	prevCaller=caller
+
 	try:
 		if comment==None:
 			comment=""
@@ -6817,6 +6826,7 @@ def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment=
 			package=[gM]
 			showChain(package)
 			return True, package
+
 		if not excludeXchg:
 			foundT, x1 = xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement)
 			if foundT:
@@ -6824,14 +6834,15 @@ def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment=
 				package=[gM]
 				showChain(package)
 				return True, package
+
 		foundAT, gAT= findAddTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
 		if foundAT:
 			return True, gAT
 
 		if not excludeXor:
-				foundXT, gXT= findXorTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
-				if foundXT:
-					return True, gXT
+			foundXT, gXT= findXorTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+			if foundXT:
+				return True, gXT
 
 		if not excludeSub:
 			foundST, gST= findSubTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
@@ -6849,7 +6860,7 @@ def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment=
 					cPuPo=chainObj(mEsp,  "Transfer(2) "+op2 + " to " + reg, filler)
 				cPuPo=pkBuild([cPuPo])
 				return True, cPuPo
-		if not excludeDeeper:
+		if not excludeDeeper and checkDeeperLimit():
 			foundMEsp, pk = deeperGetPushPopReg(op2, reg,excludeRegs,espDesiredMovement,bad,True,	False,False)
 			if foundMEsp:
 				return True, pk
@@ -6858,27 +6869,48 @@ def findUniTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment=
 		print ("exception - findUniTransfer")
 		print(e)
 		print(traceback.format_exc())
+	return False,0
+
+deeperLimit=0
+prevCaller="666"
+def checkDeeperLimit():
+	global deeperLimit
+
+	if deeperLimit>2:
+		deeperLimit=0
+		return False
+	else:
+		deeperLimit+=1
+		return True
 
 def deeperGetPushPopReg(op2, reg,excludeRegs,espDesiredMovement, bad,length1,regMatch=True, c3Only=True,notESP=True,):
-	foundMEsp, mEsp, newReg,stackPivotAmount,c3Status,c2Adjust = getPushPopReg(op2, reg,excludeRegs,espDesiredMovement,False,False)
-	if foundMEsp:
-		foundT, gT4 = findUniTransfer(reg,newReg, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +newReg+" to " + reg, True,True,True,True,False)
-		if foundT:
-			filler2=[]
-			if stackPivotAmount ==0:
-				cMEsp=chainObj(mEsp,  "Transfer(3) "+op2 + " to " + reg, [])
-				if c3Status!="c3":
-					cMEsp=chainObj(mEsp,  "Transfer(4) "+op2 + " to ",[])
-					filler2=genFiller(c2Adjust)
-					gT4[0].modStackAddFirst(filler2)
-			else:
-				filler=genFiller(stackPivotAmount)
-				cMEsp=chainObj(mEsp,  "Transfer(5) "+op2 + " to ", filler)
-				if c3Status!="c3":
-					filler2=genFiller(c2Adjust)
-					gT4[0].modStackAddFirst(filler2)
-			pk=pkBuild([cMEsp,gT4])
-			return True, pk
+	global deeperLimit
+	# print (yel,"deeperGetPushPopReg", reg, op2, gre,deeperLimit,res)
+	try:
+		foundMEsp, mEsp, newReg,stackPivotAmount,c3Status,c2Adjust = getPushPopReg(op2, reg,excludeRegs,espDesiredMovement,False,False)
+		if foundMEsp:
+			foundT, gT4 = findUniTransfer("4-Deeper",reg,newReg, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +newReg+" to " + reg, False,False,False,False,False)
+			if foundT:
+				filler2=[]
+				if stackPivotAmount ==0:
+					cMEsp=chainObj(mEsp,  "Transfer(3) "+op2 + " to " + reg, [])
+					if c3Status!="c3":
+						cMEsp=chainObj(mEsp,  "Transfer(4) "+op2 + " to ",[])
+						filler2=genFiller(c2Adjust)
+						gT4[0].modStackAddFirst(filler2)
+				else:
+					filler=genFiller(stackPivotAmount)
+					cMEsp=chainObj(mEsp,  "Transfer(5) "+op2 + " to ", filler)
+					if c3Status!="c3":
+						filler2=genFiller(c2Adjust)
+						gT4[0].modStackAddFirst(filler2)
+				pk=pkBuild([cMEsp,gT4])
+				return True, pk
+		return False,0
+	except Exception as e:
+		print ("exception - deeperGetPushPopReg")
+		print(e)
+		print(traceback.format_exc())
 	return False,0
 
 
@@ -6938,12 +6970,12 @@ def findDoubleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, co
 			pass
 	
 	for r in availableRegs:
-		foundT, gT = findUniTransfer(r,reg2, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +reg2+" to " + r)
+		foundT, gT = findUniTransfer("5",r,reg2, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +reg2+" to " + r)
 		if foundT:
 			excludeRegs2= copy.deepcopy(excludeRegs)
 			excludeRegs2.append(r)
 
-			foundT2, gT2 = findUniTransfer(reg1,r, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " + r +" to " + reg1)
+			foundT2, gT2 = findUniTransfer("6",reg1,r, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " + r +" to " + reg1)
 			if foundT2:
 				pkg=pkBuild([gT,gT2])
 				# showChain(pkg,True)
@@ -6972,7 +7004,7 @@ def findTripleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, co
 	# print ("start excludeRegs", excludeRegs)
 
 	for r in availableRegs:
-		foundT, gT = findUniTransfer(r,reg2, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +reg2+" to " + r)
+		foundT, gT = findUniTransfer("7",r,reg2, bad,length1,excludeRegs,espDesiredMovement, "Transfer " +reg2+" to " + r)
 		if foundT:
 
 			excludeRegs2= copy.deepcopy(excludeRegs)
@@ -6985,7 +7017,7 @@ def findTripleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, co
 
 			for r2 in availableRegs2:
 
-				foundT2, gT2 = findUniTransfer(r2,r, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " + r +" to " + r2)
+				foundT2, gT2 = findUniTransfer("8",r2,r, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " + r +" to " + r2)
 				if foundT2:
 					# print ("found2 ", r2)
 					
@@ -6994,7 +7026,7 @@ def findTripleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, co
 					excludeRegs3.append(r2)
 					# print ("now excludeRegs2  ", excludeRegs3 )
 
-					foundT3, gT3 = findUniTransfer(reg1,r2, bad,length1,excludeRegs3,espDesiredMovement, "Transfer " + r2 +" to " + reg1)
+					foundT3, gT3 = findUniTransfer("9",reg1,r2, bad,length1,excludeRegs3,espDesiredMovement, "Transfer " + r2 +" to " + reg1)
 					if foundT3:
 						pkg=pkBuild([gT,gT2,gT3])
 						# showChain(pkg,True)
@@ -7016,7 +7048,7 @@ def findTryObfMethTransfer(excludeRegs,bad,val,tThis, bb, withPR,reg,comment, is
 	length1=True
 	espDesiredMovement=0
 	for r in availableRegs:
-		foundT, gT = findUniTransfer(reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
+		foundT, gT = findUniTransfer("10",reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
 		if not foundT:
 			continue
 		success, tryPackage = tryObfMethods(excludeRegs,bad,val,tThis, bb, False,r,comment, isVal)
@@ -7039,7 +7071,7 @@ def findPopTransfer(reg,val, bad,length1,excludeRegs, espDesiredMovement, commen
 	# print ("findPopTransfer reg", reg, "val", val,"availableRegs", availableRegs,"excludeRegs", excludeRegs,res)
 	for r in availableRegs:
 		foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs,isVal)
-		foundT, gT = findUniTransfer(reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg, False, False,False,False,"findPopTransfer")
+		foundT, gT = findUniTransfer("11",reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
 		if foundP1 and foundT:
 			comment2="indirectly load " + reg
 			if comment!=None:
@@ -7175,7 +7207,7 @@ def getDistanceGadget(excludeRegs,rValStr,pk,reg,loc,patType=None):
 	if foundStart:
 		dp ("transfer gadget")
 		showChain(pkStart)
-		foundT, gT = findUniTransfer(reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
+		foundT, gT = findUniTransfer("12",reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
 		if foundT:
 			pk2=pkBuild([pkStart,gT])
 			pk3=pkBuild([pk,pk2])
@@ -7217,7 +7249,7 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 				availableRegs.remove(d)
 			except:
 				pass
-		foundT, gT = findUniTransfer(reg,"eax", bad,length1,excludeRegs,0, "Transfer to " + reg)
+		foundT, gT = findUniTransfer("13",reg,"eax", bad,length1,excludeRegs,0, "Transfer to " + reg)
 		# print ("foundT", foundT, gT, "desired reg",reg)
 		# foundT=False
 		if foundT:
@@ -7824,6 +7856,7 @@ def getPushPopReg(reg, reg2,excludeRegs,espDesiredMovement,regMatch=True, c3Only
 		dp  ("oh no")
 		dp (e)
 		dp (traceback.format_exc())
+	return False, 0,0,0,0,0
 
 def findMovRegSpecial(reg1, bad,length1,excludeRegs,espDesiredMovement):
 	#reg 1 - the one we want
@@ -7941,7 +7974,7 @@ def findMovDerefGetStackOld(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredM
 					foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs2,espDesiredMovement,False,False)
 				if foundMEsp:
 					cMEsp=chainObj(0x56ee7f,  "Save esp to "+reg, [0xdeadc0de,0xdeadc0de])
-					foundT4, gT4 = findUniTransfer(reg,newReg, bad,length1,excludeRegs2,0, "Transfer to " + reg)
+					foundT4, gT4 = findUniTransfer("14",reg,newReg, bad,length1,excludeRegs2,0, "Transfer to " + reg)
 					if foundT4:
 						filler2=[]
 						if stackPivotAmount ==0:
@@ -8018,28 +8051,28 @@ def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMove
 						cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
 				if not foundMEsp:
 					foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs2,espDesiredMovement,False,False)
-				if foundMEsp:
-					# print ("yes")
-					# cMEsp=chainObj(0x56ee7f,  "Save esp to "+reg, [0xdeadc0de,0xdeadc0de])
-					foundT4, gT4 = findUniTransfer(reg,newReg, bad,length1,excludeRegs2,0, "Transfer to " + reg)
-					if foundT4:
-						filler2=[]
-						if stackPivotAmount ==0:
-							cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
-							if c3Status!="c3":
-								cMEsp=chainObj(mEsp,  "Save esp to "+reg,[])
-								filler2=genFiller(c2Adjust)
-								gT4[0].modStackAddFirst(filler2)
+					if foundMEsp:
+						# print ("yes")
+						# cMEsp=chainObj(0x56ee7f,  "Save esp to "+reg, [0xdeadc0de,0xdeadc0de])
+						foundT4, gT4 = findUniTransfer("15",reg,newReg, bad,length1,excludeRegs2,0, "Transfer to " + reg)
+						if foundT4:
+							filler2=[]
+							if stackPivotAmount ==0:
+								cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
+								if c3Status!="c3":
+									cMEsp=chainObj(mEsp,  "Save esp to "+reg,[])
+									filler2=genFiller(c2Adjust)
+									gT4[0].modStackAddFirst(filler2)
+							else:
+								filler=genFiller(stackPivotAmount)
+								cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
+								if c3Status!="c3": #now
+									filler2=genFiller(c2Adjust)
+									gT4[0].modStackAddFirst(filler2)
+							cMEsp=pkBuild([cMEsp,gT4])
+							# print ("done", cMEsp)
 						else:
-							filler=genFiller(stackPivotAmount)
-							cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
-							if c3Status!="c3": #now
-								filler2=genFiller(c2Adjust)
-								gT4[0].modStackAddFirst(filler2)
-						cMEsp=pkBuild([cMEsp,gT4])
-						# print ("done", cMEsp)
-					else:
-						foundMEsp=False
+							foundMEsp=False
 			if not foundMEsp:
 				# print ("continue foundMEsp2")
 				continue
@@ -8088,11 +8121,11 @@ def findMovDerefGetStackNotReg(reg,bad,length1, excludeRegs,regsNotUsed,espDesir
 			# dp ("continue a1")
 			continue
 
-		# foundT, gT = findUniTransfer(op3,"eax", bad,length1,excludeRegs2,0, "Transfer to " + reg)
+		# foundT, gT = findUniTransfer("16",op3,"eax", bad,length1,excludeRegs2,0, "Transfer to " + reg)
 		# excludeRegs2.append(op3)
 		foundT, gT = findMovDeref(op3,"eax",bad,length1, excludeRegs2,espDesiredMovement)
 
-		foundT2, gT2 = findUniTransfer(reg,op3, bad,length1,excludeRegs2,0, "Transfer to " + reg)
+		foundT2, gT2 = findUniTransfer("17",reg,op3, bad,length1,excludeRegs2,0, "Transfer to " + reg)
 
 		if foundL1 and foundAdd and foundMEsp and foundT2 and foundT:
 			cMEsp=chainObj(mEsp, "Save esp2 to "+reg, [])
@@ -8164,7 +8197,7 @@ def buildLPWinAPI(orgOp2,derefReg, bad,length1, excludeRegs,regsNotUsed,espDesir
 			gT=chainObj(x1, "Move VirtualProtect to " + orgOp2 , [])
 			gT=[gT]
 		if not foundT:	
-			foundT, gT = findUniTransfer(orgOp2,op2, bad,length1,excludeRegs2,espDesiredMovement, "Transfer VP to " + orgOp2)
+			foundT, gT = findUniTransfer("18-buildLPWinAPI",orgOp2,op2, bad,length1,excludeRegs2,espDesiredMovement, "Transfer VP to " + orgOp2)
 
 		if foundM1 and foundL1 and foundT:
 			gM2=chainObj(m2, "Dereference(3) " +op2 +" and move to " , [])
@@ -8413,10 +8446,10 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 						pass
 					for r4 in regsNotUsed:
 						
-						foundT2, gT2 = findUniTransfer(r4,reg, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters to " + r4)
+						foundT2, gT2 = findUniTransfer("19",r4,reg, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters to " + r4)
 						if not foundT2:
 							continue
-						foundT3, gT3 = findUniTransfer(reg,r4, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters back to " + reg)
+						foundT3, gT3 = findUniTransfer("20",reg,r4, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters back to " + reg)
 						if foundT3:
 							foundTransfers=True
 							break
@@ -8433,7 +8466,7 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 				# if sysTReg==reg or sysTReg==op2:
 				if rTrans==op2:
 					for r3 in regsNotUsed:
-						foundT, gT = findUniTransfer(r3,rTrans, bad,length1,excludeRegs2,espDesiredMovement, "Transfer  FS:[0xc0] to to " + r3)
+						foundT, gT = findUniTransfer("21",r3,rTrans, bad,length1,excludeRegs2,espDesiredMovement, "Transfer  FS:[0xc0] to to " + r3)
 						rTrans=r3
 						if foundT and  r3 != op2:
 							excludeRegs2.append(r3)
@@ -8493,10 +8526,10 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 						pass
 					for r4 in regsNotUsed:
 						
-						foundT2, gT2 = findUniTransfer(r4,reg, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters to " + r4)
+						foundT2, gT2 = findUniTransfer("22",r4,reg, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters to " + r4)
 						if not foundT2:
 							continue
-						foundT3, gT3 = findUniTransfer(reg,r4, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters back to " + reg)
+						foundT3, gT3 = findUniTransfer("23",reg,r4, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters back to " + reg)
 						if foundT3:
 							foundTransfers=True
 							break
@@ -8518,7 +8551,7 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 				if rTrans==op2:
 				# if 1==1:
 					for r3 in regsNotUsed:
-						foundT, gT = findUniTransfer(r3,rTrans, bad,length1,excludeRegs2,espDesiredMovement, "Transfer  FS:[0xc0] to to " + r3)
+						foundT, gT = findUniTransfer("24",r3,rTrans, bad,length1,excludeRegs2,espDesiredMovement, "Transfer  FS:[0xc0] to to " + r3)
 						rTrans=r3
 						if foundT and  r3 != op2:
 							excludeRegs2.append(r3)
@@ -8577,10 +8610,10 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 							pass
 						for r4 in regsNotUsed:
 							
-							foundT2, gT2 = findUniTransfer(r4,reg, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters to " + r4)
+							foundT2, gT2 = findUniTransfer("25",r4,reg, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters to " + r4)
 							if not foundT2:
 								continue
-							foundT3, gT3 = findUniTransfer(reg,r4, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters back to " + reg)
+							foundT3, gT3 = findUniTransfer("26",reg,r4, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters back to " + reg)
 							if foundT3:
 								foundTransfers=True
 								break
@@ -8614,7 +8647,7 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 				if rTrans==op2:
 				# if 1==1:
 					for r3 in regsNotUsed:
-						foundT, gT = findUniTransfer(r3,rTrans, bad,length1,excludeRegs2,espDesiredMovement, "Transfer  FS:[0xc0] to to " + r3)
+						foundT, gT = findUniTransfer("27",r3,rTrans, bad,length1,excludeRegs2,espDesiredMovement, "Transfer  FS:[0xc0] to to " + r3)
 						rTrans=r3
 						if foundT and  r3 != op2:
 							excludeRegs2.append(r3)
@@ -8679,10 +8712,10 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 						pass
 					for r4 in regsNotUsed:
 						
-						foundT2, gT2 = findUniTransfer(r4,reg, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters to " + r4)
+						foundT2, gT2 = findUniTransfer("28",r4,reg, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters to " + r4)
 						if not foundT2:
 							continue
-						foundT3, gT3 = findUniTransfer(reg,r4, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters back to " + reg)
+						foundT3, gT3 = findUniTransfer("29",reg,r4, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters back to " + reg)
 						if foundT3:
 							foundTransfers=True
 							break
@@ -8704,7 +8737,7 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 				if rTrans==op2:
 				# if 1==1:
 					for r3 in regsNotUsed:
-						foundT, gT = findUniTransfer(r3,rTrans, bad,length1,excludeRegs2,espDesiredMovement, "Transfer  FS:[0xc0] to to " + r3)
+						foundT, gT = findUniTransfer("30",r3,rTrans, bad,length1,excludeRegs2,espDesiredMovement, "Transfer  FS:[0xc0] to to " + r3)
 						rTrans=r3
 						if foundT and  r3 != op2:
 							excludeRegs2.append(r3)
@@ -8757,7 +8790,7 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 					pass
 				for ra in regsNotUsed:
 					
-					foundT0, gT0 = findUniTransfer(ra,rTrans, bad,length1,excludeRegs,espDesiredMovement, "")
+					foundT0, gT0 = findUniTransfer("31",ra,rTrans, bad,length1,excludeRegs,espDesiredMovement, "")
 					if not foundT0:
 						continue
 					if foundT0:
@@ -8782,10 +8815,10 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 						pass
 					for r4 in regsNotUsed:
 						
-						foundT2, gT2 = findUniTransfer(r4,reg, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters to " + r4)
+						foundT2, gT2 = findUniTransfer("32",r4,reg, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters to " + r4)
 						if not foundT2:
 							continue
-						foundT3, gT3 = findUniTransfer(reg,r4, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters back to " + reg)
+						foundT3, gT3 = findUniTransfer("33",reg,r4, bad,length1,excludeRegs,espDesiredMovement, "Transfer parameters back to " + reg)
 						if foundT3:
 							foundTransfers=True
 							break
@@ -8802,7 +8835,7 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 				# if sysTReg==reg or sysTReg==op2:
 				if rTrans==op2:
 					for r3 in regsNotUsed:
-						foundT, gT = findUniTransfer(r3,rTrans, bad,length1,excludeRegs2,espDesiredMovement, "Transfer  FS:[0xc0] to to " + r3)
+						foundT, gT = findUniTransfer("34",r3,rTrans, bad,length1,excludeRegs2,espDesiredMovement, "Transfer  FS:[0xc0] to to " + r3)
 						rTrans=r3
 						if foundT and  r3 != op2:
 							excludeRegs2.append(r3)
@@ -9329,9 +9362,9 @@ def buildMovDerefSyscall(excludeRegs,bad, myArgs ,numArgs):
 				helperSuccessRA1, pkRA1=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,img(pR), "Return address #2 - rop nop ", "Write ReturnAddress #1 to mem")
 				helperSuccessRA2, pkRA2=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,img(pR),"Return address #2 - rop nop ","Write ReturnAddress #2 to mem")
 				for r3 in regsNotUsed2:
-					foundT, gT = findUniTransfer(r3,reg, bad,length1,excludeRegs2,espDesiredMovement, "Transfer ptr to Region Size to " + r3)
+					foundT, gT = findUniTransfer("35",r3,reg, bad,length1,excludeRegs2,espDesiredMovement, "Transfer ptr to Region Size to " + r3)
 					if foundT:
-						foundT2, gT2 = findUniTransfer(op2,r3, bad,length1,excludeRegs2,espDesiredMovement, "Transfer ptr to Region Size to " + op2)
+						foundT2, gT2 = findUniTransfer("36",op2,r3, bad,length1,excludeRegs2,espDesiredMovement, "Transfer ptr to Region Size to " + op2)
 					foundInc2, i2 = findGeneric("inc",op2,bad,length1, regsNotUsed2,espDesiredMovement)
 					cI2=chainObj(i2, "Increrement " + op2, [])
 					pkInc=([cI2,cI2,cI2,cI2])
@@ -9449,8 +9482,8 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 					regsNotUsed4.remove(reg)
 				except:
 					pass
-				foundT, gT1 = findUniTransfer(op3,reg, bad,length1,excludeRegs3,espDesiredMovement, "Save pointer to memory, " + op3)
-				foundT2, gTbase = findUniTransfer(op2,reg, bad,length1,excludeRegs3,espDesiredMovement, "Get BaseAddress value for pointer")
+				foundT, gT1 = findUniTransfer("37",op3,reg, bad,length1,excludeRegs3,espDesiredMovement, "Save pointer to memory, " + op3)
+				foundT2, gTbase = findUniTransfer("38",op2,reg, bad,length1,excludeRegs3,espDesiredMovement, "Get BaseAddress value for pointer")
 				if foundT and foundT2:
 					altRegforESP=op3
 					break
@@ -9464,24 +9497,48 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 			if foundM1 and foundL1 and foundInc and findMovDerefGetStack and foundT and foundT2:
 				helperSuccessSV, pkNBforPtr=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, NumberBytesProtect, "Set up value for Number of Bytes for ptr, " + hex(NumberBytesProtect))
 				
-				foundT, gT3 = findUniTransfer(op2,op3, bad,length1,excludeRegs3,espDesiredMovement, "Get ptr to OldAccessProtection")
+				foundT, gT3 = findUniTransfer("39",op2,op3, bad,length1,excludeRegs3,espDesiredMovement, "Get ptr to OldAccessProtection")
+				if not foundT:
+					continue
+
 				helperSuccessP5, pkP5=helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, op2, "Write ptr to OldAccessProtection to memory")
 				helperSuccessP4, pkP4=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, NewAccessProt, "NewAccessProteciton, " + hex(NewAccessProt))
+				if not helperSuccessP5 and helperSuccessP4:
+					continue
 
-				foundT2, gT4 = findUniTransfer(op2,altRegforESP, bad,length1,excludeRegs3,espDesiredMovement, "Get point of reference to values")
+				foundT2, gT4 = findUniTransfer("40",op2,altRegforESP, bad,length1,excludeRegs3,espDesiredMovement, "Get point of reference to values")
+				if not foundT2:
+					continue
+
 				foundInc, inc1 = findGeneric("inc",op2,bad,length1, regsNotUsed4,espDesiredMovement)
 				if foundInc:
 					cI=chainObj(i1, "Increment " + op2, [])
 				else:
 					continue
+
 				helperSuccessP3, pkP3=helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, op2, "NumberOfBytesToProtect pointer")
+				if not helperSuccessP3:
+					continue
+
 				pkP3=pkBuild([gT4,inc1,inc1,inc1,inc1,pkP3])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
 				helperSuccessP2, pkP2=helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, op2, "BaseAddress pointer")
+				if not helperSuccessP2:
+					continue
+
 				pkP2=pkBuild([inc1,inc1,inc1,inc1,pkP2])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
+				
 				helperSuccessP1, pkP1=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, processHandle, "Set ProcessHandle to -1, itself, " + hex(processHandle))
 				fRet, pR,rDict=findRet(bad)
+				if not helperSuccessP1:
+					continue
+				
 				helperSuccessRA1, pkRA1=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement,img(pR), "Return address #2 - rop nop ", "Write ReturnAddress #1 to mem")
+				if not helperSuccessRA1:
+					continue
+				
 				helperSuccessRA2, pkRA2=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement,img(pR),"Return address #2 - rop nop ","Write ReturnAddress #2 to mem")
+				if not helperSuccessRA2:
+					continue
 
 
 				cM=chainObj(m1, "Write BaseAddress value to mem", [])
@@ -9496,6 +9553,9 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 					continue
 				if foundMovderef:
 					foundSys, pkSysSetup=getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName,excludeRegs2)
+					if not foundSys:
+						# print (red,"\n\nALMOST MADE IT",res,)
+						continue
 
 				if foundStart and foundSys:
 					pk=pkBuild([pkStart,gTbase,pkBA,pkNBforPtr,gT1, gT3,pkP5,pkP4,pkP3,pkP2,pkP1,pkRA1,pkRA2,pkSysSetup])
@@ -9973,7 +10033,7 @@ class getParamVals:
 			if foundStart:
 				excludeRegs2= copy.deepcopy(excludeRegs)
 				excludeRegs2.append(r)
-				foundT, gT = findUniTransfer(reg,r, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " +r +" to " + reg,True, True,True)
+				foundT, gT = findUniTransfer("41",reg,r, bad,length1,excludeRegs2,espDesiredMovement, "Transfer " +r +" to " + reg)
 				if foundT:
 					pk=pkBuild([chSP2, gT])
 					# showChain(pk,True)
