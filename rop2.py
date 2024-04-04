@@ -5288,6 +5288,7 @@ def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 	isRegDeref= re.compile( r'mov dword ptr \[[eaxbcdispb]+\]', re.M|re.I)
 	isRegDeref= re.compile( r'mov dword ptr \[[eaxbcdispb]+ \+ [1-9af]+]', re.M|re.I)
 
+	# print (red,"findMovDeref",yel,reg,op2,res, excludeRegs)
 	if bExists:
 		dp ("findMovDeref exists")
 		# length1=False
@@ -8354,24 +8355,29 @@ def regsAvailtoExclude(availableRegs, eRegs=None,newReg=None):
 	# print ("new available", availableRegs)
 	
 	return exclude, availableRegs
-def helperMovDeref(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,val,comment, comment2=None):
+def helperMovDeref(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,val,mReg=None,dReg=None,comment="" ,comment2=None):
+	# print ("helperMovDeref", mReg,dReg)
 	excludeRegs= regsAvailtoExclude(regsNotUsed)
-	foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement)
+	m1=0
+	i1=0
+	if mReg==None:
+		foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement)
+	else:
+		m1=mReg
+		foundM1=True
 	if not foundM1:
+		return False,0
+	if dReg==None:
+		foundInc, i1 = findGeneric("dec",reg,bad,length1, regsNotUsed,espDesiredMovement)
+	else:
+		i1=dReg
+		foundInc=True
+	if not foundInc:
 		return False,0
 	foundL1, p1, chP = loadReg(op2,bad,True,excludeRegs,val,comment)
 	if not foundL1:
 		return False,0
-	foundInc, i1 = findGeneric("dec",reg,bad,length1, regsNotUsed,espDesiredMovement)
-	# if foundInc:
-	# 	plpflOldProtect=myArgs[4]
-	# 	plfNewProtect=myArgs[3]
-	# 	pdwSize=myArgs[2]
-	# 	pReturnAddress=myArgs[1]
-	# 	plpAddress=myArgs[0]
-	# 	pVirtualProtect=0x7877badd
-	if not foundInc:
-		return False,0
+	
 	if foundM1 and foundL1 and foundInc:
 		# dp ("found condition build findMovDeref ops:", op2)
 		if comment2==None:
@@ -9323,45 +9329,94 @@ def buildMovDerefSyscall(excludeRegs,bad, myArgs ,numArgs):
 	length1=True
 	espDesiredMovement=0
 	package=[]
+	chainCompleted=False
+
 	for reg in availableRegs:
+		# print ("reg:",reg)
+		foundMovderef=False
+		if chainCompleted:
+			break
 		foundMovderef=False
 		regsNotUsed= copy.deepcopy(availableRegs)
 		regsNotUsed.remove(reg)
-		# print ("Reg1",reg, "from", availableRegs)
 		for op2 in regsNotUsed:	
-
 			regsNotUsed2= copy.deepcopy(regsNotUsed)
 			regsNotUsed2.remove(op2)
-			# print ("op2",op2, "from", regsNotUsed2)
-
 			dp ("op2 regsNotUsed", op2)
-			excludeRegs2,regsNotUsed2= regsAvailtoExclude(regsNotUsed2,excludeRegs)
-
+			# print ("reg", reg, "op2",op2)
+			# foundM1, m1 = findMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement)
+			excludeRegs2,regsNotUsed3= regsAvailtoExclude(regsNotUsed2,excludeRegs)
 			foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs2,espDesiredMovement)
+	
 			if not foundM1:
+				# print("continue 1")
 				continue
 
 			foundL1, p1, chP = loadReg(op2,bad,True,excludeRegs2,0,"Null for BaseAddress Ptr")
 			if not foundL1:
+				# print("continue 2")
 				continue
+
 			foundInc, i1 = findGeneric("dec",reg,bad,length1, regsNotUsed2,espDesiredMovement)
 			if not foundInc:
+				# print("continue 3")
 				continue
-			if foundM1 and foundL1 and foundInc:
-				helperSuccessSV, pkVRSforPtr=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement, sizeForPtr, "Size value for Region Size, " + hex(sizeForPtr))
-				helperSuccessP6, pkP6=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,protect, "Protect = " + hex(protect))
-				helperSuccessP1, pkP1=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,processHandle, "Process Handle = -1")
-				helperSuccessP3, pkP3=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,zeroBits, "ZeroBits = 0")
-	
 
+			if foundM1 and foundL1 and foundInc:
+				helperSuccessSV, pkVRSforPtr=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement, sizeForPtr, m1,i1,"Size value for Region Size, " + hex(sizeForPtr))
+				if not helperSuccessSV:
+					# print("continue 4")
+					continue
+
+				helperSuccessP6, pkP6=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,protect, m1,i1,"Protect = " + hex(protect))
+				if not helperSuccessP6:
+					# print("continue 5")
+					continue
+
+				helperSuccessP1, pkP1=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,processHandle, m1,i1,"Process Handle = -1")
+				if not helperSuccessP1:
+					# print("continue 6")
+					continue
+				
+
+				helperSuccessP3, pkP3=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,zeroBits,m1,i1, "ZeroBits = 0")
+				if not helperSuccessP3:
+					# print("continue 7")
+					continue
 
 				helperSuccessP4, pkP4=helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement, op2, "Write ptr to Region size to mem")
+				if not helperSuccessP4:
+					# print("continue 8")
+					continue
+
 				helperSuccessP2, pkP2=helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement, op2, "Write ptr to BaseAddress to mem")
+				if not helperSuccessP2:
+					# print("continue 9")
+					continue
+
 				fRet, pR,rDict=findRet(bad)
-				helperSuccessP5, pkP5=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,allocationType, "AllocationType = " + hex(allocationType))
-				helperSuccessRA1, pkRA1=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,img(pR), "Return address #2 - rop nop ", "Write ReturnAddress #1 to mem")
-				helperSuccessRA2, pkRA2=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,img(pR),"Return address #2 - rop nop ","Write ReturnAddress #2 to mem")
+				helperSuccessP5, pkP5=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,allocationType, m1,i1,"AllocationType = " + hex(allocationType))
+				if not helperSuccessP5:
+					# print("continue 10")
+					continue
+
+				helperSuccessRA1, pkRA1=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,img(pR), m1,i1,"Return address #2 - rop nop ", "Write ReturnAddress #1 to mem")
+				if not helperSuccessRA1:
+					# print("continue 11")
+					continue
+
+				helperSuccessRA2, pkRA2=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,img(pR),m1,i1,"Return address #2 - rop nop ","Write ReturnAddress #2 to mem")
+				if not helperSuccessRA2:
+					# print ("contineu 12")
+					continue
+
+				foundT=False
+				foundT2=False
+				foundInc2=False
 				for r3 in regsNotUsed2:
+					foundT=False
+					foundT2=False
+					foundInc2=False
 					foundT, gT = findUniTransfer("35",r3,reg, bad,length1,excludeRegs2,espDesiredMovement, "Transfer ptr to Region Size to " + r3)
 					if foundT:
 						foundT2, gT2 = findUniTransfer("36",op2,r3, bad,length1,excludeRegs2,espDesiredMovement, "Transfer ptr to Region Size to " + op2)
@@ -9369,37 +9424,39 @@ def buildMovDerefSyscall(excludeRegs,bad, myArgs ,numArgs):
 					cI2=chainObj(i2, "Increrement " + op2, [])
 					pkInc=([cI2,cI2,cI2,cI2])
 					if foundT and foundT2 and foundInc2:	
+						# print ("doing the break?")
 						break
-				if not foundT or not foundT2:
-					# print ("continue")
+				if not foundT or not foundT2 or not foundInc2:
+					# print ("continue 13")
 					continue
-				
-					
 
 				cM=chainObj(m1, "Write param to mem", [])
 				cI=chainObj(i1, "Decrement " + reg, [])
 				pkZBA=pkBuild([chP,cM, cI,cI,cI,cI])
-				if helperSuccessSV and helperSuccessP6:
-					foundMovderef=True
+
+			foundStart, pkStart=findMovDerefGetStack(reg,bad,length1, excludeRegs2,regsNotUsed2,espDesiredMovement,distEsp)
+			if not foundStart:
+				# print ("continue 14")
+				continue
+
+			if foundStart:
+				# print(pkStart,pkZBA,gT,pkVRSforPtr,pkP6, pkP5,gT2,pkP4,pkP3,gT2,pkInc,pkP2, pkP1,pkRA1,pkRA2)
+				curPk=pkBuild([pkStart,pkZBA,gT,pkVRSforPtr,pkP6, pkP5,gT2,pkP4,pkP3,gT2,pkInc,pkP2, pkP1,pkRA1,pkRA2])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
+				foundSys, pkSysSetup=getSyscallSetup(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName,excludeRegs2)
+				if not foundSys:
+					dp("not foundSys")
+
+				if foundStart and foundSys:
+					pk=pkBuild([pkStart,pkZBA,gT,pkVRSforPtr,pkP6, pkP5,gT2,pkP4,pkP3,gT2,pkInc,pkP2, pkP1,pkRA1,pkRA2,pkSysSetup])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
+					# distParam, apiReached=getDistanceParamReg(pe,n,pk,distEsp,IncDec,numP,1, reg, destAfter)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter
+					dp ("\nsyscall chain\n")
+					showChain(pk)
+					cOut,out=genOutput(pk)
+					fgc.addNtAllocate(fChainObj(pk,out,cOut))
+					print(cOut)		
+					printGadgetChain(out, "w_syscall_NtAllocateVirtualMemory")
+					chainCompleted=True
 					break
-		if not foundMovderef:
-			continue
-		foundStart, pkStart=findMovDerefGetStack(reg,bad,length1, excludeRegs2,regsNotUsed2,espDesiredMovement,distEsp)
-		if foundStart:
-			curPk=pkBuild([pkStart,pkZBA,gT,pkVRSforPtr,pkP6, pkP5,gT2,pkP4,pkP3,gT2,pkInc,pkP2, pkP1,pkRA1,pkRA2])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
-			foundSys, pkSysSetup=getSyscallSetup(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName,excludeRegs2)
-
-		if foundStart and foundSys:
-			pk=pkBuild([pkStart,pkZBA,gT,pkVRSforPtr,pkP6, pkP5,gT2,pkP4,pkP3,gT2,pkInc,pkP2, pkP1,pkRA1,pkRA2,pkSysSetup])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
-			# distParam, apiReached=getDistanceParamReg(pe,n,pk,distEsp,IncDec,numP,1, reg, destAfter)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter
-			dp ("\nsyscall chain\n")
-			showChain(pk)
-			cOut,out=genOutput(pk)
-			fgc.addNtAllocate(fChainObj(pk,out,cOut))
-			print(cOut)		
-			printGadgetChain(out, "w_syscall_NtAllocateVirtualMemory")
-
-			break
 		else:
 			print ("NtAllocateVirtualMemory - Chain not found at this time.")
 
@@ -9474,7 +9531,9 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 				excludeRegs3.append(reg)
 			except:
 				pass
-	
+			
+			foundT=False
+			foundT2=False
 			for op3 in regsNotUsed3:	
 				regsNotUsed4= copy.deepcopy(regsNotUsed3)
 				regsNotUsed4.remove(op3)
@@ -9494,80 +9553,72 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 			except:
 				pass
 
-			if foundM1 and foundL1 and foundInc and findMovDerefGetStack and foundT and foundT2:
-				helperSuccessSV, pkNBforPtr=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, NumberBytesProtect, "Set up value for Number of Bytes for ptr, " + hex(NumberBytesProtect))
-				
-				foundT, gT3 = findUniTransfer("39",op2,op3, bad,length1,excludeRegs3,espDesiredMovement, "Get ptr to OldAccessProtection")
-				if not foundT:
-					continue
+			helperSuccessSV, pkNBforPtr=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, NumberBytesProtect, m1,i1,"Set up value for Number of Bytes for ptr, " + hex(NumberBytesProtect))
+			
+			foundT, gT3 = findUniTransfer("39",op2,op3, bad,length1,excludeRegs3,espDesiredMovement, "Get ptr to OldAccessProtection")
+			if not foundT:
+				continue
 
-				helperSuccessP5, pkP5=helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, op2, "Write ptr to OldAccessProtection to memory")
-				helperSuccessP4, pkP4=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, NewAccessProt, "NewAccessProteciton, " + hex(NewAccessProt))
-				if not helperSuccessP5 and helperSuccessP4:
-					continue
+			helperSuccessP5, pkP5=helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, op2, "Write ptr to OldAccessProtection to memory")
+			helperSuccessP4, pkP4=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, NewAccessProt, m1,i1,"NewAccessProteciton, " + hex(NewAccessProt))
+			if not helperSuccessP5 and helperSuccessP4:
+				continue
 
-				foundT2, gT4 = findUniTransfer("40",op2,altRegforESP, bad,length1,excludeRegs3,espDesiredMovement, "Get point of reference to values")
-				if not foundT2:
-					continue
+			foundT2, gT4 = findUniTransfer("40",op2,altRegforESP, bad,length1,excludeRegs3,espDesiredMovement, "Get point of reference to values")
+			if not foundT2:
+				continue
 
-				foundInc, inc1 = findGeneric("inc",op2,bad,length1, regsNotUsed4,espDesiredMovement)
-				if foundInc:
-					cI=chainObj(i1, "Increment " + op2, [])
-				else:
-					continue
+			foundInc, inc1 = findGeneric("inc",op2,bad,length1, regsNotUsed4,espDesiredMovement)
+			if foundInc:
+				cI=chainObj(i1, "Increment " + op2, [])
+			else:
+				continue
 
-				helperSuccessP3, pkP3=helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, op2, "NumberOfBytesToProtect pointer")
-				if not helperSuccessP3:
-					continue
+			helperSuccessP3, pkP3=helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, op2, "NumberOfBytesToProtect pointer")
+			if not helperSuccessP3:
+				continue
 
-				pkP3=pkBuild([gT4,inc1,inc1,inc1,inc1,pkP3])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
-				helperSuccessP2, pkP2=helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, op2, "BaseAddress pointer")
-				if not helperSuccessP2:
-					continue
+			pkP3=pkBuild([gT4,inc1,inc1,inc1,inc1,pkP3])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
+			helperSuccessP2, pkP2=helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, op2, "BaseAddress pointer")
+			if not helperSuccessP2:
+				continue
 
-				pkP2=pkBuild([inc1,inc1,inc1,inc1,pkP2])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
-				
-				helperSuccessP1, pkP1=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, processHandle, "Set ProcessHandle to -1, itself, " + hex(processHandle))
-				fRet, pR,rDict=findRet(bad)
-				if not helperSuccessP1:
-					continue
-				
-				helperSuccessRA1, pkRA1=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement,img(pR), "Return address #2 - rop nop ", "Write ReturnAddress #1 to mem")
-				if not helperSuccessRA1:
-					continue
-				
-				helperSuccessRA2, pkRA2=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement,img(pR),"Return address #2 - rop nop ","Write ReturnAddress #2 to mem")
-				if not helperSuccessRA2:
-					continue
+			pkP2=pkBuild([inc1,inc1,inc1,inc1,pkP2])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
+			
+			helperSuccessP1, pkP1=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement, processHandle, m1,i1,"Set ProcessHandle to -1, itself, " + hex(processHandle))
+			fRet, pR,rDict=findRet(bad)
+			if not helperSuccessP1:
+				continue
+			
+			helperSuccessRA1, pkRA1=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement,img(pR), m1,i1,"Return address #2 - rop nop ", "Write ReturnAddress #1 to mem")
+			if not helperSuccessRA1:
+				continue
+			
+			helperSuccessRA2, pkRA2=helperMovDeref(reg,op2,bad,length1, regsNotUsed4,espDesiredMovement,img(pR),m1,i1,"Return address #2 - rop nop ","Write ReturnAddress #2 to mem")
+			if not helperSuccessRA2:
+				continue
 
+			cM=chainObj(m1, "Write BaseAddress value to mem", [])
+			cI=chainObj(i1, "Decrement " + reg, [])
+			pkBA=([cM, cI,cI,cI,cI])
+			curPk=pkBuild([pkStart,gTbase,pkBA,pkNBforPtr,gT1, gT3,pkP5,pkP4,pkP3,pkP2,pkP1,pkRA1,pkRA2])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
+		# distParam, apiReached=getDistanceParamReg(pe,n,pk,distEsp,IncDec,numP,1, reg, destAfter)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter
 
-				cM=chainObj(m1, "Write BaseAddress value to mem", [])
-				cI=chainObj(i1, "Decrement " + reg, [])
-				pkBA=([cM, cI,cI,cI,cI])
-				curPk=pkBuild([pkStart,gTbase,pkBA,pkNBforPtr,gT1, gT3,pkP5,pkP4,pkP3,pkP2,pkP1,pkRA1,pkRA2])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
-			# distParam, apiReached=getDistanceParamReg(pe,n,pk,distEsp,IncDec,numP,1, reg, destAfter)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter
-				if helperSuccessP5 and helperSuccessP4 and helperSuccessP3 and helperSuccessP2 and helperSuccessP1 and foundT2 and foundT and foundInc:
-					foundMovderef=True
-					# break
-				if not foundMovderef:
-					continue
-				if foundMovderef:
-					foundSys, pkSysSetup=getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName,excludeRegs2)
-					if not foundSys:
-						# print (red,"\n\nALMOST MADE IT",res,)
-						continue
+			foundSys, pkSysSetup=getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName,excludeRegs2)
+			if not foundSys:
+				# print (red,"\n\nALMOST MADE IT",res,)
+				continue
 
-				if foundStart and foundSys:
-					pk=pkBuild([pkStart,gTbase,pkBA,pkNBforPtr,gT1, gT3,pkP5,pkP4,pkP3,pkP2,pkP1,pkRA1,pkRA2,pkSysSetup])
-					
-					dp ("\nsyscall chain\n")
-					showChain(pk)
-					cOut,out=genOutput(pk)	
-					print (cOut)
-					fgc.addNtProtect(fChainObj(pk,out,cOut))
-					printGadgetChain(out, "w_syscall_NtProtectVirtualMemory")
+			if  foundSys:
+				pk=pkBuild([pkStart,gTbase,pkBA,pkNBforPtr,gT1, gT3,pkP5,pkP4,pkP3,pkP2,pkP1,pkRA1,pkRA2,pkSysSetup])
+				dp ("\nsyscall chain\n")
+				showChain(pk)
+				cOut,out=genOutput(pk)	
+				print (cOut)
+				fgc.addNtProtect(fChainObj(pk,out,cOut))
+				printGadgetChain(out, "w_syscall_NtProtectVirtualMemory")
 
-					return
+				return
 	print ("No chains found.")
 
 def get_VirtualProtectPTR():		
@@ -9650,8 +9701,8 @@ def buildMovDeref(bad, myArgs ,numArgs):
 				# print ("not found, continue INc")
 				continue
 			if foundM1 and foundL1 and foundInc:
-				helperSuccessDw, pkDW=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,pdwSize, "Dwsize = " + hex(pdwSize))
-				helperSuccessFn, pkFn=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,plfNewProtect, "flNewProtect = " + hex(plfNewProtect))
+				helperSuccessDw, pkDW=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,pdwSize, m1,i1,"Dwsize = " + hex(pdwSize))
+				helperSuccessFn, pkFn=helperMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,plfNewProtect, m1,i1,"flNewProtect = " + hex(plfNewProtect))
 				cM=chainObj(m1, "Write param to mem", [])
 				cI=chainObj(i1, "Decrement " + reg, [])
 				pkFo=pkBuild([chP,cM, cI,cI,cI,cI])
