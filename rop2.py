@@ -5158,9 +5158,10 @@ def findGenericOp2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMove
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
+				# print (disOffset(p), reg, op2, myDict[p].op1, myDict[p].op2, myDict[p].opcode)
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
-					dp ("found ",instruction, reg)
+					# print (cya,"found ",p, disOffset(p), instruction, reg, res)
 					return True,p
 			dp ("findGeneric2 returning False" )
 			return False,0
@@ -5280,20 +5281,22 @@ def findMovEsp(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 		# dp ("return false findmovderef")
 		return False,0
 
-def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
+def findMovDeref(reg,op2,bad,length1, excludeRegs, bothForms=True):
 	global rC
 	dp ("findMovDeref:", reg, length1)
 	# print ("findMovDeref", reg, op2)
 	bExists, myDict=fg.getFg("movDword",reg)
-	isRegDeref= re.compile( r'mov dword ptr \[[eaxbcdispb]+\]', re.M|re.I)
-	isRegDeref= re.compile( r'mov dword ptr \[[eaxbcdispb]+ \+ [1-9af]+]', re.M|re.I)
-
-	# print (red,"findMovDeref",yel,reg,op2,res, excludeRegs)
+	if not bothForms:
+		isRegDeref= re.compile( r'mov dword ptr \[[eaxbcdispb]+\]', re.M|re.I)
+	else:
+		isRegDeref= re.compile( r'mov dword ptr \[[eaxbcdispb]+\]|mov dword ptr \[[eaxbcdispb]+ \+ [1-9af]+]', re.M|re.I)
 	if bExists:
 		dp ("findMovDeref exists")
 		# length1=False
+		# length1=False
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
+				# print (disOffset((p)))
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2==op2:
 					out=disOffset(p)
@@ -5308,7 +5311,6 @@ def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 				checkRopTester()
 				out=disOffset(p)
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
-
 				if myDict[p].length > 1 and freeBad and fg.rop[p].op2==op2:
 					out=disOffset(p)
 					if re.search(isRegDeref, out) and "leave" not in out:
@@ -5331,14 +5333,9 @@ def findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement=0):
 											c2Amt=int(c2Ret[1],16)
 										except:
 											c2Amt=int(c2Ret[1])
-									stackPivotAmount=stackPivotAmount+c2Amt
+									stackPivotAmount=stackPivotAmount
+									print(disOffset(p), stackPivotAmount, c2Amt)
 									return True, p, stackPivotAmount
-									# return True,p, stackPivotAmount
-						# 		else:
-						# 			print(blu,"   not verifyValSame",res)
-						# if not checkedFree:
-						# 	print (blu,"     not checkFree",res)
-
 		return False,0
 	else:
 		dp ("return false findmovderef")
@@ -5443,7 +5440,6 @@ def findMovDerefLeftJustOne(reg,bad,length1, excludeRegs,comment,espDesiredMovem
 		return bFind,pk
 	return False, 0
 
-#now
 
 def findMovDerefLeftSingle(reg1,bad,length1, excludeRegs2,comment,espDesiredMovement=0):
 	global excludeRegsGlobal
@@ -7286,7 +7282,7 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 		if foundStart:
 			pkTransfer=pkBuild([gT])
 		else:
-			print ("  Need a mov dereference gadget.")
+			print ("  Need a mov dereference / get stack ptr gadget.")
 			return False, 0,0,0
 
 	elif rValStr=="flOldProtect":
@@ -7990,7 +7986,7 @@ def findMovDerefGetStackOld(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredM
 							# showChain([cMEsp],True)
 							test=pkBuild([cMEsp])
 							# showChain(test,True)
-							if c3Status!="c3": #now
+							if c3Status!="c3": 
 								filler2=genFiller(c2Adjust)
 								# print (cya)
 								# temp=pkBuild([gT4])
@@ -8067,7 +8063,7 @@ def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMove
 							else:
 								filler=genFiller(stackPivotAmount)
 								cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
-								if c3Status!="c3": #now
+								if c3Status!="c3": 
 									filler2=genFiller(c2Adjust)
 									gT4[0].modStackAddFirst(filler2)
 							cMEsp=pkBuild([cMEsp,gT4])
@@ -8095,47 +8091,63 @@ def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMove
 
 
 def findMovDerefGetStackNotReg(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distEsp):
-	dp ("findMovDerefGetStack", reg)
-
+	# dp ("findMovDerefGetStack", reg)
 	if "eax" not in excludeRegs:
 		excludeRegs.append("eax")
-	dp ("***regsNotUsed", regsNotUsed)
 	for op2 in regsNotUsed:
+		altPath=False
 		foundL1, p2, chP = loadReg(op2,bad,length1,excludeRegs,distEsp)
 		if not foundL1:
-			dp ("continue p2")
+			# dp ("continue p2")
 			continue
 		regsNotUsed2= copy.deepcopy(regsNotUsed)
 		regsNotUsed2.remove(op2)
 		excludeRegs2= copy.deepcopy(excludeRegs)
 		
 		for op3 in regsNotUsed2:
-			foundMEsp, mEsp = findMovEsp(op3,bad,length1, excludeRegs2,espDesiredMovement)
-			if foundMEsp:
+			foundStart, chSP=findStackPivot(op3,bad,length1, excludeRegs,availableRegs,"")
+			if foundStart:
+				# pk=pkBuild([chSP])
+				# showChain(pk,True)
+				excludeRegs2.append(op3)
 				break
-				
-		if not foundMEsp:
+		if not foundStart:
+			# print ("continue foundMEsp")
 			continue
 
 		foundAdd, a1 = findGenericOp2("add", op2,op3,bad,length1, excludeRegs2,espDesiredMovement)
 		if not foundAdd:
-			# dp ("continue a1")
+			# print ("continue a1")
 			continue
 
-		# foundT, gT = findUniTransfer("16",op3,"eax", bad,length1,excludeRegs2,0, "Transfer to " + reg)
-		# excludeRegs2.append(op3)
-		foundT, gT = findMovDeref(op3,"eax",bad,length1, excludeRegs2,espDesiredMovement)
-
-		foundT2, gT2 = findUniTransfer("17",reg,op3, bad,length1,excludeRegs2,0, "Transfer to " + reg)
-
-		if foundL1 and foundAdd and foundMEsp and foundT2 and foundT:
-			cMEsp=chainObj(mEsp, "Save esp2 to "+reg, [])
+		foundT, gT = findMovDeref(op3,"eax",bad,length1, excludeRegs2,False)
+		# foundT=False
+		if not foundT:
+			regsNotUsed3= copy.deepcopy(regsNotUsed)
+			for r3 in regsNotUsed3:
+				foundT2, gTb = findUniTransfer("17b",r3,"eax", bad,length1,excludeRegs2,0, "Transfer to " + reg)
+				if foundT2:
+					foundT, m2 = findMovDeref(op3,r3,bad,length1, excludeRegs2,False)
+					if foundT:
+						altPath=True
+						# pk=pkBuild([gTb,m2])
+						# showChain(pk,True)
+						break
+		if not altPath:
+			foundT4, gT2 = findUniTransfer("17",reg,op3, bad,length1,excludeRegs2,0, "Transfer to " + reg)
+		else:
+			foundT4, gT2 = findUniTransfer("17",reg,r3, bad,length1,excludeRegs2,0, "Transfer to " + reg)
+			# if foundT4:
+			# 	pk=pkBuild([gTb,m2, gT2])
+			# 	showChain(pk,True)
+		if foundL1 and foundAdd and foundStart and foundT4 and foundT:
 			cA=chainObj(a1, "Adjust " +reg +" to parameter2", [])
-			
-			package=pkBuild([cMEsp,chP,cA,gT,gT2])
-			showChain(package)
+			if not altPath:
+				package=pkBuild([chSP,chP,cA,gT,gT2])
+			else:
+				package=pkBuild([chSP,chP,cA,gTb,m2,gT2])
+			# showChain(package, True)
 			return True, package
-	dp ("findMovDerefGetStack return false")
 	return False, -0x666
 
 def buildJmpToAPI(reg, bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,winAPi,gMd,distFinalESP,curPk,distEsp,destAfter,IncDec,numP,compensate,sysTarget):
@@ -8308,13 +8320,13 @@ def findJmp(reg,bad):
 				return True,p
 	return False,-1
 def helperMovDerefCopy(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,val,comment, comment2=None):
-	# foundM1, m1 = findMovDeref(reg,op2,bad,length1, regsNotUsed,espDesiredMovement)
+	# foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs)
 	# if not foundM1:
 	# 	return False,0
 	# foundL1, p1, chP = loadReg(op2,bad,True,regsNotUsed,val,comment)
 	# if not foundL1:
 	# 	return False,0
-	# foundInc, i1 = findGeneric("dec",reg,bad,length1, regsNotUsed,espDesiredMovement)
+	# foundInc, i1 = findGeneric("dec",reg,bad,length1, regsNotUsed)
 	
 	# if not foundInc:
 	# 	return False,0
@@ -8361,7 +8373,7 @@ def helperMovDeref(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,val,mReg=
 	m1=0
 	i1=0
 	if mReg==None:
-		foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement)
+		foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs)
 	else:
 		m1=mReg
 		foundM1=True
@@ -8877,7 +8889,7 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 		# foundL1, p1, chP = loadReg(op2,bad,True,excludeRegs2,img(sysTarget)," Ptr to way of invoking syscall, "+tryThis)
 		# pkLoadSys=pkBuild([chP])
 
-		foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement)
+		foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs)
 		if not foundM1:
 			return False,0
 		if not foundL1:
@@ -8933,7 +8945,7 @@ def getSyscallSetup(reg,op2,bad,length1, regsNotUsed,espDesiredMovement, curPk,s
 
 def helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,val,comment=None):
 	excludeRegs= regsAvailtoExclude(regsNotUsed)
-	foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs,espDesiredMovement)
+	foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs)
 	if not foundM1:
 		return False,0
 	foundInc, i1 = findGeneric("dec",reg,bad,length1, regsNotUsed,espDesiredMovement)
@@ -9344,9 +9356,8 @@ def buildMovDerefSyscall(excludeRegs,bad, myArgs ,numArgs):
 			regsNotUsed2.remove(op2)
 			dp ("op2 regsNotUsed", op2)
 			# print ("reg", reg, "op2",op2)
-			# foundM1, m1 = findMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement)
 			excludeRegs2,regsNotUsed3= regsAvailtoExclude(regsNotUsed2,excludeRegs)
-			foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs2,espDesiredMovement)
+			foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs2)
 	
 			if not foundM1:
 				# print("continue 1")
@@ -9509,10 +9520,9 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 			regsNotUsed2= copy.deepcopy(regsNotUsed)
 			regsNotUsed2.remove(op2)
 			dp ("op2 regsNotUsed", op2)
-			# foundM1, m1 = findMovDeref(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement)
 			excludeRegs2,regsNotUsed3= regsAvailtoExclude(regsNotUsed2,excludeRegs)
 
-			foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs2,espDesiredMovement)
+			foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs2)
 	
 			if not foundM1:
 				continue
@@ -9686,7 +9696,7 @@ def buildMovDeref(bad, myArgs ,numArgs):
 			excludeRegs2,regsNotUsed2= regsAvailtoExclude(regsNotUsed,excludeRegs)
 			excludeRegs2.append(op2)
 
-			foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs2,espDesiredMovement)
+			foundM1, m1 = findMovDeref(reg,op2,bad,length1, excludeRegs2)
 			if not foundM1:
 				# print (red, reg, op2, res,"mov deref not found, continue",res)
 				continue
@@ -10639,7 +10649,6 @@ def addExRegs(excludeRegs, r):
 		excludeRegs.append(r)
 	return excludeRegs
 
-
 def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stopCode):
 	j=0
 	outputsTxt=[]
@@ -10665,15 +10674,16 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			# print (cya+"adding to excludeRegs2 1", excludeRegs2,res)
 			pk=pkBuild([pk1,lr1])
 		else:
+			# print("buildps continue 1")
 			continue
 
 		foundL2, pl2, lr2,r2 = loadRegP(2,i, bad,True,excludeRegs2,pk)
 		if foundL2:
 			excludeRegs2=addExRegs(excludeRegs2, r2)
 			# print (cya+"adding to excludeRegs2 2", excludeRegs2,res)
-
 			pk=pkBuild([pk,lr2])
 		else:
+			# print("buildps continue 2")
 			continue
 
 		foundL3, pl3, lr3,r3 = loadRegP(3,i, bad,True,excludeRegs2,pk)
@@ -10682,6 +10692,7 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			# print (cya+"adding to excludeRegs2 3", excludeRegs2,res)
 			pk=pkBuild([pk,lr3])
 		else:
+			# print("buildps continue 3")
 			continue
 
 		foundL4, pl4, lr4,r4 = loadRegP(4,i, bad,True,excludeRegs2,pk)
@@ -10690,6 +10701,7 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			# print (cya+"adding to excludeRegs2 4", excludeRegs2,res)
 			pk=pkBuild([pk,lr4])
 		else:
+			# print("buildps continue 4")
 			continue
 
 		foundL5, pl5, lr5,r5 = loadRegP(5,i, bad,True,excludeRegs2,pk)
@@ -10698,6 +10710,7 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			# print (cya+"adding to excludeRegs2 5", excludeRegs2,res)
 			pk=pkBuild([pk,lr5])
 		else:
+			# print("buildps continue 5")
 			continue
 
 		foundL6, pl6, lr6,r6 = loadRegP(6,i, bad,True,excludeRegs2,pk)
@@ -10729,8 +10742,6 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 
 		fRet, pR,rDict=findRet(bad)
 		foundPushad, puA,pDict=findPushad(bad,length1,excludeRegs)
-		
-
 
 		if foundPushad:
 			pkPA=pkBuild([pk,puA])
