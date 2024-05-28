@@ -64,7 +64,7 @@ def splash():
 /_/|_|\____/_/    /_/|_|\____/\___/_/|_/___/ /_/    
                                                     
 """+res
-	author=yel+"                   v.0.9400:  Bramwell Brizendine, 2023-2024"+res
+	author=yel+"                   v.0.9402:  Bramwell Brizendine, 2023-2024"+res
 
 	print (banner)
 	print (author)

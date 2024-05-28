@@ -280,8 +280,13 @@ class gadgets:
 			self.opcode="c3"
 		else:
 			self.opcode="c2"
+		self.c2Adjust=None
+		self.stC2=[]
+
 	def setFSIndex(self,val):
 		self.FSIndex=val
+	def setC2Adjust(self,val):
+		self.c2Adjust=val
 	def addHg1(self,val):
 		self.hg1=val			
 	def addHg2(self,val):
