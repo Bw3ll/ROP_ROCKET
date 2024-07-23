@@ -14886,7 +14886,7 @@ def getBaseDir(filename=None, alt=None):
 	if ".exe" in filename:
 		filename =filename.replace(".exe", "")
 	base=os.getcwd()
-	baseDir  = os.path.join(base, filename, filename)
+	baseDir  = os.path.join(base, filename)
 	if not os.path.isdir(baseDir):
 		# print("Creating..")
 		os.makedirs(baseDir)
@@ -15224,7 +15224,7 @@ def uiShowBadBytes():
 	text +=mag+"  Find Bad Bytes in Offsets: \t\t\t\t {}\n".format(togBadOf)
 	text +="  \tOffsets include virtual address. This cannot be disabled. \t\t{}\n".format("")
 	text +=mag+"  Find Bad Bytes in ImageBase + VirtualAddress + Offset: {}\n".format(togBadIm)
-	text +=mag+"  Default ImageBase: {}\t VirtualAddress: {}\n".format(cya+hex(pe[n].ImageBase)+mag, cya+hex(pe[n].VirtualAdd)+mag)
+	text +=mag+"  Default ImageBase: {}\t VirtualAddress: {}\n".format(cya+hex(pe[n].imageBase)+mag, cya+hex(pe[n].VirtualAdd)+mag)
 
 	text +=mag+"  Current Bad Bytes: {}\n\n".format(cya+curBadBytes+res)
 	
