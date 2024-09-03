@@ -6499,7 +6499,15 @@ def genOutput(myDict, typePattern=None):
 		myStrings.append(s)
 		param="params=bytes(cmdLine,'utf-8')"		
 		myParams.append(param)
-		dist=distanceDict["targetDllString"]["distanceToPayload"]
+		dist=distanceDict["WinExec"]["distanceToPayload"]
+	elif typePattern=="DF":
+		s =distanceDict["DeleteFileA"]["loc1"]["String"] 
+		s+= "' + " +"'\\x00\\x00'\n"
+		s="del_file = " + "'"+s
+		myStrings.append(s)
+		param="params=bytes(del_file,'utf-8')"		
+		myParams.append(param)
+		dist=distanceDict["DeleteFileA"]["distanceToPayload"]
 	else:
 		dist=0
 		pass
@@ -7975,7 +7983,7 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 		comment=" - get lpProcName"
 		FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr2,pk,reg,"loc2","lpProcName")
 
-	elif rValStr=="Command" or rValStr=="cmdLine":
+	elif rValStr=="Command" or rValStr=="cmdLine" or rValStr=="lpFileName":
 		# dp ("lpProcName contents", pk)
 		# global outFile
 		# outFile.write("About to do Loc2  " )
@@ -7983,9 +7991,12 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 		if rValStr=="Command":
 			rValStr2="System"
 			FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr2,pk,reg,"loc3","System")
-		else:
+		elif rValStr=="cmdLine":
 			rValStr2="WinExec"
 			FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr2,pk,reg,"loc1","WinExec")
+		elif rValStr=="lpFileName":
+			rValStr2="DeleteFileA"
+			FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr2,pk,reg,"loc1","DeleteFileA")
 		comment=" - get "+rValStr
 		# if FoundDistG:
 		# 	showChain(pk2,True)
@@ -8028,7 +8039,7 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 		return True, None, None,reg
 
 
-	if (rValStr=="targetDllString" or rValStr=="lpProcName" or rValStr=="Command" or rValStr=="cmdLine") and FoundDistG:
+	if (rValStr=="targetDllString" or rValStr=="lpProcName" or rValStr=="Command" or rValStr=="cmdLine" or rValStr=="lpFileName") and FoundDistG:
 		return True, 0, pk2,reg
 	if rValStr=="hModule" or rValStr=="SystemPTR":
 		return True, 0, pkTransfer,reg		
@@ -10499,6 +10510,9 @@ def genPayload(val, patType=None):
 	elif val=="WinExec":
 		s =distanceDict["WinExec"]["loc1"]["String"] 
 		payload=bytes(s,'utf-8')+b'\x00\x00'
+	elif val=="DeleteFileA":
+		s =distanceDict["DeleteFileA"]["loc1"]["String"] 
+		payload=bytes(s,'utf-8')+b'\x00\x00'
 	return payload
 
 def buildRopChainTempMore(gadgets,rValStr,patType=None):
@@ -11359,6 +11373,12 @@ class getParamVals:
 		comment=""
 		if fRet:
 			return True, rn,comment
+		return True, skip,comment	
+	def get_lpFileName(self,name,excludeRegs,r,r2,bad,pk):
+		fRet, rn,rDict=findRet(bad)
+		comment=""
+		if fRet:
+			return True, rn,comment
 		return True, skip,comment				
 	def get_hModule(self,name,excludeRegs,r,r2,bad,pk):
 		fRet, rn,rDict=findRet(bad)
@@ -11473,6 +11493,29 @@ class getParamVals:
 		else:
 			return True,0x30306,"Simulated value-VirtualProtect ptr not found!"
 		return False,0,"VirtualProtect Ptr not Found"
+	
+	def get_dfPTR(self,name,excludeRegs,r,r2,bad,pk):		
+		wE=0x77662244
+		comment=""
+		foundLL=False
+		try:
+			wE=dllDict["kernel32.dll"]["DeleteFileA"]
+			foundLL=True
+		except:
+			try:
+				wE=dllDict["kernelbase.dll"]["DeleteFileA"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment="Ptr to DeleteFileA not found. 0x77443322 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to DeleteFileA")	
+			comment="Ptr to DeleteFileA"
+			return True, wE,comment
+		else:
+			return True,wE,"Simulated value-DeleteFileA ptr not found!"
+		return False,wE,"DeleteFileA not Found"	
+
 
 	def get_winPTR(self,name,excludeRegs,r,r2,bad,pk):		
 		wE=0x77443322
@@ -12167,12 +12210,192 @@ pat = {  'LoLi1':{
 		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
 		},
+		'DF1':{ 
+		'4': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
+		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
+        },
+		'DF2':{ 
+		'1': {'r': 'edi', 'val': 'dfPTR', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'lpFileName', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
+        },
+        		
+		'DF3':{ 
+		'8': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
+		'4': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'eax', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''}
+        },
+        		
+		'DF4':{ 
+		'8': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'addESP', 'excluded':[], "r2":"0xc",'com':''},
+		'4': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'eax', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''}
+        },
+		'DF5':{ 
+		'4': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":'0xc','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
+        },
+		'DF6':{ 
+		'4': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
+        },
+        		
+		'DF7':{ 
+		'8': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'eax', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''}
+        },
+        		
+		'DF8':{ 
+		'4': {'r': 'edi', 'val': 'pop', 'excluded':["esi"], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'pop', 'excluded':["esi"],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"esi",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
+        },		
+		'DF9':{ 
+		'8': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"8",'com':''},
+		'4': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'JmpDword', 'excluded':[], "r2":"ebx",'com':''},
+		'1': {'r': 'eax', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''}
+        },
+		'DF10':{ 
+		'4': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'pop', 'excluded':["edi","esi"],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"esi",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
+        },
+        		
+		'DF11':{ 
+		'4': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'pop', 'excluded':["edi","esi"],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'JmpDword', 'excluded':[], "r2":"esi",'com':''},
+		'1': {'r': 'eax', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''}
+        },
+        		
+		'DF12':{ 
+		'8': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
+		'2': {'r': 'ebp', 'val': 'dfPTR', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'JmpDword', 'excluded':[], "r2":"EBP",'com':''},
+		'1': {'r': 'eax', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''}
+        },	
+		'DF13':{ 
+		'4': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
+		'2': {'r': 'ebp', 'val': 'dfPTR', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"ebp",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
+        },
+		'DF14':{ 
+		'4': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":'0xc','com':''},
+		'2': {'r': 'ebp', 'val': 'dfPTR', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"ebp",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
+        },
+        	
+		'DF15':{ 
+		'4': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":'0xc','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"esi",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
+        },
+        
+		'DF16':{ 
+		'8': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":'0xc','com':''},
+		'2': {'r': 'ebp', 'val': 'dfPTR', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'JmpDword', 'excluded':[], "r2":"ebp",'com':''},
+		'1': {'r': 'eax', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''}
+        },
+
+        'DF17':{ 
+        '4': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":'0xc','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"esi",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		},		
+
 		'SYSxx':{ 
 		'1': {'r': 'edi', 'val': 'x', 'excluded':[], "r2":'','com':''},
 		'2': {'r': 'ebp', 'val': 'x', 'excluded':[],"r2":"",'com':''},
 		'3': {'r': 'esi', 'val': 'x', 'excluded':[], "r2":"",'com':''},
 		'4': {'r': 'ecx', 'val': 'x', 'excluded':[], "r2":"",'com':''},
-		'5': {'r': 'esp', 'val': 'x', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
 		'6': {'r': 'ebx', 'val': 'x', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'x', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'x', 'excluded':[], "r2":"",'com':''}
@@ -12291,7 +12514,8 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			excludeRegs2=addExRegs(excludeRegs2, r8)
 			pk=pkBuild([pk,lr8])
 		else:
-			print (red,"continue 8",res)
+			if tellWhy:
+				print (red,"continue 8",res)
 			continue
 
 		fRet, pR,rDict=findRet(bad)
@@ -12353,7 +12577,7 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 		outputsTxtC.append(cOut)
 		outputsPk.append(pkAll)
 		dp(len(outputsTxt))
-
+	# exit()
 	if len(outputsTxtC)>0:
 		print ("\n")
 		for o in outputsTxtC:
@@ -12388,7 +12612,10 @@ def giveApiNum(winApi,j):
 		apiCode="VA"
 	elif winApi=="WE":
 		apiNum=10
-		apiCode="WE"						
+		apiCode="WE"
+	elif winApi=="DF":
+		apiNum=17
+		apiCode="DF"						
 	i=apiCode+str(j)
 	curPat=i
 	return i,j, apiCode, apiNum
@@ -12463,7 +12690,11 @@ def buildPushad(bad, patType):
 		foundInnerWE,outputsTxtWE, outputsTxtCWE,outputsPkWE=buildPushadInner(bad,excludeRegs2,"WE",10,"apiCode",pk,pk,stopCode)
 		if foundInnerWE:
 			printGadgetChain(outputsTxtWE, "WinExec")
-
+	elif patType=="DF":
+		stopCode="DF"
+		foundInnerWE,outputsTxtWE, outputsTxtCWE,outputsPkWE=buildPushadInner(bad,excludeRegs2,"DF",17,"apiCode",pk,pk,stopCode)
+		if foundInnerWE:
+			printGadgetChain(outputsTxtWE, "DeleteFileA")
 
 
 
@@ -15043,6 +15274,10 @@ def genWinExecPushad():
 	global bad
 	buildPushad(bad, "WE" )
 
+def genDeleteFileAPushad():
+	global bad
+	buildPushad(bad, "DF" )
+
 def genVirtualAllocPushad():
 	global bad
 	buildPushad(bad, "VA" )
@@ -16446,6 +16681,8 @@ def ui():
 			elif userIN[0:1] == "!":
 
 				genVirtualProtectPushad()
+			elif userIN[0:1] == "$":
+				genDeleteFileAPushad()
 			elif userIN[0:1] == "@":
 				genVirtualAllocPushad()
 			elif userIN[0:1] == "#":

@@ -1046,6 +1046,11 @@ distanceDict={
     },
 
 
+    'DeleteFileA':{'distanceToPayload':0x400, 'numLoc':1,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'C:\\My Files\\delete.txt','size':35,'NullAfterString':True,'isStruct':False},
+    },
+
+
 
     'empty':{'distanceToPayload':0x700, 'numLoc':5,
         'loc1':{'distanceFromPayload':0,'isText':False, 'String':None,'size':10,'NullAfterString':False,'isStruct':False},
