@@ -672,7 +672,7 @@ def get_OP_RET_parallel(args):
 				disHereRetSingle(dll,t + begin, 0,pe)
 			elif ((ourData[t]) == OP_RET2[0]):
 				numOps = numBytes
-				while numOps > 2:
+				while numOps > 2:  
 					# dp ("found one")
 					disHereRetC2(dll,t + begin, numOps,pe)
 					numOps = numOps - 1
@@ -6130,19 +6130,17 @@ def findPush(reg,bad,length1, excludeRegs,espDesiredMovement=-4):
 		return False,0,0
 
 def findRet(bad, mode64=False):
-	dp ("findRet")
+	# print ("findRet", mode64)
 	if not mode64:
 		bExists, myDict=fg.getFg("ret")
 	else:
 		bExists, myDict=fg.getFg("ret64")
-
 	# dp ("dict size", reg, len(myDict))
 	if bExists:
 		for p in myDict:
-			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
-
+			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],False)
 			if  myDict[p].opcode=="c3" and freeBad:
-				dp ("found ret")
+				# print ("found ret")
 				return True,p, myDict
 	return False,0,0
 
@@ -6166,6 +6164,7 @@ def findRetf(bad, mode64=False):
 def findRetC2(bad,val):
 	dp ("findRetC2",val, type(val))
 	global rc2
+	retC2=0
 	if val==4:
 		try:
 			retC2=rc2.g04
@@ -6183,6 +6182,8 @@ def findRetC2(bad,val):
 			return False,0,0
 	else:
 		dp ("none!!!")
+	if retC2==0:
+		return False,0,0
 	tryThis= "with " + hex(img(retC2)) 
 	tryThis2=" -> " + disOffset(retC2)
 	dp (tryThis)
@@ -6448,7 +6449,7 @@ def showChain(myDict,printYes=False,GiveText=False):
 #     return contents
 
 def genOutput(myDict, typePattern=None):
-	dp ("genOutput", typePattern)
+	# print ("genOutput", typePattern)
 	global curPat
 	global oldPat
 	t=0
@@ -6489,6 +6490,14 @@ def genOutput(myDict, typePattern=None):
 		s="command = " + "'"+s
 		myStrings.append(s)
 		param="params=bytes(targetDll + targetAPI + command,'utf-8')"		
+		myParams.append(param)
+		dist=distanceDict["targetDllString"]["distanceToPayload"]
+	elif typePattern=="WE":
+		s =distanceDict["WinExec"]["loc1"]["String"] 
+		s+= "' + " +"'\\x00\\x00'\n"
+		s="cmdLine = " + "'"+s
+		myStrings.append(s)
+		param="params=bytes(cmdLine,'utf-8')"		
 		myParams.append(param)
 		dist=distanceDict["targetDllString"]["distanceToPayload"]
 	else:
@@ -7732,7 +7741,7 @@ def findPopTransfer(reg,val, bad,length1,excludeRegs, espDesiredMovement, commen
 	# print ("findPopTransfer reg", reg, "val", val,"availableRegs", availableRegs,"excludeRegs", excludeRegs,res)
 	for r in availableRegs:
 		foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs,isVal)
-		print (red,"reg3",reg,res)
+		print (red,"reg3 _ pop transfer",reg,res)
 		foundT, gT = findUniTransfer("11",reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
 		if foundP1 and foundT:
 			comment2="indirectly load " + reg
@@ -7805,6 +7814,8 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None):
 		# 	return foundP1, p1, chP
 		
 	return False, 0,0
+
+
 
 def loadRegOld(reg,bad,length1,excludeRegs,val,comment=None):
 	if val=="skip":
@@ -7889,9 +7900,11 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 
 	found, val,com2=pv.get(rValStr, excludeRegs,reg,r1b,bad,pk)
 	comment=com1+com2
-	
+	if not found:
+		# print (red,"return false", rValStr,res)
+		return False, 0,0,0
 	dp ("loadRegP__", z,i, curPat,rValStr)
-	# print (red+"loadRegP__", reg, z,i, curPat,rValStr,res, val)
+	# print (yel+"loadRegP__", reg, z,i, curPat,"rValStr", rValStr,res, val)
 	 
 
 	if rValStr=="targetDllString":
@@ -7962,13 +7975,25 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 		comment=" - get lpProcName"
 		FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr2,pk,reg,"loc2","lpProcName")
 
-	elif rValStr=="Command":
-		rValStr2="System"
+	elif rValStr=="Command" or rValStr=="cmdLine":
 		# dp ("lpProcName contents", pk)
 		# global outFile
 		# outFile.write("About to do Loc2  " )
-		FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr2,pk,reg,"loc3","System")
-		comment=" - get Command"
+		FoundDistG=False
+		if rValStr=="Command":
+			rValStr2="System"
+			FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr2,pk,reg,"loc3","System")
+		else:
+			rValStr2="WinExec"
+			FoundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr2,pk,reg,"loc1","WinExec")
+		comment=" - get "+rValStr
+		# if FoundDistG:
+		# 	showChain(pk2,True)
+		# else:
+		# 	print ("NOT FOUND command/system")
+		if not FoundDistG:
+			print (" Could not find gadget for "+rValStr)
+			return False,0,0,reg
 	elif rValStr=="VPPtr2" or rValStr=="VAPtr2":
 		comment+=" - dereferencing the API"
 		bFind, pk=findMovDerefLeftJustOneLoad(reg,val,bad,length1, excludeRegs,comment,0)
@@ -8003,7 +8028,7 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 		return True, None, None,reg
 
 
-	if (rValStr=="targetDllString" or rValStr=="lpProcName" or rValStr=="Command") and FoundDistG:
+	if (rValStr=="targetDllString" or rValStr=="lpProcName" or rValStr=="Command" or rValStr=="cmdLine") and FoundDistG:
 		return True, 0, pk2,reg
 	if rValStr=="hModule" or rValStr=="SystemPTR":
 		return True, 0, pkTransfer,reg		
@@ -8597,7 +8622,7 @@ def adjustForC2(fillerAmt, myPk,offset):
 	
 	myPk[offset].modStackAddFirst(filler)
 	print ("after",gre)
-	showChain(myPk, True)
+	showChain(myPk)
 	print (res)
 	# gT4[0].modStackAddFirst(filler2)
 
@@ -10455,7 +10480,7 @@ def buildRopChainTemp(gadgets,offsets=None):
 	return rc3
 
 def genPayload(val, patType=None):
-	dp ('genPayload', val, patType)
+	# print ('genPayload', val, patType)
 	payload=""
 	if val == "targetDllString" and (patType==None or patType=="lpProcName"):
 		dp ("targetDllString genPayload")
@@ -10471,6 +10496,9 @@ def genPayload(val, patType=None):
 		payload+=bytes(s2,'utf-8')+b'\x00\x00'
 		s3 =distanceDict["targetDllString"]["loc3"]["String"] 
 		payload+=bytes(s3,'utf-8')+b'\x00\x00'
+	elif val=="WinExec":
+		s =distanceDict["WinExec"]["loc1"]["String"] 
+		payload=bytes(s,'utf-8')+b'\x00\x00'
 	return payload
 
 def buildRopChainTempMore(gadgets,rValStr,patType=None):
@@ -10505,8 +10533,8 @@ def buildRopChainTempMore(gadgets,rValStr,patType=None):
 		dp(len(extra))
 		dp ("rc3", type(rc3), rc3)
 		# newP=bytes(payload,'utf-8')
-		dp ("payload", payload)
-		dp (len(payload))
+		# print ("payload", payload)
+		# print (len(payload))
 		rc3+=extra + payload
 
 	### TODO if rop chain too big alrady, increase distance from - return this as updated info
@@ -11008,12 +11036,17 @@ def buildMovDerefSyscallProtect(excludeRegs,bad, myArgs ,numArgs):
 def get_VirtualProtectPTR():		
 		vp=0x77666999
 		comment=""
+		foundLL=False
 		try:
 			vp=dllDict["kernel32.dll"]["VirtualProtect"]
 			foundLL=True
 		except:
-			foundLL=False
-			comment="Ptr to VirtualProtect not found. 0x20000 used as placeholder."
+			try:
+				vp=dllDict["kernelbase.dll"]["VirtualProtect"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment="Ptr to VirtualProtect not found. 0x77666999 used as placeholder."
 		if foundLL:
 			dp ("returning ptr to VirtualProtect")	
 			comment="Ptr to VirtualProtect"
@@ -11021,6 +11054,8 @@ def get_VirtualProtectPTR():
 		else:
 			True,vp,"Simulated value-VirtualProtect ptr not found!"
 		return False,vp,"VirtualProtect not Found"	
+
+
 
 def buildMovDeref(bad, myArgs ,numArgs):
 	clearGlobals()
@@ -11216,12 +11251,14 @@ class getParamVals:
 	def get(self, name: str,excludeRegs,r,r2,bad,pk):#, testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL,c2=False):
 		dp ("get", name)
 		# print ("get",name)
+		comment=""
 		if 1==1:
 			do = f"get_{name}"
-
+			# print (do)
 			if hasattr(self, do) and callable(func := getattr(self, do)):
 				found,val,comment=func(name,excludeRegs,r,r2,bad,pk)
 				return found,val,comment
+		print ("ERROR: not found param val type", red, do, res)
 		return False,0x999999,comment
 	# def get2(self, name: str,excludeRegs,r,r2,bad,pk):#, testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL,c2=False):
 	# 	# dp ("get2", name)
@@ -11273,7 +11310,7 @@ class getParamVals:
 		if foundLL:
 			return True, l,comment
 		else:
-			True,0x30000,"Simulated value-LoadLibrary ptr not found!"
+			return True,0x30000,"Simulated value-LoadLibrary ptr not found!"
 		return False,0,"loadLibraryPtr not Found"
 	def get_GetProcAddressPTR(self,name,excludeRegs,r,r2,bad,pk):
 		dp ("get GetProcAddressPTR")
@@ -11292,7 +11329,7 @@ class getParamVals:
 		else:
 			dp ("returning simulated ptr to GetProcAddress")
 
-			True,0x20000,"Simulated value-GetProcAddress ptr not found!"
+			return True,0x20000,"Simulated value-GetProcAddress ptr not found!"
 		return False,0,"GetProcAddressPtr not Found"		
 	def get_skip(self,name,excludeRegs,r,r2,bad,pk):
 		dp ("get skip")
@@ -11312,6 +11349,12 @@ class getParamVals:
 			return True, rn,comment
 		return True, skip,comment		
 	def get_Command(self,name,excludeRegs,r,r2,bad,pk):
+		fRet, rn,rDict=findRet(bad)
+		comment=""
+		if fRet:
+			return True, rn,comment
+		return True, skip,comment	
+	def get_cmdLine(self,name,excludeRegs,r,r2,bad,pk):
 		fRet, rn,rDict=findRet(bad)
 		comment=""
 		if fRet:
@@ -11346,6 +11389,7 @@ class getParamVals:
 		return True, 0x33,comment
 		return False,0,"0x33 selector not found"
 	def get_ropNop(self,name,excludeRegs,r,r2,bad,pk):
+		# print ("get_ropNop")
 		fRet, rn,rDict=findRet(bad)
 		comment=""
 		if fRet:
@@ -11376,7 +11420,10 @@ class getParamVals:
 			return True, j1,comment
 		# print ("jmpDword not found")
 		return False,0xffffadd,"JMP ESP NOT FOUND"
-
+	def get_uCmdShow(self,name,excludeRegs,r,r2,bad,pk):
+		comment=""
+		return True,1, comment
+		
 	def get_nop(self,name,excludeRegs,r,r2,bad,pk):
 		comment="Build some NOPs"
 		return True, 0x90909090,comment
@@ -11398,7 +11445,7 @@ class getParamVals:
 		if foundLL:
 			return True, l,comment
 		else:
-			True,0x30304,"Simulated value-VirtualAlloc ptr not found!"
+			return True,0x30304,"Simulated value-VirtualAlloc ptr not found!"
 		return False,0,"VirtualAlloc Ptr not Found"
 
 
@@ -11424,9 +11471,30 @@ class getParamVals:
 		if foundLL:
 			return True, l,comment
 		else:
-			True,0x30306,"Simulated value-VirtualProtect ptr not found!"
+			return True,0x30306,"Simulated value-VirtualProtect ptr not found!"
 		return False,0,"VirtualProtect Ptr not Found"
 
+	def get_winPTR(self,name,excludeRegs,r,r2,bad,pk):		
+		wE=0x77443322
+		comment=""
+		foundLL=False
+		try:
+			wE=dllDict["kernel32.dll"]["WinExec"]
+			foundLL=True
+		except:
+			try:
+				wE=dllDict["kernelbase.dll"]["WinExec"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment="Ptr to WinExec not found. 0x77443322 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to WinExec")	
+			comment="Ptr to WinExec"
+			return True, wE,comment
+		else:
+			return True,wE,"Simulated value-WinExec ptr not found!"
+		return False,wE,"WinExec not Found"	
 	def get_VPPtr2(self,name,excludeRegs,r,r2,bad,pk):
 		dp ("get VPPtr2")
 		bVal,p, com=self.get_VPPtr(name,excludeRegs,r,r2,bad,pk)
@@ -11998,15 +12066,116 @@ pat = {  'LoLi1':{
 		'7': {'r': 'edx', 'val': 'flAllocationType', 'excluded':[], "r2":"",'com':''},
 		'1': {'r': 'ecx', 'val': 'flNewProtect', 'excluded':[], "r2":"",'com':' flNewProtect '}
 		},
+
+		'WE1':{ 
+		'4': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":8,'com':''},
+		'2': {'r': 'ebp', 'val': 'winPTR', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'1': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"ebp",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
+		},		
+		'WE2':{ 
+		'1': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'pop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"esi",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
+		},
+		'WE3':{ 
+		'1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":8,'com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
+		},
+		'WE4':{ 
+		'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":'0xc','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
+		},
+		'WE5':{ 
+		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'addESP', 'excluded':[],"r2":"4",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
+		},
+		'WE6':{ 
+		'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":'0xc','com':''},
+		'2': {'r': 'ebp', 'val': 'winPTR', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"ebp",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
+		},
+		'WE7':{ 
+		'1': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'addESP', 'excluded':[],"r2":"4",'com':''},
+		'3': {'r': 'esi', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"esi",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
+		},
+		'WE8':{ 
+		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
+		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
+		},
+		'WE9':{ 
+		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'ebp', 'val': 'pop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
+		},
+		'WE10':{ 
+		'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":'0xc','com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"esi",'com':''},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
+		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
+		},
 		'SYSxx':{ 
 		'1': {'r': 'edi', 'val': 'x', 'excluded':[], "r2":'','com':''},
-		'2': {'r': 'eax', 'val': 'x', 'excluded':[],"r2":"",'com':''},
+		'2': {'r': 'ebp', 'val': 'x', 'excluded':[],"r2":"",'com':''},
 		'3': {'r': 'esi', 'val': 'x', 'excluded':[], "r2":"",'com':''},
-		'4': {'r': 'ebp', 'val': 'x', 'excluded':[], "r2":"",'com':''},
+		'4': {'r': 'ecx', 'val': 'x', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'x', 'excluded':[], "r2":"",'com':''},
 		'6': {'r': 'ebx', 'val': 'x', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'x', 'excluded':[], "r2":"",'com':''},
-		'8': {'r': 'ecx', 'val': 'x', 'excluded':[], "r2":"",'com':''}
+		'8': {'r': 'eax', 'val': 'x', 'excluded':[], "r2":"",'com':''}
         }
         }
 
@@ -12035,7 +12204,7 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 		# print (gre+"i", i, "j", j, "apiCode",apiCode,"apiNum",apiNum,res)
 		# apiCode="GPA1s"
 		# print (i, j, "apiCode",apiCode, apiNum)
-		print (yel,"    Attempting apiCode",res,apiCode, j)
+		print (yel,"    Attempting apiCode",res,apiCode, j, "of ", apiNum)
 
 
 		excludeRegs2= copy.deepcopy(excludeRegs)
@@ -12045,13 +12214,15 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 		length1=True
 		pk=[]
 
+		tellWhy=False
 		foundL1, pl1, lr1,r1 = loadRegP(1,i, bad,True,excludeRegs2,pk)
 		if foundL1:
 			excludeRegs2=addExRegs(excludeRegs2, r1)
 			# print (cya+"adding to excludeRegs2 1", excludeRegs2,res)
 			pk=pkBuild([pk1,lr1])
 		else:
-			# print(red,"buildps continue 1",res)
+			if tellWhy:
+				print(red,"buildps continue 1",res, i, j)
 			continue
 
 		foundL2, pl2, lr2,r2 = loadRegP(2,i, bad,True,excludeRegs2,pk)
@@ -12060,7 +12231,8 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			# print (cya+"adding to excludeRegs2 2", excludeRegs2,res)
 			pk=pkBuild([pk,lr2])
 		else:
-			# print(red,"buildps continue 2",res)
+			if tellWhy:
+				print(red,"buildps continue 2",res)
 			continue
 
 		foundL3, pl3, lr3,r3 = loadRegP(3,i, bad,True,excludeRegs2,pk)
@@ -12069,7 +12241,8 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			# print (cya+"adding to excludeRegs2 3", excludeRegs2,res)
 			pk=pkBuild([pk,lr3])
 		else:
-			# print(red,"buildps continue 3",res)
+			if tellWhy:
+				print(red,"buildps continue 3",res)
 			continue
 
 		foundL4, pl4, lr4,r4 = loadRegP(4,i, bad,True,excludeRegs2,pk)
@@ -12078,7 +12251,8 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			# print (cya+"adding to excludeRegs2 4", excludeRegs2,res)
 			pk=pkBuild([pk,lr4])
 		else:
-			# print(red,"buildps continue 4",res)
+			if tellWhy:
+				print(red,"buildps continue 4",res)
 			continue
 
 		foundL5, pl5, lr5,r5 = loadRegP(5,i, bad,True,excludeRegs2,pk)
@@ -12087,7 +12261,8 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			# print (cya+"adding to excludeRegs2 5", excludeRegs2,res)
 			pk=pkBuild([pk,lr5])
 		else:
-			# print(red,"buildps continue 5",res)
+			if tellWhy:
+				print(red,"buildps continue 5",res)
 			continue
 
 		foundL6, pl6, lr6,r6 = loadRegP(6,i, bad,True,excludeRegs2,pk)
@@ -12096,7 +12271,8 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			# print (cya+"adding to excludeRegs2 6", excludeRegs2,res)
 			pk=pkBuild([pk,lr6])
 		else:
-			# print (red,"continue 6",res)
+			if tellWhy:
+				print (red,"continue 6",res)
 			continue
 
 		foundL7, pl7, lr7,r7 = loadRegP(7,i, bad,True,excludeRegs2,pk)
@@ -12105,7 +12281,8 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			# print (cya+"adding to excludeRegs2 7", excludeRegs2,res)
 			pk=pkBuild([pk,lr7])
 		else:
-			# print (red,"continue 7",res)
+			if tellWhy:
+				print (red,"continue 7",res)
 			continue
 
 		foundL8, pl8, lr8,r8 = loadRegP(8,i, bad,True,excludeRegs2,pk)
@@ -12114,7 +12291,7 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 			excludeRegs2=addExRegs(excludeRegs2, r8)
 			pk=pkBuild([pk,lr8])
 		else:
-			# print (red,"continue 8",res)
+			print (red,"continue 8",res)
 			continue
 
 		fRet, pR,rDict=findRet(bad)
@@ -12178,6 +12355,7 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 		dp(len(outputsTxt))
 
 	if len(outputsTxtC)>0:
+		print ("\n")
 		for o in outputsTxtC:
 			print(o)
 		return True, outputsTxt,outputsTxtC, outputsPk
@@ -12207,7 +12385,10 @@ def giveApiNum(winApi,j):
 		apiCode="VP"
 	elif winApi=="VA":
 		apiNum=2
-		apiCode="VA"						
+		apiCode="VA"
+	elif winApi=="WE":
+		apiNum=10
+		apiCode="WE"						
 	i=apiCode+str(j)
 	curPat=i
 	return i,j, apiCode, apiNum
@@ -12277,6 +12458,13 @@ def buildPushad(bad, patType):
 			# fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
 			#todo
 			printGadgetChain(outputsTxtVP, "VirtualAlloc")
+	elif patType=="WE":
+		stopCode="WE"
+		foundInnerWE,outputsTxtWE, outputsTxtCWE,outputsPkWE=buildPushadInner(bad,excludeRegs2,"WE",10,"apiCode",pk,pk,stopCode)
+		if foundInnerWE:
+			printGadgetChain(outputsTxtWE, "WinExec")
+
+
 
 
 def buildPushadOld(excludeRegs,bad, myArgs ,numArgs):
@@ -14851,6 +15039,9 @@ def genVirtualProtectPushad():
 	global bad
 	buildPushad(bad, "VP" )
 
+def genWinExecPushad():
+	global bad
+	buildPushad(bad, "WE" )
 
 def genVirtualAllocPushad():
 	global bad
@@ -16256,8 +16447,9 @@ def ui():
 
 				genVirtualProtectPushad()
 			elif userIN[0:1] == "@":
-
 				genVirtualAllocPushad()
+			elif userIN[0:1] == "#":
+				genWinExecPushad()
 			elif userIN[0:1] == "b":
 				getBadBytesSubmenu()
 			elif userIN[0:1] == "d":

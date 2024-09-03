@@ -1041,6 +1041,12 @@ distanceDict={
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':15,'NullAfterString':True,'isStruct':False},
     },
 
+    'WinExec':{'distanceToPayload':0x400, 'numLoc':1,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
+    },
+
+
+
     'empty':{'distanceToPayload':0x700, 'numLoc':5,
         'loc1':{'distanceFromPayload':0,'isText':False, 'String':None,'size':10,'NullAfterString':False,'isStruct':False},
         'loc2':{'distanceFromPayload':0,'isText':False, 'String':None,'size':10,'NullAfterString':False,'isStruct':False}

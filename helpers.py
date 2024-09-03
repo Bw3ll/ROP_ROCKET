@@ -152,18 +152,19 @@ def checkFreeBadBytes(opt,fg,address, bad,myDict=None,pe=None,n=None, checkImg=F
 	checkOffset=True
 	mod=None
 	acceptASLR=opt["acceptASLR"]
+	# acceptASLR=True
 	try:
-		if not acceptASLR:
+		if not acceptASLR and not isVal:
 			mod=fg.rop[address].mod
 			pe[mod].aslrStatus
 			if pe[mod].aslrStatus:
 				if tellWhy:
-					# print ("ASLR", mod, pe[mod].aslrStatus)
+					print ("ASLR", mod, pe[mod].aslrStatus)
 					pass
 				return False
 	except:
 		pass
-	if myDict!=None:
+	if myDict!=None and not isVal:
 		try:
 			mod=myDict[address].mod
 			offset=myDict[address].offset + pe[n].VirtualAdd
