@@ -11355,37 +11355,38 @@ class getParamVals:
 		comment=""
 		if fRet:
 			return True, rn,comment
-		return True, skip,comment		
+		return False, 0,comment		
 	def get_SystemPTR(self,name,excludeRegs,r,r2,bad,pk):
 		fRet, rn,rDict=findRet(bad)
 		comment=""
 		if fRet:
 			return True, rn,comment
-		return True, skip,comment		
+		return False, 0,comment		
 	def get_Command(self,name,excludeRegs,r,r2,bad,pk):
 		fRet, rn,rDict=findRet(bad)
 		comment=""
 		if fRet:
 			return True, rn,comment
-		return True, skip,comment	
+		return False, 0,comment	
 	def get_cmdLine(self,name,excludeRegs,r,r2,bad,pk):
 		fRet, rn,rDict=findRet(bad)
 		comment=""
+
 		if fRet:
 			return True, rn,comment
-		return True, skip,comment	
+		return False, 0,comment	
 	def get_lpFileName(self,name,excludeRegs,r,r2,bad,pk):
 		fRet, rn,rDict=findRet(bad)
 		comment=""
 		if fRet:
 			return True, rn,comment
-		return True, skip,comment				
+		return False, 0,comment				
 	def get_hModule(self,name,excludeRegs,r,r2,bad,pk):
 		fRet, rn,rDict=findRet(bad)
 		comment=""
 		if fRet:
 			return True, rn,comment
-		return True, skip,comment
+		return False, 0,comment
 	def get_retf(self,name,excludeRegs,r,r2,bad,pk):
 		fRet, rn,rDict=findRetf(bad)
 		comment=""
@@ -15243,53 +15244,96 @@ def genObfs():
 
 	
 def genHeavanGatex32():
+	timeStart = timeit.default_timer()
 	# excludeRegs=[]
 	# bad=[]
 	# global bad
 	buildPushad([], "HG32" )
+
+	timeStop = timeit.default_timer()
+	print(red," Time:",yel, str(timeStop - timeStart),res)
+
 def genHeavanGatex64():
 	buildHG([],[])
 def genWinSyscallNtAllocateVirtualMemory():
+	timeStart = timeit.default_timer()
+	
 	global bad
 	sysNtAllocParams=["tbd","tbd",0xFFFFFFFF,"ptr",0,"ptr",0x3000,0x40,0x6000]
 	print (cya+"   This will attempt to generate a ROP chain using the Windows syscall\n   NtAllocateVirtualMemory for "+yel+"Windows 10/11"+cya+". Other OSs not presently supported.\n"+res)
-	buildMovDerefSyscall([],bad, sysNtAllocParams,8 )
+	buildMovDerefSyscall([],bad, sysNtAllocParams,8 )	
+	timeStop = timeit.default_timer()
+	print(red," Time:",yel, str(timeStop - timeStart),res)
+
 
 def genWinSyscallNtProtectVirtualMemory():
+	timeStart = timeit.default_timer()
+	
 	global bad
 	global excludeRegsGlobal
 	sysNtProtectParms=["tbd", "tbd", 0xffffffff,"ptr", 1, 0x40, "ptr"]
 	print (cya+"   This will attempt to generate a ROP chain using the Windows syscall\n   NtProtectVirtualMemory for "+yel+"Windows 10/11"+cya+". Other OSs not presently supported.\n"+res)
-	buildMovDerefSyscallProtect([],bad, sysNtProtectParms,6 )
+	buildMovDerefSyscallProtect([],bad, sysNtProtectParms,6 )	
+	timeStop = timeit.default_timer()
+	print(red," Time:",yel, str(timeStop - timeStart),res)
+
 
 def genShellcodelessROP_System():
+	timeStart = timeit.default_timer()
 	global bad
-	buildPushad(bad, "System" )
+	buildPushad(bad, "System" )	
+	timeStop = timeit.default_timer()
+	print(red," Time:",yel, str(timeStop - timeStart),res)
+
 
 def genVirtualProtectPushad():
+	timeStart = timeit.default_timer()
 	global bad
-	buildPushad(bad, "VP" )
+	buildPushad(bad, "VP" )	
+	timeStop = timeit.default_timer()
+	print(red," Time:",yel, str(timeStop - timeStart),res)
+
 
 def genWinExecPushad():
+	timeStart = timeit.default_timer()
 	global bad
-	buildPushad(bad, "WE" )
+	buildPushad(bad, "WE" )	
+	timeStop = timeit.default_timer()
+	print(red," Time:",yel, str(timeStop - timeStart),res)
+
 
 def genDeleteFileAPushad():
+	timeStart = timeit.default_timer()
 	global bad
-	buildPushad(bad, "DF" )
+	buildPushad(bad, "DF" )	
+	timeStop = timeit.default_timer()
+	print(red," Time:",yel, str(timeStop - timeStart),res)
+
 
 def genVirtualAllocPushad():
+	timeStart = timeit.default_timer()
 	global bad
-	buildPushad(bad, "VA" )
+	buildPushad(bad, "VA" )	
+	timeStop = timeit.default_timer()
+	print(red," Time:",yel, str(timeStop - timeStart),res)
+
 
 def genMovDerefVP():
+	timeStart = timeit.default_timer()
 	global bad
 	vpParams=[0x7877badd, "automatic","automatic",0x0299,0x40,0xbaddcad2]
-	buildMovDeref(bad, vpParams,6 )
+	buildMovDeref(bad, vpParams,6 )	
+	timeStop = timeit.default_timer()
+	print(red," Time:",yel, str(timeStop - timeStart),res)
+
 
 def genShellcodelessROP_GetProc():
+	timeStart = timeit.default_timer()
 	global bad
-	buildPushad(bad, "GetProcAddress" )
+	buildPushad(bad, "GetProcAddress" )	
+	timeStop = timeit.default_timer()
+	print(red," Time:",yel, str(timeStop - timeStart),res)
+
 
 	pass
 def clearGadgets():
