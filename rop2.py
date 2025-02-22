@@ -11494,8 +11494,19 @@ class getParamVals:
 		else:
 			return True,0x30306,"Simulated value-VirtualProtect ptr not found!"
 		return False,0,"VirtualProtect Ptr not Found"
-	
-	def get_dfPTR(self,name,excludeRegs,r,r2,bad,pk):		
+
+	def get_dfPTR(self,name,excludeRegs,r,r2,bad,pk):
+		dp("get DeleteFileA_PTR")
+		l=0x30702 # Placeholder address
+		comment=""
+		try:
+			l = dllDict["kernel32.dll"]["DeleteFileA"]
+		except:
+			dp("Ptr to DeleteFileA not found.")
+			comment = "Ptr to DeleteFileA not found. 0x30702 used as placeholder."
+			return True, l, comment
+
+	def get_dfPTR_RT(self,name,excludeRegs,r,r2,bad,pk):		
 		wE=0x77662244
 		comment=""
 		foundLL=False
@@ -11517,8 +11528,18 @@ class getParamVals:
 			return True,wE,"Simulated value-DeleteFileA ptr not found!"
 		return False,wE,"DeleteFileA not Found"	
 
+	def get_winPTR(self,name,excludeRegs,r,r2,bad,pk):
+		dp("get WinExecPTR")
+		wEPtr=0x30902 # Placeholder address
+		comment=""
+		try:
+			wEPtr = dllDict["kernel32.dll"]["WinExec"]
+		except:
+			dp("Ptr to WinExec not found.")
+			comment = "Ptr to WinExec not found. 0x30902 used as placeholder."
+			return True, wEPtr, comment
 
-	def get_winPTR(self,name,excludeRegs,r,r2,bad,pk):		
+	def get_winPTR_RT(self,name,excludeRegs,r,r2,bad,pk):		
 		wE=0x77443322
 		comment=""
 		foundLL=False
@@ -11538,7 +11559,8 @@ class getParamVals:
 			return True, wE,comment
 		else:
 			return True,wE,"Simulated value-WinExec ptr not found!"
-		return False,wE,"WinExec not Found"	
+		return False,wE,"WinExec not Found"
+
 	def get_VPPtr2(self,name,excludeRegs,r,r2,bad,pk):
 		dp ("get VPPtr2")
 		bVal,p, com=self.get_VPPtr(name,excludeRegs,r,r2,bad,pk)
@@ -11645,6 +11667,27 @@ class getParamVals:
 		if foundT1:
 			return True, 0xbaddbadd,comment
 		return False,0,""
+
+	def get_CTh32SPtr(self, name, excludeRegs, r, r2, bad, pk):
+	    dp("get CreateToolhelp32SnapshotPtr")
+	    l = 0x30802  # Placeholder address
+	    comment = ""
+	    try:
+	        l = dllDict["kernel32.dll"]["CreateToolhelp32Snapshot"]
+	    except:
+	        dp("Ptr to CreateToolhelp32Snapshot not found.")
+	        comment = "Ptr to CreateToolhelp32Snapshot not found. 0x30802 used as placeholder."
+	    return True, l, comment
+
+	def get_dwFlags(self, name, excludeRegs, r, r2, bad, pk):
+	    flags_value = 0x2
+	    comment = 'TH32CS_SNAPPROCESS'
+	    return True, flags_value, comment
+
+	def get_th32ProcessID(self, name, excludeRegs, r, r2, bad, pk):
+	    process_id_value = 0x0
+	    comment = "current process"
+	    return True, process_id_value, comment
 
 pv=getParamVals()
 
@@ -12137,7 +12180,7 @@ pat = {  'LoLi1':{
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
-		'6': {'r': 'ebx', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'winPTR_RT', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
 		},
@@ -12147,7 +12190,7 @@ pat = {  'LoLi1':{
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
-		'6': {'r': 'ebx', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'winPTR_RT', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
 		},
@@ -12157,7 +12200,7 @@ pat = {  'LoLi1':{
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
-		'6': {'r': 'ebx', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'winPTR_RT', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
 		},
@@ -12187,7 +12230,7 @@ pat = {  'LoLi1':{
 		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
 		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
-		'6': {'r': 'ebx', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'winPTR_RT', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
 		},
@@ -12197,7 +12240,7 @@ pat = {  'LoLi1':{
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'4': {'r': 'ecx', 'val': 'cmdLine', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
-		'6': {'r': 'ebx', 'val': 'winPTR', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'winPTR_RT', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'uCmdShow', 'excluded':[], "r2":"",'com':'1 for SW_SHOWNORMAL'}
 		},
@@ -12217,12 +12260,12 @@ pat = {  'LoLi1':{
 		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
 		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
-		'6': {'r': 'ebx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'dfPTR_RT', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
         },
 		'DF2':{ 
-		'1': {'r': 'edi', 'val': 'dfPTR', 'excluded':[], "r2":'','com':''},
+		'1': {'r': 'edi', 'val': 'dfPTR_RT', 'excluded':[], "r2":'','com':''},
 		'2': {'r': 'ebp', 'val': 'lpFileName', 'excluded':[],"r2":"",'com':''},
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'4': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
@@ -12239,7 +12282,7 @@ pat = {  'LoLi1':{
 		'4': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
 		'6': {'r': 'ebx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
-		'7': {'r': 'edx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'dfPTR_RT', 'excluded':[], "r2":"",'com':''},
 		'1': {'r': 'eax', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''}
         },
         		
@@ -12250,7 +12293,7 @@ pat = {  'LoLi1':{
 		'4': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
 		'6': {'r': 'ebx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
-		'7': {'r': 'edx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'dfPTR_RT', 'excluded':[], "r2":"",'com':''},
 		'1': {'r': 'eax', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''}
         },
 		'DF5':{ 
@@ -12259,7 +12302,7 @@ pat = {  'LoLi1':{
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
-		'6': {'r': 'ebx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'dfPTR_RT', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
         },
@@ -12269,7 +12312,7 @@ pat = {  'LoLi1':{
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'1': {'r': 'ecx', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
-		'6': {'r': 'ebx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'dfPTR_RT', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''}
         },
@@ -12281,7 +12324,7 @@ pat = {  'LoLi1':{
 		'4': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
 		'6': {'r': 'ebx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':''},
-		'7': {'r': 'edx', 'val': 'dfPTR', 'excluded':[], "r2":"",'com':''},
+		'7': {'r': 'edx', 'val': 'dfPTR_RT', 'excluded':[], "r2":"",'com':''},
 		'1': {'r': 'eax', 'val': 'lpFileName', 'excluded':[], "r2":"",'com':''}
         },
         		
@@ -12400,7 +12443,119 @@ pat = {  'LoLi1':{
 		'6': {'r': 'ebx', 'val': 'x', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'x', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'x', 'excluded':[], "r2":"",'com':''}
+        },
+
+       	'CTh32S1':{
+		'1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
+		'2': {'r': 'eax', 'val': 'th32ProcessID', 'excluded':[],"r2":"",'com':'th32ProcessID'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'CTh32SPtr_RT', 'excluded':[], "r2":"",'com':'Ptr to CreateToolhelp32Snapshot'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], "r2":"",'com':'dwFlags'}
+        },
+       	'CTh32S2':{
+		'1': {'r': 'edi', 'val': 'pop', 'excluded':["esi"], "r2":"",'com':''},
+		'2': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], "r2":"",'com':'dwFlags'},
+		'3': {'r': 'esi', 'val': 'CTh32SPtr', 'excluded':[], "r2":"",'com':'Ptr to CreateToolhelp32Snapshot'},
+		'4': {'r': 'ebp', 'val': 'pop', 'excluded':["esi"], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"esi",'com':''},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'th32ProcessID', 'excluded':[],"r2":"",'com':'th32ProcessID'} 
+        },
+   		'CTh32S3':{
+		'1': {'r': 'esi', 'val': 'CTh32SPtr', 'excluded':[], 'r2':'','com':'Ptr to CreateToolhelp32Snapshot'},
+		'2': {'r': 'eax', 'val': 'th32ProcessID', 'excluded':[], 'r2':'','com':'th32ProcessID'},
+		'3': {'r': 'ebp', 'val': 'addESP', 'excluded':["edi","esi"], "r2":'4','com':''},
+		'4': {'r': 'esp', 'val': 'skip', 'excluded':[], 'r2':'','com':''},
+		'5': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], 'r2':'esi','com':''},
+		'6': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], 'r2':'','com':'Return address'},
+		'7': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], 'r2':'','com':'dwFlags'},
+		'8': {'r': 'edi', 'val': 'pop', 'excluded':['esi'], 'r2':'','com':''}
+        },
+   		'CTh32S4':{
+		'1': {'r': 'esi', 'val': 'ropNop', 'excluded':[], 'r2':'','com':'Rop nop'},
+		'2': {'r': 'eax', 'val': 'th32ProcessID', 'excluded':[], 'r2':'','com':'th32ProcessID'},
+		'3': {'r': 'ebp', 'val': 'CTh32SPtr', 'excluded':[], "r2":'','com':'Ptr to CreateToolhelp32Snapshot'},
+		'4': {'r': 'esp', 'val': 'skip', 'excluded':[], 'r2':'','com':''},
+		'5': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], 'r2':'ebp','com':''},
+		'6': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], 'r2':'','com':'Return address'},
+		'7': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], 'r2':'','com':'dwFlags'},
+		'8': {'r': 'edi', 'val': 'addESP', 'excluded':[], 'r2':'0xc','com':''}
+        },
+		'CTh32S5':{
+		'1': {'r': 'esi', 'val': 'CTh32SPtr', 'excluded':[], 'r2':'','com':'Ptr to CreateToolhelp32Snapshot'},
+		'2': {'r': 'eax', 'val': 'th32ProcessID', 'excluded':[], 'r2':'','com':'th32ProcessID'},
+		'3': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":'','com':'Rop nop'},
+		'4': {'r': 'esp', 'val': 'skip', 'excluded':[], 'r2':'','com':''},
+		'5': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], 'r2':'esi','com':''},
+		'6': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], 'r2':'','com':'Return address'},
+		'7': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], 'r2':'','com':'dwFlags'},
+		'8': {'r': 'edi', 'val': 'addESP', 'excluded':[], 'r2':'0xc','com':''}
+        },
+		'CTh32S6':{
+		'1': {'r': 'esi', 'val': 'CTh32SPtr', 'excluded':[], 'r2':'','com':'Ptr to CreateToolhelp32Snapshot'},
+		'2': {'r': 'eax', 'val': 'th32ProcessID', 'excluded':[], 'r2':'','com':'th32ProcessID'},
+		'3': {'r': 'ebp', 'val': 'addESP', 'excluded':[], "r2":'4','com':''},
+		'4': {'r': 'esp', 'val': 'skip', 'excluded':[], 'r2':'','com':''},
+		'5': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], 'r2':'esi','com':''},
+		'6': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], 'r2':'','com':'Return address'},
+		'7': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], 'r2':'','com':'dwFlags'},
+		'8': {'r': 'edi', 'val': 'addESP', 'excluded':[], 'r2':'4','com':''}
+        },
+        'CTh32S7':{
+		'1': {'r': 'esi', 'val': 'addESP', 'excluded':[], 'r2':'4','com':''},
+		'2': {'r': 'eax', 'val': 'th32ProcessID', 'excluded':[], 'r2':'','com':'th32ProcessID'},
+		'3': {'r': 'ebp', 'val': 'CTh32SPtr', 'excluded':[], "r2":'','com':'Ptr to CreateToolhelp32Snapshot'},
+		'4': {'r': 'esp', 'val': 'skip', 'excluded':[], 'r2':'','com':''},
+		'5': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], 'r2':'ebp','com':''},
+		'6': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], 'r2':'','com':'Return address'},
+		'7': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], 'r2':'','com':'dwFlags'},
+		'8': {'r': 'edi', 'val': 'addESP', 'excluded':[], 'r2':'0xc','com':''}
+        },
+        'CTh32S8':{
+		'1': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], 'r2':'4','com':''},
+		'2': {'r': 'eax', 'val': 'th32ProcessID', 'excluded':[], 'r2':'','com':'th32ProcessID'},
+		'3': {'r': 'ebp', 'val': 'CTh32SPtr', 'excluded':[], "r2":'','com':'Ptr to CreateToolhelp32Snapshot'},
+		'4': {'r': 'esp', 'val': 'skip', 'excluded':[], 'r2':'','com':''},
+		'5': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], 'r2':'ebp','com':''},
+		'6': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], 'r2':'','com':'Return address'},
+		'7': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], 'r2':'','com':'dwFlags'},
+		'8': {'r': 'edi', 'val': 'addESP', 'excluded':[], 'r2':'0xc','com':''}
+        },
+		'CTh32S9':{
+		'1': {'r': 'esi', 'val': 'addESP', 'excluded':[], 'r2':'4','com':''},
+		'2': {'r': 'eax', 'val': 'th32ProcessID', 'excluded':[], 'r2':'','com':'th32ProcessID'},
+		'3': {'r': 'ebp', 'val': 'CTh32SPtr', 'excluded':[], "r2":'','com':'Ptr to CreateToolhelp32Snapshot'},
+		'4': {'r': 'esp', 'val': 'skip', 'excluded':[], 'r2':'','com':''},
+		'5': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], 'r2':'ebp','com':''},
+		'6': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], 'r2':'','com':'Return address'},
+		'7': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], 'r2':'','com':'dwFlags'},
+		'8': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], 'r2':'4','com':''}
+        },
+        'CTh32S10':{
+		'1': {'r': 'esi', 'val': 'pop', 'excluded':[], 'r2':'','com':''},
+		'2': {'r': 'eax', 'val': 'th32ProcessID', 'excluded':[], 'r2':'','com':'th32ProcessID'},
+		'3': {'r': 'ebp', 'val': 'CTh32SPtr', 'excluded':[], "r2":'','com':'Ptr to CreateToolhelp32Snapshot'},
+		'4': {'r': 'esp', 'val': 'skip', 'excluded':[], 'r2':'','com':''},
+		'5': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], 'r2':'ebp','com':''},
+		'6': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], 'r2':'','com':'Return address'},
+		'7': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], 'r2':'','com':'dwFlags'},
+		'8': {'r': 'edi', 'val': 'addESP', 'excluded':[], 'r2':'0xc','com':''}
+        },
+        'CTh32S11':{
+		'1': {'r': 'esi', 'val': 'CTh32SPtr', 'excluded':[], 'r2':'','com':'Ptr to CreateToolhelp32Snapshot'},
+		'2': {'r': 'eax', 'val': 'th32ProcessID', 'excluded':[], 'r2':'','com':'th32ProcessID'},
+		'3': {'r': 'ebp', 'val': 'pop', 'excluded':[], "r2":'','com':''},
+		'4': {'r': 'esp', 'val': 'skip', 'excluded':[], 'r2':'','com':''},
+		'5': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], 'r2':'ebp','com':''},
+		'6': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], 'r2':'','com':'Return address'},
+		'7': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], 'r2':'','com':'dwFlags'},
+		'8': {'r': 'edi', 'val': 'addESP', 'excluded':[], 'r2':'4','com':''}
         }
+
         }
 
 def giveRegValsFromDict(dict,t,i):
@@ -12418,10 +12573,12 @@ def addExRegs(excludeRegs, r):
 	return excludeRegs
 
 def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stopCode):
+	print('buildPushadInner')
 	j=0
 	outputsTxt=[]
 	outputsPk=[]
 	outputsTxtC=[]
+	tellWhy=True
 
 	for x in range(apiNum):
 		i,j, apiCode, apiNum= giveApiNum(winApi,j)
@@ -12524,6 +12681,7 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 
 		if foundPushad:
 			pkPA=pkBuild([pk,puA])
+			# showChain(pkPA, True,True)
 			print (cya,"    Completed apiCode",res,apiCode, j)
 
 		else:
@@ -12616,7 +12774,10 @@ def giveApiNum(winApi,j):
 		apiCode="WE"
 	elif winApi=="DF":
 		apiNum=17
-		apiCode="DF"						
+		apiCode="DF"
+	elif winApi == "CTh32S":
+		apiNum=11
+		apiCode="CTh32S"					
 	i=apiCode+str(j)
 	curPat=i
 	return i,j, apiCode, apiNum
@@ -12638,6 +12799,7 @@ def buildPushad(bad, patType):
 	outputs=[]
 	pk=[]
 	oldPat=""
+
 
 	# patType="GetProcAddress"
 	if patType=="GetProcAddress":
@@ -12697,7 +12859,11 @@ def buildPushad(bad, patType):
 		if foundInnerWE:
 			printGadgetChain(outputsTxtWE, "DeleteFileA")
 
-
+	elif patType == "CTh32S":
+		stopCode="CTh32S"
+		foundInnerCT,outputsTxtCT, outputsTxtCCT,outputsPkCT=buildPushadInner(bad,excludeRegs2,"CTh32S",11,"apiCode",pk,pk,stopCode)
+		if foundInnerCT:
+			printGadgetChain(outputsTxtCT, "CreateToolhelp32Snapshot")
 
 def buildPushadOld(excludeRegs,bad, myArgs ,numArgs):
 	global PWinApi
@@ -15334,8 +15500,13 @@ def genShellcodelessROP_GetProc():
 	timeStop = timeit.default_timer()
 	print(red," Time:",yel, str(timeStop - timeStart),res)
 
+def genCreateToolhelp32SnapshotROP():
+    timeStart = timeit.default_timer()
+    global bad
+    buildPushad(bad, "CTh32S")
+    timeStop = timeit.default_timer()
+    print(red, " Time:", yel, str(timeStop - timeStart), res)
 
-	pass
 def clearGadgets():
 	global fg
 	global opt
@@ -16735,6 +16906,8 @@ def ui():
 				getBadBytesSubmenu()
 			elif userIN[0:1] == "d":
 				genShellcodelessROP_GetProc()
+			elif userIN[0:1] == "k":
+				genCreateToolhelp32SnapshotROP()
 			elif userIN[0:1] == "o":
 				genObfs()
 			elif userIN[0:1] == "p":
