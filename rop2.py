@@ -12161,11 +12161,33 @@ class getParamVals:
 			return True,P32F_RT," - Simulated value-Process32First not found!"
 		return False, P32F_RT, "Process32First not Found"
 
+	def get_P32N_RT(self, name, excludeRegs, r, r2, bad, pk):
+		P32N_RT=0x0af0bd09
+		comment=""
+		foundLL=False
+		try:
+			P32N_RT=dllDict["kernel32.dll"]["Process32Next"]
+			foundLL=True
+		except:
+			try:
+				P32N_RT=dllDict["kernelbase.dll"]["Process32Next"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - Process32Next not found. 0x0af0bd09 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to Process32Next")	
+			comment=" - Ptr to Process32Next"
+			return True, P32N_RT,comment
+		else:
+			return True,P32N_RT," - Simulated value-Process32Next not found!"
+		return False, P32N_RT, "Process32Next not Found"
+
 	def get_hSnapshot(self, name, excludeRegs, r, r2, bad, pk):
 	# TODO: point to the handle from CreateToolhelp32Snapshot
 	# CreateToolhelp32Snapshot puts in EAX
-		value=0x90909090
-		comment=' - handle from CreateToolhelp32Snapshot'
+		value=0xd14
+		comment=' - placeholder, simulated handle from CreateToolhelp32Snapshot'
 		return True, value, comment
 
 	def get_lppe(self, name, excludeRegs, r, r2, bad, pk):
@@ -12198,7 +12220,7 @@ class getParamVals:
 
 	def get_lpData(self, name, excludeRegs, r, r2, bad, pk):
 	# TODO: implement a pointer to 0x1
-		comment=''
+		comment='create pointer'
 		return True, 0x1, comment
 
 	def get_cbData(self, name, excludeRegs, r, r2, bad, pk):
@@ -12296,7 +12318,7 @@ class getParamVals:
 
 	def get_phkResult(self, name, excludeRegs, r, r2, bad, pk):
 	# TODO: implement a pointer which holds the output [OUT]
-		comment=''
+		comment='create pointer'
 		return True, 0x0, comment
 
 	def get_WPM_RT(self, name, excludeRegs, r, r2, bad, pk):
@@ -12420,8 +12442,8 @@ class getParamVals:
 	def get_hSCManager(self, name, excludeRegs, r, r2, bad, pk):
 	# TODO: point to the handle from OpenSCManagerA
 	# OpenSCManagerA puts in EAX
-		value=0x90909090
-		comment=' - handle from OpenSCManagerA'
+		value=0xa15
+		comment=' - placeholder, simulated handle from OpenSCManagerA'
 		return True, value, comment
 
 	def get_lpServiceName(self, name, excludeRegs, r, r2, bad, pk):
@@ -12438,7 +12460,7 @@ class getParamVals:
 			foundLL=True
 		except:
 			try:
-				SEA_RT=dllDict["Shell32.dl"]["ShellExecuteA"]
+				SEA_RT=dllDict["Shell32.dll"]["ShellExecuteA"]
 				foundLL=True
 			except:
 				foundLL=False
@@ -12475,6 +12497,133 @@ class getParamVals:
 
 	def get_nShowCmd(self, name, excludeRegs, r, r2, bad, pk):
 		comment=' - SW_HIDE'
+		return True, 0x0, comment
+
+	def get_CRT_RT(self, name, excludeRegs, r, r2, bad, pk):
+		CRT_RT=0x0af0cd06
+		comment=""
+		foundLL=False
+		try:
+			CRT_RT=dllDict["kernel32.dll"]["CreateRemoteThread"]
+			foundLL=True
+		except:
+			try:
+				CRT_RT=dllDict["kernelbase.dl"]["CreateRemoteThread"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - CreateRemoteThread not found. 0x0af0cd06 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to CreateRemoteThread")
+			comment=" - Ptr to CreateRemoteThread"
+			return True, CRT_RT,comment
+		else:
+			return True,CRT_RT," - Simulated value-CreateRemoteThread not found!"
+		return False, CRT_RT, "CreateRemoteThread not Found"
+
+	def get_hProcess_CRT(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: implement handle to the process
+		value=0xc12
+		comment=' - placeholder, simulated handle to the target process'
+		return True, value, comment
+
+	def get_lpThreadAttributes(self, name, excludeRegs, r, r2, bad, pk):
+		comment=''
+		return True, 0x0, comment
+
+	def get_VAE_RT(self, name, excludeRegs, r, r2, bad, pk):
+		VAE_RT=0x0af0cd07
+		comment=""
+		foundLL=False
+		try:
+			VAE_RT=dllDict["kernel32.dll"]["VirtualAllocEx"]
+			foundLL=True
+		except:
+			try:
+				VAE_RT=dllDict["kernelbase.dl"]["VirtualAllocEx"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - VirtualAllocEx not found. 0x0af0cd07 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to VirtualAllocEx")
+			comment=" - Ptr to VirtualAllocEx"
+			return True, VAE_RT,comment
+		else:
+			return True,VAE_RT," - Simulated value-VirtualAllocEx not found!"
+		return False, VAE_RT, "VirtualAllocEx not Found"
+
+	def get_hProcess_VAE(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: point to handle from the OpenProcess
+		value=0xa12
+		comment=' - placeholder, simulated handle from OpenProcess'
+		return True, value, comment
+
+	def get_lpAddress(self, name, excludeRegs, r, r2, bad, pk):
+		comment=''
+		return True, 0x0, comment
+
+	def get_TP_RT(self, name, excludeRegs, r, r2, bad, pk):
+		TP_RT=0x0af0cd08
+		comment=""
+		foundLL=False
+		try:
+			TP_RT=dllDict["kernel32.dll"]["TerminateProcess"]
+			foundLL=True
+		except:
+			try:
+				TP_RT=dllDict["kernelbase.dl"]["TerminateProcess"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - TerminateProcess not found. 0x0af0cd08 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to TerminateProcess")
+			comment=" - Ptr to TerminateProcess"
+			return True, TP_RT,comment
+		else:
+			return True,TP_RT," - Simulated value-TerminateProcess not found!"
+		return False, TP_RT, "TerminateProcess not Found"
+
+	def get_hProcess_TP(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: point to handle from the OpenProcess
+		value=0xd17
+		comment=' - placeholder, simulated handle from OpenProcess'
+		return True, value, comment
+
+	def get_uExitCode(self, name, excludeRegs, r, r2, bad, pk):
+		comment=''
+		return True, 0x0, comment
+
+	def get_CPA_RT(self, name, excludeRegs, r, r2, bad, pk):
+		CPA_RT=0x0af0cd09
+		comment=""
+		foundLL=False
+		try:
+			CPA_RT=dllDict["kernel32.dll"]["CreateProcessA"]
+			foundLL=True
+		except:
+			try:
+				CPA_RT=dllDict["kernelbase.dl"]["CreateProcessA"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - CreateProcessA not found. 0x0af0cd09 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to CreateProcessA")
+			comment=" - Ptr to CreateProcessA"
+			return True, CPA_RT,comment
+		else:
+			return True,CPA_RT," - Simulated value-CreateProcessA not found!"
+		return False, CPA_RT, "CreateProcessA not Found"
+
+	def get_lpApplicationName(self, name, excludeRegs, r, r2, bad, pk):
+		comment=''
+		return True, 0x0, comment
+
+	def get_lpCommandLine(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: varStr = 'C:\Roptester3\calc.exe'
+		comment=''
 		return True, 0x0, comment
 
 pv=getParamVals()
@@ -13524,6 +13673,116 @@ pat = {  'LoLi1':{
 		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
 		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'}
         },
+		
+		'P32N1':{
+        '1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":'8','com':''},
+		'2': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32N_RT', 'excluded':[], "r2":"",'com':'Process32NextStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'}
+        },
+
+     	'P32N2':{
+      	'1': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":"",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32N_RT', 'excluded':[], "r2":"",'com':'Process32NextStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+        'P32N3':{
+      	'1': {'r': 'edi', 'val': 'pop', 'excluded':[], "r2":"",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'addESP', 'excluded':["edi", "esi"], "r2":"4",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32N_RT', 'excluded':[], "r2":"",'com':'Process32NextStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+        'P32N4':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"0xc",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32N_RT', 'excluded':[], "r2":"",'com':'Process32NextStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+        'P32N5':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"4",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'addESP', 'excluded':[], "r2":"4",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32N_RT', 'excluded':[], "r2":"",'com':'Process32NextStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+		'P32N6':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"0xc",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'addESP', 'excluded':[], "r2":"4",'com':''},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32N_RT', 'excluded':[], "r2":"",'com':'Process32NextStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+		'P32N7':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"0xc",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32N_RT', 'excluded':[], "r2":"",'com':'Process32NextStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+        'P32N8':{
+      	'1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'addESP', 'excluded':[], "r2":"4",'com':''},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32N_RT', 'excluded':[], "r2":"",'com':'Process32NextStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+		
+		'P32N9':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"0xc",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'pop', 'excluded':["edi"], "r2":"",'com':''},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32N_RT', 'excluded':[], "r2":"",'com':'Process32NextStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'} 
+        },
+
+        'P32N10':{
+      	'1': {'r': 'edi', 'val': 'addESP', 'excluded':[], "r2":"4",'com':''},
+		'2': {'r': 'ecx', 'val': 'hSnapshot', 'excluded':[], "r2":"",'com':'hSnapshot'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"], "r2":"",'com':''},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'P32N_RT', 'excluded':[], "r2":"",'com':'Process32NextStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lppe', 'excluded':[],"r2":"",'com':'lppe'}
+        },
 
         "RSKV1":{
         '1': {'r': 'edi', 'val': 'RSKV_RT', 'excluded':[], "r2":"",'com':'RegSetKeyValueAStub'},
@@ -13664,7 +13923,7 @@ pat = {  'LoLi1':{
 		'6': {'r': 'ebx', 'val': 'lpFile', 'excluded':[], "r2":"",'com':'lpFile'},
 		'7': {'r': 'edx', 'val': 'lpParameters', 'excluded':[], "r2":"",'com':'lpParameters'},
 		'8': {'r': 'eax', 'val': 'nShowCmd', 'excluded':[], "r2":"",'com':'nShowCmd'}
-        }
+        },
 
      	# 'SEA2':{
         # '9': {'valStr': 'lpFile', 'val': 0, 'specialHandling':True, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpFile'}, # TODO: varStr = 'calc'
@@ -13680,6 +13939,66 @@ pat = {  'LoLi1':{
 		# '7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
 		# '8': {'r': 'eax', 'val': 'lpOperation', 'excluded':[], "r2":"",'com':'lpOperation'}
         # },
+
+        'CRT1':{
+		'9': {'valStr': 'dwStackSize', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwStackSize'}, 
+        '10': {'valStr': 'lpStartAddress', 'val': 0x90909090, 'specialHandling':True, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpStartAddress'}, # TODO: specialHandling
+        '11': {'valStr': 'lpParameter', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpParameter'},
+        '12': {'valStr': 'dwCreationFlags', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwCreationFlags'},
+        '13': {'valStr': 'lpThreadId', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpThreadId'},
+		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'2': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"], "r2":"",'com':''},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ecx', 'val': 'hProces_CRT', 'excluded':[], "r2":"",'com':'hProcess'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'CRT_RT', 'excluded':[], "r2":"",'com':'CreateRemoteThreadStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lpThreadAttributes', 'excluded':[], "r2":"",'com':'lpThreadAttributes'}
+        },
+
+	   'VAE1':{
+		'9': {'valStr': 'dwSize', 'val': 0x1000, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwSize'},
+        '10': {'valStr': 'flAllocationType', 'val': 0x3000, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'flAllocationType'},
+        '11': {'valStr': 'flProtect', 'val': 0x40, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'flProtect - PAGE_EXECUTE_READWRITE'},
+		'1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":"8",'com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ecx', 'val': 'hProcess_VAE', 'excluded':[], "r2":"",'com':'hProcess'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'VAE_RT', 'excluded':[], "r2":"",'com':'VirtualAllocExStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lpAddress', 'excluded':[], "r2":"",'com':'lpAddress'}
+        },
+
+        'TP1':{
+        '1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":"8",'com':''},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'4': {'r': 'ecx', 'val': 'hProcess_TP', 'excluded':[], "r2":"",'com':'hProcess'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'TP_RT', 'excluded':[], "r2":"",'com':'TerminateProcessStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'uExitCode', 'excluded':[], "r2":"",'com':'uExitCode'}
+        },
+
+        'CPA1':{
+        '9': {'valStr': 'lpProcessAttributes ', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpProcessAttributes '},
+        '10': {'valStr': 'lpThreadAttributes', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpThreadAttributes'},
+        '11': {'valStr': 'bInheritHandles', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'bInheritHandles'},
+        '12': {'valStr': 'dwCreationFlags', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'dwCreationFlags'},
+        '13': {'valStr': 'lpEnvironment', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpEnvironment'},
+        '14': {'valStr': 'lpCurrentDirectory', 'val': 0, 'specialHandling':False, 'hasPointer':False, 'StructPointer': False, 'StructType':None, 'com':'lpCurrentDirectory'},
+        '15': {'valStr': 'lpStartupInfo', 'val': 0, 'specialHandling':True, 'hasPointer':True, 'StructPointer': False, 'StructType':None, 'com':'lpStartupInfo'}, # TODO: pointer to struct of 17 - 0's
+        '16': {'valStr': 'lpProcessInformation', 'val': 0, 'specialHandling':True, 'hasPointer':True, 'StructPointer': False, 'StructType':None, 'com':'lpProcessInformation'}, # TODO: pointer to struct of 17 - 0's
+		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'Rop nop'},
+		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':''},
+		'4': {'r': 'ecx', 'val': 'lpApplicationName', 'excluded':[], "r2":"",'com':'lpApplicationName'},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':''},
+		'6': {'r': 'ebx', 'val': 'CPA_RT', 'excluded':[], "r2":"",'com':'CreateProcessAStub'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address'},
+		'8': {'r': 'eax', 'val': 'lpCommandLine', 'excluded':[], "r2":"",'com':'lpCommandLine'}
+        }
 
         }
 
@@ -13960,6 +14279,9 @@ def giveApiNum(winApi,j):
 	elif winApi == "P32F":
 		apiNum=10
 		apiCode="P32F"
+	elif winApi == "P32N":
+		apiNum=10
+		apiCode="P32N"
 	elif winApi == "RSKV":
 		apiNum=2
 		apiCode="RSKV"
@@ -13986,6 +14308,21 @@ def giveApiNum(winApi,j):
 		apiNum=1
 		apiCode="SEA"
 		# size=12
+	elif winApi=="CreateRemoteThread":
+		apiNum=1
+		apiCode="CRT"
+		size=13
+	elif winApi=="VirtualAllocEx":
+		apiNum=1
+		apiCode="VAE"
+		size=11
+	elif winApi=="TerminateProcess":
+		apiNum=1
+		apiCode="TP"
+	elif winApi=="CreateProcessA":
+		apiNum=1
+		apiCode="CPA"
+		size=16
 	elif winApi == "Test":
 		apiNum=1
 		apiCode="Test"
@@ -14096,6 +14433,12 @@ def buildPushad(bad, patType):
 		if foundInnerPF:
 			printGadgetChain(outputsTxtPF, "Process32First")
 
+	elif patType == "P32N":
+		stopCode="P32N"
+		foundInnerPN,outputsTxtPN, outputsTxtCPN,outputsPkPN=buildPushadInner(bad,excludeRegs2,"P32N",10,"apiCode",pk,pk,stopCode)
+		if foundInnerPN:
+			printGadgetChain(outputsTxtPN, "Process32Next")
+
 	elif patType == "RSKV":
 		stopCode="RSKV"
 		foundInnerRV,outputsTxtRV, outputsTxtCRV,outputsPkRV=buildPushadInner(bad,excludeRegs2,"RSKV",2,"apiCode",pk,pk,stopCode)
@@ -14137,6 +14480,30 @@ def buildPushad(bad, patType):
 		foundInnerSEA,outputsTxtSEA, outputsTxtCSEA,outputsPkSEA=buildPushadInner(bad,excludeRegs2,"ShellExecuteA",1,"apiCode",pk,pk,stopCode)
 		if foundInnerSEA:
 			printGadgetChain(outputsTxtSEA, "ShellExecuteA")
+
+	elif patType == "CreateRemoteThread":
+		stopCode="CRT"
+		foundInnerCRT,outputsTxtCRT, outputsTxtCCRT,outputsPkCRT=buildPushadInner(bad,excludeRegs2,"CreateRemoteThread",1,"apiCode",pk,pk,stopCode)
+		if foundInnerCRT:
+			printGadgetChain(outputsTxtCRT, "CreateRemoteThread")
+
+	elif patType=="VirtualAllocEx":
+		stopCode="VAE"
+		foundInnerVPE,outputsTxtVPE, outputsTxtCVPE,outputsPkVPE=buildPushadInner(bad,excludeRegs2,"VirtualAllocEx",1,"apiCode",pk,pk,stopCode)
+		if foundInnerVPE:
+			printGadgetChain(outputsTxtVPE, "VirtualAllocEx")
+
+	elif patType=="TerminateProcess":
+		stopCode="TP"
+		foundInnerTP,outputsTxtTP, outputsTxtCTP,outputsPkTP=buildPushadInner(bad,excludeRegs2,"TerminateProcess",1,"apiCode",pk,pk,stopCode)
+		if foundInnerTP:
+			printGadgetChain(outputsTxtTP, "TerminateProcess")
+
+	elif patType=="CreateProcessA":
+		stopCode="CPA"
+		foundInnerCPA,outputsTxtCPA, outputsTxtCCPA,outputsPkCPA=buildPushadInner(bad,excludeRegs2,"CreateProcessA",1,"apiCode",pk,pk,stopCode)
+		if foundInnerCPA:
+			printGadgetChain(outputsTxtCPA, "CreateProcessA")
 
 	elif patType == "Test":
 		stopCode="Test"
@@ -16808,6 +17175,13 @@ def genProcess32First():
 	timeStop = timeit.default_timer()
 	print(red, " Time:", yel, str(timeStop - timeStart), res)
 
+def genProcess32Next():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "P32N")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
 def genRegSetKeyValueA():
 	timeStart = timeit.default_timer()
 	global bad
@@ -16854,6 +17228,34 @@ def genShellExecuteA():
 	timeStart = timeit.default_timer()
 	global bad
 	buildPushad(bad, "ShellExecuteA")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genCreateRemoteThread():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "CreateRemoteThread")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genVirtualAllocEx():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "VirtualAllocEx")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genTerminateProcess():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "TerminateProcess")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genCreateProcessA():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "CreateProcessA")
 	timeStop = timeit.default_timer()
 	print(red, " Time:", yel, str(timeStop - timeStart), res)
 
@@ -18268,8 +18670,10 @@ def ui():
 				genURLDownloadToFile()
 			elif userIN[0:1] == "l":
 				genOpenProcess()
-			elif userIN[0:1] == "e":
+			elif userIN[0:2] == "pf":
 				genProcess32First()
+			elif userIN[0:2] == "pn":
+				genProcess32Next()
 			elif userIN[0:1] == "y":
 				genRegSetKeyValueA()
 			elif userIN[0:1] == "j":
@@ -18284,6 +18688,14 @@ def ui():
 				genCreateServiceA()
 			elif userIN[0:2] == "77":
 				genShellExecuteA()
+			elif userIN[0:2] == "88":
+				genCreateRemoteThread()
+			elif userIN[0:2] == "99":
+				genVirtualAllocEx()
+			elif userIN[0:2] == "&":
+				genTerminateProcess()
+			elif userIN[0:2] == "12":
+				genCreateProcessA()
 			elif userIN[0:2] == "22":
 				genTest()
 			elif userIN[0:1] == "o":
