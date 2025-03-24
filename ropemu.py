@@ -710,7 +710,7 @@ def giveStackSys(uc, arch):
             # print(yel,binaryToStr(mem3),res)
             pass
         return True,start-goBackDistance
-    return False,0xdeadc0de
+    return False,0xdeadc0d2
 
 def giveStack(uc, arch):
     global ApiSyscall
@@ -750,7 +750,7 @@ def giveStack(uc, arch):
             # print(yel,binaryToStr(mem3),res)
             pass
         return True,start-goBackDistance
-    return False,0xdeadc0de
+    return False,0xdeadc0d3
     # stacky1=binaryToStr(uc.mem_read(uc.reg_read(UC_X86_REG_ESP-0x50), 0x50))
 
     # stacky=binaryToStr(uc.mem_read(uc.reg_read(UC_X86_REG_ESP), 0x100))
@@ -833,9 +833,7 @@ def hook_code2(uc, address, size, user_data):
    
     if ApiSyscall!="syscall":
         # print ("finalPivotGadgetG",hex(finalPivotGadgetG))
-
         if doAfterPivot:
-            # print (red,"doAfterPivot address:", hex(address))
             bGiveStack, givStDistance= giveStack(uc,32)
             doAfterPivot=False
         if address==finalPivotGadgetG:
@@ -1051,6 +1049,47 @@ distanceDict={
     },
 
 
+   'CSA':{'distanceToPayload':0x400, 'numLoc':3,  #CreateServiceA
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'EvilService','size':13,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':13,'isText':True, 'String':'My EvilService','size':16,'NullAfterString':True,'isStruct':False},
+        'loc3':{'distanceFromPayload':29,'isText':True, 'String':'C:\\Program Files\\VMware\\VMware Tools\\demo.exe','size':47,'NullAfterString':True,'isStruct':False},
+    },
+     'SEA':{'distanceToPayload':0x400, 'numLoc':2, #ShellExecuteA
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'open','size':6,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':6,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False}
+    },
+     'CPA':{'distanceToPayload':0x400, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'calc/e','size':6,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':6,'isText':True, 'String':'struct1','size':68,'NullAfterString':False,'isStruct':True},
+        # 'loc3':{'distanceFromPayload':0x80,'isText':True, 'Strings':'struct2','size':17,'NullAfterString':False,'isStruct':True},
+    },
+    'P32F':{'distanceToPayload':0x400, 'numLoc':1,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'struct1','size':40,'NullAfterString':False,'isStruct':True},
+    },
+    'P32N':{'distanceToPayload':0x400, 'numLoc':1,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'struct1','size':40,'NullAfterString':False,'isStruct':True},
+    },
+     'lpProcessInformation':{'distanceToPayload':0x400, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':6,'isText':True, 'String':'struct1','size':68,'NullAfterString':False,'isStruct':True},
+    },
+
+     'UDTF':{'distanceToPayload':0x400, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'http://httpbin.org/image/jpeg','size':31,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':31,'isText':True, 'String':'download-file1.jpeg','size':21,'NullAfterString':True,'isStruct':False},
+    },
+     'RSKV':{'distanceToPayload':0x400, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'SYSTEM\\CurrentControlSet\\Control\\Terminal Server','size':50,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':50,'isText':True, 'String':'fDenyTSConnections','size':21,'NullAfterString':True,'isStruct':False},
+
+    },
+       'RCKV':{'distanceToPayload':0x400, 'numLoc':1,   #RegCreateKeyA
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'Software\\Microsoft\\Windows\\CurrentVersion\\Run','size':47,'NullAfterString':True,'isStruct':False},
+    },
+     'new':{'distanceToPayload':0x400, 'numLoc':1,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'new','size':60,'NullAfterString':True,'isStruct':False},
+    },
+
 
     'empty':{'distanceToPayload':0x700, 'numLoc':5,
         'loc1':{'distanceFromPayload':0,'isText':False, 'String':None,'size':10,'NullAfterString':False,'isStruct':False},
@@ -1264,6 +1303,8 @@ class ropParms:
 
     def setDistanceLoc(self,patternType,stack,pivot):
         dp ("setDistanceLoc")
+        # print ("setDistanceLoc", patternType, hex(stack),hex(pivot))
+
         numLoc=distanceDict[patternType]["numLoc"]
 
         if numLoc>=7:
@@ -1288,15 +1329,18 @@ class ropParms:
             if distanceDict[patternType]["loc3"]["isText"]:
               self.locString3=  distanceDict[patternType]["loc3"]["String"]
             dp ("in loc3b")
+            print (hex(self.loc3), self.locString3)
 
         if numLoc>=2:
             self.loc2=distanceDict[patternType]["loc2"]["distanceFromPayload"] +stack + pivot
             if distanceDict[patternType]["loc2"]["isText"]:
-              self.locString2=  distanceDict[patternType]["loc2"]["String"]       
+              self.locString2=  distanceDict[patternType]["loc2"]["String"] 
+            print (red,"loc 2",res,hex(self.loc2), self.locString2)      
         if numLoc >=1:
             self.loc1=distanceDict[patternType]["loc1"]["distanceFromPayload"] + stack + pivot
             if distanceDict[patternType]["loc1"]["isText"]:
               self.locString1=  distanceDict[patternType]["loc1"]["String"]
+            print (hex(self.loc1), self.locString1)
         self.hasDistance=True
 
     def showShellLoc(self):
@@ -1409,14 +1453,14 @@ class ropParms:
 
 
     def giveParamLocOnStack(self,paramNum,ApiSyscall):
-        # dp ("giveParamLocOnStack", paramNum, ApiSyscall)
+        # print ("giveParamLocOnStack", paramNum, ApiSyscall)
         if ApiSyscall=="winApi":
             paramLookup={1: self.param1,2: self.param2,3: self.param3,4: self.param4,5: self.param5,6: self.param6,7: self.param7,8: self.param8 ,9: self.param9, "winApi":self.winApi, "RA": self.RA, "shellcode":self.shellcode,"loc1":self.loc1,"loc2":self.loc2,"loc3":self.loc3,"loc4":self.loc4,"loc5":self.loc5,"loc6":self.loc6}
         else:
             paramLookup={1: self.param1,2: self.param2,3: self.param3,4: self.param4,5: self.param5,6: self.param6,7: self.param7,8: self.param8 ,9: self.param9, "sysInvoke":self.sysInvoke, "RA1": self.RA1, "RA2": self.RA2,"shellcode":self.shellcode}
 
         returnVal=paramLookup[paramNum]   
-
+        # print ("returnVal", returnVal)
         return returnVal
 RP=None
 targetP=None
@@ -1425,8 +1469,8 @@ ApiSyscall="winApi"
 sysTarget2=0
 
 
-def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi,sysTarget,finalPivotGadget1, rValStr=None):
-    # print(blu,"rop_testerRunROP", rValStr,res)
+def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi,sysTarget,finalPivotGadget1, rValStr=None,patType=None):
+    # print(blu,"rop_testerRunROP", "rValStr", rValStr,res, "patType",patType, "" )
     global maxCount
     global winApiSyscallReached
     global oldEsp
@@ -1504,7 +1548,14 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         RP=ropParms(ApiSyscall,IncDec,distEsp,stack,numP)   # inc/dec, direction, distEsp, startEsp, numP
 
         if rValStr!=None:
-            RP.setDistanceLoc(rValStr,stack,distanceDict[rValStr]["distanceToPayload"])
+            patsRValStr=["targetDllString","lpProcName", "System"]
+            if rValStr in patsRValStr:
+                RP.setDistanceLoc(rValStr,stack,distanceDict[rValStr]["distanceToPayload"])
+                # print (gre,"distanceDict", hex(distanceDict[rValStr]["distanceToPayload"]),res)
+            else:
+                RP.setDistanceLoc(patType,stack,distanceDict[patType]["distanceToPayload"])
+                # print (gre,"distanceDict", hex(distanceDict[patType]["distanceToPayload"]),res)
+
 
         RP.show(mu,ApiSyscall)
         RP.setShellcode("after",ApiSyscall)
@@ -1717,7 +1768,7 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         dp ("uc_err", uc_err)
         stopProcess = False
 
-
+        print ("1gOutput, locParam, locReg, winApiSyscallReached, givStDistance", gOutput, locParam, locReg, winApiSyscallReached, givStDistance)
         return gOutput, locParam, locReg, winApiSyscallReached, givStDistance
 
     except UcError as e:
@@ -1738,6 +1789,7 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
             locParam=RP.giveParamLocOnStack(targetP,"syscall")
         else:
             locParam=RP.giveParamLocOnStack(targetP,"winApi")
+        print ("\t", cya, "localparam", gre,hex(locParam), cya,"oldEsp", gre,hex(oldEsp),res,"givStDistance", hex(givStDistance),res)
         return gOutput, locParam,oldEsp,winApiSyscallReached,givStDistance
 
 rop_testerCalled=0
