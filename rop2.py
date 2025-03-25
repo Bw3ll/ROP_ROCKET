@@ -8346,7 +8346,7 @@ def createStructPushad(excludeRegs,rValStr,pk,finalReg,length1,loc,ourStruct,com
 							pk=pkBuild([pk, gT])
 					if not foundT:
 						continue
-					# showChain(pk, True,True, blu)
+					showChain(pk, True,True, blu)
 					return foundStruct, pk, r
 	return False, 0,0
 
@@ -8687,9 +8687,9 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,apiCode,distEsp=0):
 			return False, 0,0,0
 		comment=" - get "+rValStr
 	elif hasString or paramStr:
-		# print (red,"hasString:",res, rValStr)
+		print (red,"hasString:",res, rValStr)
 		foundDistG, v, pk2,reg=getDistanceGadget(excludeRegs,rValStr,pk,reg,ourLoc,apiCode,comment)
-		# showChain(pk2, True,True,gre)
+		showChain(pk2, True,True,gre)
 		if foundDistG:
 			return True, 0, pk2,reg
 		else:
@@ -8794,7 +8794,7 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,apiCode,distEsp=0):
 		foundDistG=True
 		if foundStart:
 			showChain(pk2,True,True,mag)
-			exit()
+			# exit()
 			pass
 		if foundStart:
 			return True, 0, pk2,reg
@@ -13583,7 +13583,7 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 	tellWhy=True
 	size=8
 	endFlag=False
-	apiNum=1
+	# apiNum=1  # change to 1 to view one at a time.
 
 	for x in range(apiNum):
 		i,j, apiCode, apiNum, size= giveApiNum(winApi,j)
@@ -14288,7 +14288,7 @@ def getDistanceParamReg(pe,n,pk, distEsp, IncDec,numP,targetP,targetR, destAfter
 		diffPR=locReg-locParam
 
 		#to do???????
-	print (red, "values:", hex(locParam),hex(locReg),res)
+	# print (red, "values:", hex(locParam),hex(locReg),res)
 	dp(yel)
 	dp ("diffPR 1", hex(diffPR))
 	
