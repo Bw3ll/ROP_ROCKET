@@ -12969,26 +12969,9 @@ class getParamVals:
 		return True, value,comment, ""
 
 	def get_OP_PTR(self, name, excludeRegs, r, r2, bad, pk):
-		OP_PTR=0x0af0bd04
-		comment=""
-		foundLL=False
-		try:
-			OP_PTR=dllDict["kernel32.dll"]["OpenProcess"]
-			foundLL=True
-		except:
-			try:
-				OP_PTR=dllDict["kernelbase.dll"]["OpenProcess"]
-				foundLL=True
-			except:
-				foundLL=False
-				comment=" - Ptr to OpenProcess not found. 0x0af0bd04 used as placeholder."
-		if foundLL:
-			dp ("returning ptr to OpenProcess")	
-			comment=" - Ptr to OpenProcess"
-			return True, OP_PTR,comment, ""
-		else:
-			return True,OP_PTR," - Placeholder value, OpenProcess ptr not found", ""
-		return False, OP_PTR, "OpenProcess not Found", ""
+		bFound, OP_RT,comment, extra  =  self.get_OP_RT(name, excludeRegs, r, r2, bad, pk)
+		comment="create pointer"  # this is required, to be converted into a pointer
+		return bFound, OP_RT,comment, extra
 
 	def get_P32F_RT(self, name, excludeRegs, r, r2, bad, pk):
 		P32F_RT=0x0af0bd02

@@ -891,7 +891,7 @@ pat2 = {  'LoLi1':{
 		'4': {'r': 'ebp', 'val': 'OP_RT', 'excluded':[], "r2":"",'com':'OpenProcessStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'6': {'r': 'ebx', 'val': 'jmp', 'excluded':[], "r2":"ebp",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'8': {'r': 'ecx', 'val': 'dwDesiredAccess', 'excluded':[], "r2":"",'com':'dwDesiredAccess','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
 		},
 
@@ -1224,7 +1224,7 @@ pat2 = {  'LoLi1':{
 		'WPM1':{
 		'9': {'valStr': 'lpBuffer', 'val': 0xbaddffff, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'Placeholder - supply lpBuffer here'}, # TODO: specHan
 		'10': {'valStr': 'nSize', 'val': 0x80, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None,'com':'nSize'},
-		'11': {'valStr': 'lpNumberOfBytesWritten', 'val': 0x300, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpNumberOfBytesWritten'},  # todo: create pointer 
+		'11': {'valStr': 'lpNumberOfBytesWritten', 'val': 0x0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpNumberOfBytesWritten'},  # todo: create pointer 
 		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'2': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"],"r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
