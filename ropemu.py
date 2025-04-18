@@ -1021,10 +1021,8 @@ def addImgsToEmulation(pe,mu):
                     dp(traceback.format_exc(),res)
 
 
-    # print ("press any key")
-    # input()
 distanceDict={ 
-    'targetDllString':{'distanceToPayload':0x400, 'numLoc':2,
+    'targetDllString':{'distanceToPayload':0x400, 'numLoc':3,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'msvcrt.dll','size':12,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':12,'isText':True, 'String':'system','size':8,'NullAfterString':True,'isStruct':False},
         'loc3':{'distanceFromPayload':20,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
@@ -1035,6 +1033,7 @@ distanceDict={
         'loc2':{'distanceFromPayload':12,'isText':True, 'String':'system','size':8,'NullAfterString':True,'isStruct':False},
         'loc3':{'distanceFromPayload':20,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
     },
+   
     'lpProcName':{'distanceToPayload':0x700, 'numLoc':1,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':15,'NullAfterString':True,'isStruct':False},
     },
@@ -1043,26 +1042,73 @@ distanceDict={
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
     },
 
-
+    'GPAWinExec':{'distanceToPayload':0x400, 'numLoc':3,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':14,'isText':True, 'String':'WinExec','size':9,'NullAfterString':True,'isStruct':False},
+        'loc3':{'distanceFromPayload':21,'isText':True, 'String':'C:\\Roptester3\\calc.exe','size':26,'NullAfterString':True,'isStruct':False},
+    },
+    
     'DeleteFileA':{'distanceToPayload':0x400, 'numLoc':1,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'C:\\My Files\\delete.txt','size':35,'NullAfterString':True,'isStruct':False},
     },
 
-
-   'CSA':{'distanceToPayload':0x400, 'numLoc':3,  #CreateServiceA
-        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'EvilService','size':13,'NullAfterString':True,'isStruct':False},
-        'loc2':{'distanceFromPayload':13,'isText':True, 'String':'My EvilService','size':16,'NullAfterString':True,'isStruct':False},
-        'loc3':{'distanceFromPayload':29,'isText':True, 'String':'C:\\Program Files\\VMware\\VMware Tools\\demo.exe','size':47,'NullAfterString':True,'isStruct':False},
+    'GPADeleteFileA':{'distanceToPayload':0x400, 'numLoc':3,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':14,'isText':True, 'String':'DeleteFileA','size':13,'NullAfterString':True,'isStruct':False},
+        'loc3':{'distanceFromPayload':27,'isText':True, 'String':'C:\\My Files\\delete.txt','size':26,'NullAfterString':True,'isStruct':False},
     },
-     'SEA':{'distanceToPayload':0x400, 'numLoc':2, #ShellExecuteA
+    
+    'GPAHeapCreate':{'distanceToPayload':0x400, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':14,'isText':True, 'String':'HeapCreate','size':12,'NullAfterString':True,'isStruct':False},
+    },
+    
+    'GPAHeapAlloc':{'distanceToPayload':0x400, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':14,'isText':True, 'String':'HeapCreate','size':12,'NullAfterString':True,'isStruct':False},
+    },
+
+    'GPAOpenSCManagerA':{'distanceToPayload':0x400, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'advapi32.dll','size':14,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':14,'isText':True, 'String':'OpenSCManagerA','size':16,'NullAfterString':True,'isStruct':False},
+    },
+
+    'GPAWriteProcessMemory':{'distanceToPayload':0x400, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':14,'isText':True, 'String':'WriteProcessMemory','size':20,'NullAfterString':True,'isStruct':False},
+    },
+
+   'SEA':{'distanceToPayload':0x400, 'numLoc':2, # ShellExecuteA
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'open','size':6,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':6,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False}
     },
-     'CPA':{'distanceToPayload':0x400, 'numLoc':2,
-        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'calc/e','size':6,'NullAfterString':True,'isStruct':False},
+    
+    'GPAShellExecuteA':{'distanceToPayload':0x400, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'shell32.dll','size':13,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':13,'isText':True, 'String':'ShellExecuteA','size':15,'NullAfterString':True,'isStruct':False},
+    },
+
+   'CSA':{'distanceToPayload':0x400, 'numLoc':3,  # CreateServiceA
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'EvilService','size':13,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':13,'isText':True, 'String':'My EvilService','size':16,'NullAfterString':True,'isStruct':False},
+        'loc3':{'distanceFromPayload':29,'isText':True, 'String':'C:\\Program Files\\VMware\\VMware Tools\\demo.exe','size':51,'NullAfterString':True,'isStruct':False},
+    },
+    
+    'ExCSA':{'distanceToPayload':0x400, 'numLoc':6,  # ExCreateServiceA
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'advapi32.dll','size':14,'NullAfterString':True,'isStruct':False},
+        'loc2':{'distanceFromPayload':14,'isText':True, 'String':'OpenSCManagerA','size':16,'NullAfterString':True,'isStruct':False},
+        'loc3':{'distanceFromPayload':30,'isText':True, 'String':'CreateServiceA','size':16,'NullAfterString':True,'isStruct':False},
+        'loc4':{'distanceFromPayload':46,'isText':True, 'String':'EvilService','size':13,'NullAfterString':True,'isStruct':False},
+        'loc5':{'distanceFromPayload':59,'isText':True, 'String':'My EvilService','size':16,'NullAfterString':True,'isStruct':False},
+        'loc6':{'distanceFromPayload':75,'isText':True, 'String':'C:\\Program Files\\VMware\\VMware Tools\\demo.exe','size':51,'NullAfterString':True,'isStruct':False},
+    },
+
+    'CPA':{'distanceToPayload':0x400, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':6,'isText':True, 'String':'struct1','size':68,'NullAfterString':False,'isStruct':True},
         # 'loc3':{'distanceFromPayload':0x80,'isText':True, 'Strings':'struct2','size':17,'NullAfterString':False,'isStruct':True},
     },
+
     'P32F':{'distanceToPayload':0x400, 'numLoc':1,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'struct1','size':40,'NullAfterString':False,'isStruct':True},
     },
@@ -1074,22 +1120,26 @@ distanceDict={
         'loc2':{'distanceFromPayload':6,'isText':True, 'String':'struct1','size':68,'NullAfterString':False,'isStruct':True},
     },
 
-     'UDTF':{'distanceToPayload':0x400, 'numLoc':2,
+    'UDTF':{'distanceToPayload':0x400, 'numLoc':2,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'http://httpbin.org/image/jpeg','size':31,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':31,'isText':True, 'String':'download-file1.jpeg','size':21,'NullAfterString':True,'isStruct':False},
     },
-     'RSKV':{'distanceToPayload':0x400, 'numLoc':2,
-        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'SYSTEM\\CurrentControlSet\\Control\\Terminal Server','size':50,'NullAfterString':True,'isStruct':False},
+    'RSKV':{'distanceToPayload':0x400, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'SYSTEM\\CurrentControlSet\\Control\\Terminal Server','size':53,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':50,'isText':True, 'String':'fDenyTSConnections','size':21,'NullAfterString':True,'isStruct':False},
 
     },
-       'RCKV':{'distanceToPayload':0x400, 'numLoc':1,   #RegCreateKeyA
-        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'Software\\Microsoft\\Windows\\CurrentVersion\\Run','size':47,'NullAfterString':True,'isStruct':False},
+    'RCKV':{'distanceToPayload':0x400, 'numLoc':1,   #RegCreateKeyA
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'Software\\Microsoft\\Windows\\CurrentVersion\\Run','size':51,'NullAfterString':True,'isStruct':False},
     },
-     'new':{'distanceToPayload':0x400, 'numLoc':1,
+
+    'new':{'distanceToPayload':0x400, 'numLoc':1,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'new','size':60,'NullAfterString':True,'isStruct':False},
     },
 
+    'CFA':{'distanceToPayload':0x400, 'numLoc':1,   # CreateFileA
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'\\??\\c:\\Windows\\SysWOW64\\urlmon.dll','size':41,'NullAfterString':True,'isStruct':False},
+    },
 
     'empty':{'distanceToPayload':0x700, 'numLoc':5,
         'loc1':{'distanceFromPayload':0,'isText':False, 'String':None,'size':10,'NullAfterString':False,'isStruct':False},
@@ -1548,14 +1598,11 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         RP=ropParms(ApiSyscall,IncDec,distEsp,stack,numP)   # inc/dec, direction, distEsp, startEsp, numP
 
         if rValStr!=None:
-            patsRValStr=["targetDllString","lpProcName", "System"]
+            patsRValStr=["targetDllString", "lpProcName", "System"]
             if rValStr in patsRValStr:
                 RP.setDistanceLoc(rValStr,stack,distanceDict[rValStr]["distanceToPayload"])
-                # print (gre,"distanceDict", hex(distanceDict[rValStr]["distanceToPayload"]),res)
             else:
                 RP.setDistanceLoc(patType,stack,distanceDict[patType]["distanceToPayload"])
-                # print (gre,"distanceDict", hex(distanceDict[patType]["distanceToPayload"]),res)
-
 
         RP.show(mu,ApiSyscall)
         RP.setShellcode("after",ApiSyscall)
