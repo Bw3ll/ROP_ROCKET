@@ -1152,14 +1152,16 @@ pat2 = {
 		},
 
 		"RSKV1":{
-		'6': {'r': 'edi', 'val': 'RegSetKeyValueA_RT', 'excluded':[], "r2":"",'com':'RegSetKeyValueAStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'1': {'r': 'ecx', 'val': 'lpData', 'excluded':[], "r2":"",'com':'lpData','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':True, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'3': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'4': {'r': 'ebp', 'val': 'hKey_RSKV', 'excluded':[], "r2":"",'com':'hKey','specHan':False, 'hasStr':False, 'parStr': False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc1'},
-		'8': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'lpSubKey = \"SYSTEM\\CurrentControlSet\\Control\\Terminal Server','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':"loc1"},
-		'2': {'r': 'ebx', 'val': 'lpValueName', 'excluded':[], "r2":"",'com':'lpValueName = \"fDenyTSConnections\'','specHan':True, 'hasStr':True, 'parStr': 'fDenyTSConnections', 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc2'},
-		'5': {'r': 'edx', 'val': 'dwType', 'excluded':[], "r2":"",'com':'dwType','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'7': {'r': 'eax', 'val': 'cbData', 'excluded':[],"r2":"",'com':'cbData','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
+		'7': {'r': 'edi', 'val': 'RegSetKeyValueA_RT', 'excluded':[], "r2":"",'com':'RegSetKeyValueAStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'2': {'r': 'ecx', 'val': 'lpData', 'val2': 'lpData2', 'excluded':[], "r2":"",'com':'lpData','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':True, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc8', 'locb':'loc8'},   #todo may not be corect - this is a string
+		'4': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		# val2 comes from the RegCreateKeyA, which will be written to stack using mov deref.
+		# stackLoc1
+		'1': {'r': 'ebp', 'val': 'hKey_RSKV', 'val2': 'getStack', 'excluded':[], "r2":"",'com':'hKey','specHan':False, 'hasStr':False, 'parStr': False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc1'},
+		'3': {'r': 'esp', 'val': 'skip', 'val2': 'lpSubKey2_RSKV','excluded':[], "r2":"",'com':'lpSubKey = \"SYSTEM\\CurrentControlSet\\Control\\Terminal Server','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':"loc1"},
+		'6': {'r': 'ebx', 'val': 'lpValueName', 'val2': 'lpValueName2', 'excluded':[], "r2":"",'com':'lpValueName = \"fDenyTSConnections\'','specHan':True, 'hasStr':True, 'parStr': 'fDenyTSConnections', 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc2', 'locb':'loc7'},
+		'5': {'r': 'edx', 'val': 'dwType', 'val2': 'dwType2', 'excluded':[], "r2":"",'com':'dwType','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'8': {'r': 'eax', 'val': 'cbData', 'val2': 'cbData', 'excluded':[],"r2":"",'com':'cbData','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
 		},
 
 		"RSKV2_SKIP":{	#not a unique pattern, just different values.
@@ -1276,7 +1278,8 @@ pat2 = {
 		'8': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		# val2 comes from the OpenSCManagerA eax, which will be written to stack using mov deref.
-		'1': {'r': 'ecx', 'val': 'hSCManager', 'val2': 0, 'excluded':[], "r2":"",'com':'hSCManager','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		# stackLoc1
+		'1': {'r': 'ecx', 'val': 'hSCManager', 'val2':'getStack', 'excluded':[], "r2":"",'com':'hSCManager','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'6': {'r': 'ebx', 'val': 'CSA_RT', 'excluded':[], "r2":"",'com':'CreateServiceAStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
