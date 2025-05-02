@@ -1153,12 +1153,12 @@ pat2 = {
 
 		"RSKV1":{
 		'7': {'r': 'edi', 'val': 'RegSetKeyValueA_RT', 'excluded':[], "r2":"",'com':'RegSetKeyValueAStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'2': {'r': 'ecx', 'val': 'lpData', 'val2': 'lpData2', 'excluded':[], "r2":"",'com':'lpData','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':True, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc8', 'locb':'loc8'},   #todo may not be corect - this is a string
+		'2': {'r': 'ecx', 'val': 'lpData', 'val2': 'lpData2', 'excluded':[], "r2":"",'com':'lpData','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':True, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'locb':'loc8'},   #todo may not be corect - this is a string
 		'4': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		# val2 comes from the RegCreateKeyA, which will be written to stack using mov deref.
 		# stackLoc1
 		'1': {'r': 'ebp', 'val': 'hKey_RSKV', 'val2': 'getStack', 'excluded':[], "r2":"",'com':'hKey','specHan':False, 'hasStr':False, 'parStr': False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc1'},
-		'3': {'r': 'esp', 'val': 'skip', 'val2': 'lpSubKey2_RSKV','excluded':[], "r2":"",'com':'lpSubKey = \"SYSTEM\\CurrentControlSet\\Control\\Terminal Server','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':"loc1"},
+		'3': {'r': 'esp', 'val': 'skip', 'val2': 'lpSubKey2_RSKV','excluded':[], "r2":"",'com':'lpSubKey = \"SYSTEM\\CurrentControlSet\\Control\\Terminal Server','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':"loc1", 'locb': 'loc6'},
 		'6': {'r': 'ebx', 'val': 'lpValueName', 'val2': 'lpValueName2', 'excluded':[], "r2":"",'com':'lpValueName = \"fDenyTSConnections\'','specHan':True, 'hasStr':True, 'parStr': 'fDenyTSConnections', 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc2', 'locb':'loc7'},
 		'5': {'r': 'edx', 'val': 'dwType', 'val2': 'dwType2', 'excluded':[], "r2":"",'com':'dwType','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'8': {'r': 'eax', 'val': 'cbData', 'val2': 'cbData', 'excluded':[],"r2":"",'com':'cbData','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
@@ -1227,14 +1227,16 @@ pat2 = {
 		'9': {'valStr': 'lpBuffer', 'val': 0xbaddffff, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'Placeholder - supply lpBuffer here'}, # TODO: specHan
 		'10': {'valStr': 'nSize', 'val': 0x80, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None,'com':'nSize'},
 		'11': {'valStr': 'lpNumberOfBytesWritten', 'val': 0x0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpNumberOfBytesWritten'},
-		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'2': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"],"r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'2': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'4': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"],"r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'4': {'r': 'ecx', 'val': 'hProcess', 'excluded':[], "r2":"",'com':'hProcess','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'8': {'r': 'ecx', 'val': 'hProcess', 'excluded':[], "r2":"",'com':'hProcess','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'6': {'r': 'ebx', 'val': 'WPM_RT', 'excluded':[], "r2":"",'com':'WriteProcessMemoryStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'8': {'r': 'eax', 'val': 'lpBaseAddress', 'excluded':[], "r2":"",'com':'Placeholder - supply lpBaseAddress here','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
+		# val2 comes from the HeapCreate, which will be written to stack using mov deref.
+		# stackLoc1
+		'1': {'r': 'eax', 'val': 'lpBaseAddress', 'val2': 'getStack','excluded':[], "r2":"",'com':'Placeholder - supply lpBaseAddress here','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
 		},
 
 		'HC1':{
@@ -1374,10 +1376,12 @@ pat2 = {
 
 		'HA1':{
 		'9': {'valStr': 'dwBytes', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'dwBytes'},
-		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'4': {'r': 'ecx', 'val': 'hHeap', 'excluded':[], "r2":"",'com':'hHeap','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'3': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'2': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		# val2 comes from the HeapCreate, which will be written to stack using mov deref.
+		# stackLoc1
+		'1': {'r': 'ecx', 'val': 'hHeap', 'val2': 'getStack', 'excluded':[], "r2":"",'com':'hHeap','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'6': {'r': 'ebx', 'val': 'HA_RT', 'excluded':[], "r2":"",'com':'HeapAllocStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
