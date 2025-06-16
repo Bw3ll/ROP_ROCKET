@@ -1,5 +1,5 @@
-
-pat2 = {  'LoLi1':{ 
+pat2 = {
+		'LoLi1':{ 
 		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'2': {'r': 'eax', 'val': 'targetDllString', 'excluded':[],"r2":"",'com':'Target DLL string','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'3': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":8,'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
@@ -891,7 +891,7 @@ pat2 = {  'LoLi1':{
 		'4': {'r': 'ebp', 'val': 'OP_RT', 'excluded':[], "r2":"",'com':'OpenProcessStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'6': {'r': 'ebx', 'val': 'jmp', 'excluded':[], "r2":"ebp",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop'},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'8': {'r': 'ecx', 'val': 'dwDesiredAccess', 'excluded':[], "r2":"",'com':'dwDesiredAccess','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
 		},
 
@@ -1152,14 +1152,16 @@ pat2 = {  'LoLi1':{
 		},
 
 		"RSKV1":{
-		'6': {'r': 'edi', 'val': 'RegSetKeyValueA_RT', 'excluded':[], "r2":"",'com':'RegSetKeyValueAStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'1': {'r': 'ecx', 'val': 'lpData', 'excluded':[], "r2":"",'com':'lpData','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':True, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'3': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'4': {'r': 'ebp', 'val': 'hKey_RSKV', 'excluded':[], "r2":"",'com':'hKey','specHan':False, 'hasStr':False, 'parStr': False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc1'},
-		'8': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'lpSubKey = \"SYSTEM\\CurrentControlSet\\Control\\Terminal Server','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':"loc1"},
-		'2': {'r': 'ebx', 'val': 'lpValueName', 'excluded':[], "r2":"",'com':'lpValueName = \"fDenyTSConnections\'','specHan':True, 'hasStr':True, 'parStr': 'fDenyTSConnections', 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc2'},
-		'5': {'r': 'edx', 'val': 'dwType', 'excluded':[], "r2":"",'com':'dwType','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'7': {'r': 'eax', 'val': 'cbData', 'excluded':[],"r2":"",'com':'cbData','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
+		'7': {'r': 'edi', 'val': 'RegSetKeyValueA_RT', 'excluded':[], "r2":"",'com':'RegSetKeyValueAStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'2': {'r': 'ecx', 'val': 'lpData', 'val2': 'lpData2', 'excluded':[], "r2":"",'com':'lpData','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':True, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'locb':'loc8'},   #todo may not be corect - this is a string
+		'4': {'r': 'esi', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		# val2 comes from the RegCreateKeyA, which will be written to stack using mov deref.
+		# stackLoc1
+		'1': {'r': 'ebp', 'val': 'hKey_RSKV', 'val2': 'getStack', 'excluded':[], "r2":"",'com':'hKey','specHan':False, 'hasStr':False, 'parStr': False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc1'},
+		'3': {'r': 'esp', 'val': 'skip', 'val2': 'lpSubKey2_RSKV','excluded':[], "r2":"",'com':'lpSubKey = \"SYSTEM\\CurrentControlSet\\Control\\Terminal Server','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':"loc1", 'locb': 'loc6'},
+		'6': {'r': 'ebx', 'val': 'lpValueName', 'val2': 'lpValueName2', 'excluded':[], "r2":"",'com':'lpValueName = \"fDenyTSConnections\'','specHan':True, 'hasStr':True, 'parStr': 'fDenyTSConnections', 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc2', 'locb':'loc7'},
+		'5': {'r': 'edx', 'val': 'dwType', 'val2': 'dwType2', 'excluded':[], "r2":"",'com':'dwType','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'8': {'r': 'eax', 'val': 'cbData', 'val2': 'cbData', 'excluded':[],"r2":"",'com':'cbData','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
 		},
 
 		"RSKV2_SKIP":{	#not a unique pattern, just different values.
@@ -1224,15 +1226,17 @@ pat2 = {  'LoLi1':{
 		'WPM1':{
 		'9': {'valStr': 'lpBuffer', 'val': 0xbaddffff, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'Placeholder - supply lpBuffer here'}, # TODO: specHan
 		'10': {'valStr': 'nSize', 'val': 0x80, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None,'com':'nSize'},
-		'11': {'valStr': 'lpNumberOfBytesWritten', 'val': 0x300, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpNumberOfBytesWritten'},  # todo: create pointer 
-		'1': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'2': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"],"r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'11': {'valStr': 'lpNumberOfBytesWritten', 'val': 0x0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpNumberOfBytesWritten'},
+		'2': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":'','com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'4': {'r': 'ebp', 'val': 'pop', 'excluded':["edi", "esi"],"r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'4': {'r': 'ecx', 'val': 'hProcess', 'excluded':[], "r2":"",'com':'hProcess','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'8': {'r': 'ecx', 'val': 'hProcess', 'excluded':[], "r2":"",'com':'hProcess','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'6': {'r': 'ebx', 'val': 'WPM_RT', 'excluded':[], "r2":"",'com':'WriteProcessMemoryStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'8': {'r': 'eax', 'val': 'lpBaseAddress', 'excluded':[], "r2":"",'com':'Placeholder - supply lpBaseAddress here','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
+		# val2 comes from the HeapCreate, which will be written to stack using mov deref.
+		# stackLoc1
+		'1': {'r': 'eax', 'val': 'lpBaseAddress', 'val2': 'getStack','excluded':[], "r2":"",'com':'Placeholder - supply lpBaseAddress here','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
 		},
 
 		'HC1':{
@@ -1259,7 +1263,6 @@ pat2 = {  'LoLi1':{
 		'8': {'r': 'eax', 'val': 'lpDatabaseName', 'excluded':[], "r2":"",'com':'lpDatabaseName','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
 		},
 
-
 		'CSA1':{
 		'9': {'valStr': 'lpDisplayName', 'val': 0, 'specHan':True, 'hasStr':False, 'parStr': 'My EvilService', 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':"loc1", 'com':'lpDisplayName'},  # TODO: varStr = 'My EvilService'
 		'10': {'valStr': 'dwDesiredAccess', 'val': 0x2, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'dwDesiredAccess - SC_MANAGER_CREATE_SERVICE'},
@@ -1273,14 +1276,16 @@ pat2 = {  'LoLi1':{
 		'18': {'valStr': 'lpServiceStartName', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpServiceStartName'},
 		'19': {'valStr': 'lpPassword', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpPassword'},
 		
-		'2': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":"8",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'4': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":"8",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'8': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'8': {'r': 'ecx', 'val': 'hSCManager', 'excluded':[], "r2":"",'com':'hSCManager','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		# val2 comes from the OpenSCManagerA eax, which will be written to stack using mov deref.
+		# stackLoc1
+		'1': {'r': 'ecx', 'val': 'hSCManager', 'val2':'getStack', 'excluded':[], "r2":"",'com':'hSCManager','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'6': {'r': 'ebx', 'val': 'CSA_RT', 'excluded':[], "r2":"",'com':'CreateServiceAStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		'1': {'r': 'eax', 'val': 'lpServiceName', 'excluded':[], "r2":"",'com':'lpServiceName','specHan':True, 'hasStr':True, 'parStr': True, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc3'}
+		'2': {'r': 'eax', 'val': 'lpServiceName', 'excluded':[], "r2":"",'com':'lpServiceName','specHan':True, 'hasStr':True, 'parStr': True, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc3'}
 		},
 
 		'SEA1':{
@@ -1294,22 +1299,22 @@ pat2 = {  'LoLi1':{
 		'8': {'r': 'eax', 'val': 'nShowCmd', 'excluded':[], "r2":"",'com':'nShowCmd','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
 		},
 
-	 	# 'SEA2':{
-		# '9': {'valStr': 'lpFile', 'val': 0, 'specHan':True, 'hasStr':False, 'parStr': 'calc', 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpFile'}, # TODO: varStr = 'calc'
-		# '10': {'valStr': 'lpParameters', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None,'com':'lpParameters'},
-		# '11': {'valStr': 'lpDirectory', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpDirectory'},
-		# '12': {'valStr': 'nShowCmd', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None,'com':'nShowCmd - SW_HIDE'},
-		# '1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":"8",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		# '2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		# '3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		# '4': {'r': 'ecx', 'val': 'hwnd', 'excluded':[], "r2":"",'com':'hwnd','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		# '5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		# '6': {'r': 'ebx', 'val': 'SEA_RT', 'excluded':[], "r2":"",'com':'ShellExecuteAStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		# '7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
-		# '8': {'r': 'eax', 'val': 'lpOperation', 'excluded':[], "r2":"",'com':'lpOperation','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
-		# },
+	 	'SEA2':{
+		'9': {'valStr': 'lpFile', 'val': 0, 'specHan':True, 'hasStr':True, 'parStr': 'calc', 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpFile'}, # TODO: varStr = 'calc'
+		'10': {'valStr': 'lpParameters', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None,'com':'lpParameters'},
+		'11': {'valStr': 'lpDirectory', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpDirectory'},
+		'12': {'valStr': 'nShowCmd', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None,'com':'nShowCmd - SW_HIDE'},
+		'1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":"8",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'2': {'r': 'ebp', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'3': {'r': 'esi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'4': {'r': 'ecx', 'val': 'hwnd', 'excluded':[], "r2":"",'com':'hwnd','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'6': {'r': 'ebx', 'val': 'SEA_RT', 'excluded':[], "r2":"",'com':'ShellExecuteAStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'8': {'r': 'eax', 'val': 'lpOperation', 'excluded':[], "r2":"",'com':'lpOperation','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
+		},
 
-		'CRT1':{ #CreateRemoteThreadA
+		'CRT1':{ # CreateRemoteThreadA
 		'9': {'valStr': 'dwStackSize', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'dwStackSize'}, 
 		'10': {'valStr': 'lpStartAddress', 'val': 0xddddffff, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'placeholder for lpStartAddress'}, # TODO: special handling
 		'11': {'valStr': 'lpParameter', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpParameter'},
@@ -1326,7 +1331,7 @@ pat2 = {  'LoLi1':{
 		},
 
 	   'VAE1':{ #VirtualAllocEx
-		'9': {'valStr': 'dwSize33333333333333333333333333333333333333333333333333', 'val': 0x1000, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'dwSize','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'9': {'valStr': 'dwSize', 'val': 0x1000, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'dwSize','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'10': {'valStr': 'flAllocationType', 'val': 0x3000, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'flAllocationType'},
 		'11': {'valStr': 'flProtect', 'val': 0x40, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'flProtect - PAGE_EXECUTE_READWRITE'},
 		'1': {'r': 'edi', 'val': 'ret_c2', 'excluded':[], "r2":"8",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
@@ -1351,7 +1356,7 @@ pat2 = {  'LoLi1':{
 		},
 
 		'CPA1':{ #CreateProcessA
-		'9': {'valStr': 'lpProcessAttributes ', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpProcessAttributes '},
+		'9': {'valStr': 'lpProcessAttributes', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpProcessAttributes '},
 		'10': {'valStr': 'lpThreadAttributes', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpThreadAttributes'},
 		'11': {'valStr': 'bInheritHandles', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'bInheritHandles'},
 		'12': {'valStr': 'dwCreationFlags', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'dwCreationFlags'},
@@ -1367,6 +1372,85 @@ pat2 = {  'LoLi1':{
 		'6': {'r': 'ebx', 'val': 'CPA_RT', 'excluded':[], "r2":"",'com':'CreateProcessAStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'1': {'r': 'eax', 'val': 'lpCommandLine', 'excluded':[], "r2":"",'com':'lpCommandLine - calc is supplied','specHan':True, 'hasStr':True, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':"loc1"}
+		},
+
+		'HA1':{
+		'9': {'valStr': 'dwBytes', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'dwBytes'},
+		'3': {'r': 'edi', 'val': 'ropNop', 'excluded':[], "r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'4': {'r': 'ebp', 'val': 'ropNop', 'excluded':[],"r2":"",'com':'ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'2': {'r': 'esi', 'val': 'ret_c2', 'excluded':[], "r2":"4",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		# val2 comes from the HeapCreate, which will be written to stack using mov deref.
+		# stackLoc1
+		'1': {'r': 'ecx', 'val': 'hHeap', 'val2': 'getStack', 'excluded':[], "r2":"",'com':'hHeap','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'5': {'r': 'esp', 'val': 'skip', 'excluded':[], "r2":"",'com':'','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'6': {'r': 'ebx', 'val': 'HA_RT', 'excluded':[], "r2":"",'com':'HeapAllocStub','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'7': {'r': 'edx', 'val': 'returnAddress', 'excluded':[], "r2":"",'com':'Return address, ROP nop','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'8': {'r': 'eax', 'val': 'dwFlags', 'excluded':[], "r2":"",'com':'dwFlags','specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None}
 		}
+
+
+pat3 = {
+
+		'OPT':{
+		'1': {'valStr': 'OPT_RT', 'val': 0x0af0bd07, 'specHan':True, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'OpenProcessToken - not found. 0x0af0bd07 used as placeholder.'},
+		'2': {'valStr': 'returnAddress', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'returnAddress'},
+		'3': {'valStr': 'ProcessHandle', 'val': 0xffffffff, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'ProcessHandle'},
+		'4': {'valStr': 'DesiredAccess', 'val': 0x20, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'DesiredAccess - TOKEN_ADJUST_PRIVILEGES'},
+		'5': {'valStr': 'TokenHandle', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':True, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'TokenHandle'},
+		},
+
+		'ATP':{
+		'1': {'valStr': 'ATP_RT', 'val': 0x0af0bd26, 'specHan':True, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'AdjustTokenPrivileges - not found. 0x0af0bd26 used as placeholder.'},
+		'2': {'valStr': 'returnAddress', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'returnAddress'},
+		'3': {'valStr': 'TokenHandle', 'val': 0xd82, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'0xd82 - used as placeholder value'},
+		'4': {'valStr': 'DisableAllPrivileges', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'DisableAllPrivileges'},
+		# 5 -> TODO: create pointer to struct - this has struct inside struct - real values inside struct
+		'5': {'valStr': 'NewState', 'val': 0, 'specHan':False, 'hasStr':True, 'parStr': None, 'hasPtr':True, 'strucT':None, 'struSize':None, 'loc':None, 'com':'NewState'},
+		'6': {'valStr': 'BufferLength', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'BufferLength'},
+		'7': {'valStr': 'PreviousState', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'PreviousState'},
+		'8': {'valStr': 'ReturnLength', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'ReturnLength'},
+		},
+
+		'CFA':{
+		'1': {'valStr': 'CFA_RT', 'val': 0x0af0bd22, 'specHan':True, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'CreateFileA - not found. 0x0af0bd22 used as placeholder.'},
+		'2': {'valStr': 'returnAddress', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'returnAddress'},
+		# 3 -> TODO: point to "\\??\\c:\\Windows\\SysWOW64\\urlmon.dll"
+		'3': {'valStr': 'lpFileName', 'val': 0, 'specHan':True, 'hasStr':False, 'parStr': '\\??\\c:\\Windows\\SysWOW64\\urlmon.dll', 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpFileName'},
+		'4': {'valStr': 'dwDesiredAccess', 'val': 0x00120089, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'dwDesiredAccess - GENERIC_READ'},
+		'5': {'valStr': 'dwShareMode', 'val': 0x1, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'dwShareMode - FILE_SHARE_READ'},
+		'6': {'valStr': 'lpSecurityAttributes ', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'lpSecurityAttributes'},
+		'7': {'valStr': 'dwCreationDisposition', 'val': 0x3, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'dwCreationDisposition - OPEN_EXISTING'},
+		'8': {'valStr': 'dwFlagsAndAttributes', 'val': 0x860, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'dwFlagsAndAttributes'},
+		'9': {'valStr': 'hTemplateFile', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'hTemplateFile'},
+		},
+
+		'NtCS':{
+		'1': {'valStr': 'NtCS_RT', 'val': 0x0af0bd21, 'specHan':True, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'NtCreateSection - not found. 0x0af0bd21 used as placeholder.'},
+		'2': {'valStr': 'returnAddress', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'returnAddress'},
+		'3': {'valStr': 'SectionHandle', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'SectionHandle'},
+		'4': {'valStr': 'DesiredAccess', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'DesiredAccess'},
+		'5': {'valStr': 'ObjectAttributes', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'ObjectAttributes'},
+		'6': {'valStr': 'MaximumSize ', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'MaximumSize'},
+		'7': {'valStr': 'SectionPageProtection', 'val': 0x2, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'SectionPageProtection - PAGE_READONLY'},
+		'8': {'valStr': 'AllocationAttributes', 'val': 0x01000000, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'AllocationAttributes'},
+		'9': {'valStr': 'FileHandle', 'val': 0xd88, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'FileHandle - placeholder handle from CreateFileA'},
+		},
+
+		'NtMVS':{
+		'1': {'valStr': 'NtMVS_RT', 'val': 0x0af0bd29, 'specHan':True, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'NtMapViewOfSection - not found. 0x0af0bd29 used as placeholder.'},
+		'2': {'valStr': 'returnAddress', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'returnAddress'},
+		'3': {'valStr': 'SectionHandle', 'val': 0xe1, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':' - placeholder SectionHandle from the NtCreateSection'},
+		'4': {'valStr': 'ProcessHandle', 'val': 0xc2, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'ProcessHandle - placeholder Process handle from the OpenProcess '},
+		# 5 -> TODO: pointer to NULL
+		'5': {'valStr': 'BaseAddress', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':True, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'BaseAddress'},
+		'6': {'valStr': 'ZeroBits ', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'ZeroBits'},
+		'7': {'valStr': 'CommitSize', 'val': 0x2, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'CommitSize'},
+		'8': {'valStr': 'SectionOffset', 'val': 0x01000000, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'SectionOffset'},
+		# 9 -> TODO: pointer which points to 3 NULLs
+		'9': {'valStr': 'ViewSize', 'val': 0xd88, 'specHan':False, 'hasStr':False, 'parStr': True, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'ViewSize'},
+		'10': {'valStr': 'InheritDisposition', 'val': 0x1, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'InheritDisposition'},
+		'11': {'valStr': 'AllocationType', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'AllocationType'},
+		'12': {'valStr': 'Protect', 'val': 0x2, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'Protect'},
 		}
-print (len(pat2))
+
+}
