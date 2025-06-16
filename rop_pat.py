@@ -1369,3 +1369,4 @@ pat2 = {  'LoLi1':{
 		'1': {'r': 'eax', 'val': 'lpCommandLine', 'excluded':[], "r2":"",'com':'lpCommandLine - calc is supplied','specHan':True, 'hasStr':True, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':"loc1"}
 		}
 		}
+print (len(pat2))
