@@ -82,4 +82,4 @@ Late March -April 3, 2024 - Extensive updates to emulation to improve and enhanc
 
 5/2024 - Massive revamping of Windows syscalls to greatly expand what can be found with real-world binaries. Even lengthy, undesirable gadgets that leak the FS register (needed for doing Windows syscalls in SysWow64, i.e. 32-bit) can be worked with in automated fashion. Numerous other minor enhancements.
 
-6/28/2025 -   Massivve updates, including support for 17 new WinAPIs not previously included in ROP ROCKET. Added ability to define an initial overflow amount - this is relevant as it can affect calculations to strings or pointers when doing emulation.
+6/28/2025 -   Massive updates, including support for 17 new WinAPIs not previously included in ROP ROCKET. Added ability to define an initial overflow amount - this is relevant as it can affect calculations to strings or pointers when doing emulation.
