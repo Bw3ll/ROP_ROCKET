@@ -5,7 +5,7 @@ Please note that this is still a work in progress, with some updated and enhance
 
 Work is ongoing with new capabilities regularly added at present. Please check back on a regular basis.
 
-![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/rop_rocket.jpg?raw=true)
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/rop_rocket.png?raw=true)
 
 
 # Powerful ROP Capabilities
