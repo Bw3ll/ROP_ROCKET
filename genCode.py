@@ -47,11 +47,14 @@ def genCh(gList):
 	return chunk
 
 
-def genCode2(showAll):
+def genCode2(fillerQty,showAll):
+	hxFillerQ=str(fillerQty)
 	if showAll:
-		chunk="""
+		chunk=f"""
 
-filler=b"\\x41"
+filler = b"\\x41"
+initialFiller =  {hxFillerQ}
+
 	
 """
 	if not showAll:

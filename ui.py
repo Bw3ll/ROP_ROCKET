@@ -64,7 +64,7 @@ def splash():
 /_/|_|\____/_/    /_/|_|\____/\___/_/|_/___/ /_/    
                                                     
 """+res
-	author=yel+"                   v.0.9402:  Bramwell Brizendine, 2023-2024"+res
+	author=yel+"                   v.1.2:  Bramwell Brizendine, 2023-2025"+res
 
 	print (banner)
 	print (author)
@@ -121,12 +121,13 @@ def uiShowOptionsMainMenu(x86,x64):
 	text += "  {}        \n".format(cya + "u" + res + " -" + gre + "  Generate pushad:" + yel + " URLDownloadToFileA" + res)
 	text += "  {}        \n".format(cya + "os" + res + " -" + gre + " Generate pushad:" + yel + " OpenSCManagerA" + res)
 	text += "  {}        \n".format(cya + "cs" + res + " -" + gre + " Generate pushad:" + yel + " CreateServiceA" + res)
-	text += "  {}        \n".format(cya + "o" + res + " -" + gre + "  Obfuscate gadget/value." + res)
-	text += "  {}        \n".format(cya + "b" + res + " -" + gre + "  Set Bad bytes / Bad chars and ImageBase." + res)
-	text += "  {}        \n".format(cya + "p" + res + " -" + gre + "  Print gadgets found." + res)
-	text += "  {}        \n".format(cya + "f" + res + " -" + gre + "  PE file submenu." + res)
+	text += "  {}        \n".format(cya + "set" + res + " -" + gre + "  Set initial overflow value (if applicable)" + res)
+	text += "  {}        \n".format(cya + "o" + res + " -" + gre + "  Obfuscate gadget/value" + res)
+	text += "  {}        \n".format(cya + "b" + res + " -" + gre + "  Set Bad bytes / Bad chars and ImageBase" + res)
+	text += "  {}        \n".format(cya + "p" + res + " -" + gre + "  Print gadgets found" + res)
+	text += "  {}        \n".format(cya + "f" + res + " -" + gre + "  PE file submenu" + res)
 	text += "  {}        \n".format(cya + "w" + res + " -" + gre + "  Find individual gadgets / wildcard" + res)
-	text += "  {}        \n".format(cya + "c" + res + " -" + gre + "  Save config file [" + res + "config.cfg" + gre + "] with current selections." + res)
-	text += "  {}        \n".format(cya + "h" + res + " -" + gre + "  Display options." + res)
+	text += "  {}        \n".format(cya + "c" + res + " -" + gre + "  Save config file [" + res + "config.cfg" + gre + "] with current selections" + res)
+	text += "  {}        \n".format(cya + "h" + res + " -" + gre + "  Display options" + res)
 
 	print (text)

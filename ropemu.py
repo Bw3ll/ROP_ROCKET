@@ -52,7 +52,7 @@ def hook_code(uc, address, size, user_data):
     global maxAddress
     r_eip = int(uc.reg_read(UC_X86_REG_EIP))
     if r_eip >= maxAddress:
-        dp ("magic stop")
+        # print (red,"magic stop",res)
         uc.emu_stop()
 
     # dp(">>> Tracing instruction at 0x%x, instruction size = 0x%x" %(address, size))
@@ -65,6 +65,8 @@ def hook_code(uc, address, size, user_data):
         # dp (shells.hex())
         if shells[0]==0xc2:
             dp ("got c2")
+            # print (red,"magic stop got c2",res)
+
             uc.emu_stop()
     except Exception as e:
         dp ("Error2: ", e)
@@ -101,12 +103,11 @@ def hook_codeFS(uc, address, size, user_data):
         if not saved1:
             snapshotESP=r_esp
             saved1=True
-
-
     if r_eip >= maxAddress+0x2000      :
         # print ("magic stop", maxAddress, hex(maxAddress), "r_eip",hex(r_eip))
         if r_eip != 0xaaaaaa:
             finalCall=True
+            # print (red,"magic stop: r_eip != 0xaaaaaa",res)
             uc.emu_stop()
 
     # dp(">>> Tracing instruction at 0x%x, instruction size = 0x%x" %(address, size))
@@ -119,6 +120,7 @@ def hook_codeFS(uc, address, size, user_data):
         # dp (shells.hex())
         if shells[0]==0xc2:
             # print ("got c2")
+            # print (red,"got 0xc2",res)
             uc.emu_stop()
     except Exception as e:
         dp ("Error2: ", e)
@@ -128,16 +130,12 @@ def hook_codeFS(uc, address, size, user_data):
     valInstruction=""
     for i in cs.disasm(shells, address):
         valInstruction = i.mnemonic + " " + i.op_str  # + " " + shells.hex()
-
     # if "idiv" in valInstruction:   ##skip instrucitons
     #     print (gre,"we have idiv - can create problems - let's skip",res)
     #     uc.reg_write(UC_X86_REG_EIP, address+size)
-
     regOut=giveRegOuts(uc)
-
     t=0
     for i in cs.disasm(shells, address):
-
         val = i.mnemonic + " " + i.op_str  # + " " + shells.hex()
         if t == 0:
             mnemonic = i.mnemonic
@@ -150,14 +148,12 @@ def hook_codeFS(uc, address, size, user_data):
         bad_instruct_count += 1
         # print (instructLine)
         if bad_instruct_count > 5:
-            
+            # print (red,"magic stop: got bad_instruct_count",res)
             uc.emu_stop()
-
     if finalCall:
         if "0xaaaaab" in hex(address):
             # print (red, "yes!",res)
             syscallValAtESP=True
-
     try:
         shells = uc.mem_read(address, size)
     except Exception as e:
@@ -179,7 +175,6 @@ def hook_codeFS(uc, address, size, user_data):
         valInstruction = i.mnemonic + " " + i.op_str  # + " " + shells.hex()
         if showOnScreen:
             print (valInstruction+"\n")
-
         instructLine += valInstruction + '\n'
         # shells = uc.mem_read(sbase, size)
         # print (yel,instructLine,res)
@@ -470,7 +465,7 @@ class gadgetRegs:
             for r in regs:
                 try:
                     if self.diffs[r]!=0:
-                        print (yel,"bads",r, hex(self.diffs[r]),res)
+                        # print (yel,"bads",r, hex(self.diffs[r]),res)
                         return False,0
                 except:
                     # print (yel,"checkfree except",res)
@@ -802,6 +797,8 @@ def hook_code2(uc, address, size, user_data):
     global sysTarget2
     if stopProcess:
         # print ("** StopProces --> stopping")
+        # print (red,"magic stop: stopProcess",res)
+
         uc.emu_stop()
     
     global outFile
@@ -825,10 +822,14 @@ def hook_code2(uc, address, size, user_data):
         if ApiSyscall=="syscall":
             locParam=RP.giveParamLocOnStack(targetP,"syscall")
         else:
-            locParam=RP.giveParamLocOnStack(targetP,"winApi")
-        locParam2=uc.mem_read(locParam,4)
-
+            if "loc" not in targetP:
+                locParam=RP.giveParamLocOnStack(targetP,"winApi")
+                locParam2=uc.mem_read(locParam,4)
+                # print("in else", hex(locParam), "param2",binaryToStr(locParam2), red, "targetP",targetP, res, yel, "ApiSyscall", ApiSyscall)
+            else:
+                locParam2=b'\x99\x99\x99\x99'
     except:
+        # print ("in the except2")
         pass
    
     if ApiSyscall!="syscall":
@@ -852,17 +853,19 @@ def hook_code2(uc, address, size, user_data):
     # dp ("locParam2", binaryToStr(bytes(locParam2)))
     maxCount+=1
     if maxCount > 20000:
-        # print ("Emulation max exceeded. Stopping.")
+        print ("Emulation max exceeded. Stopping.")
         stopProcess=True
     try:
-
+        # print ("locParam2", (locParam2), binaryToStr(locParam2))
+        # print ("locParam2", hex(locParam2))
         stopPoint = int.from_bytes(locParam2, 'little')
 
     except:
+        # print ("in the except")
         stopPoint=0x9999999
     if stopPoint==r_eip and stopPoint !=0:
         # print ("special stopping process: EIP is at ", hex(r_eip))
-        outFile.write("special stopping process: EIP is at " + hex(r_eip))
+        outFile.write("special stopping process: EIP is at " + hex(r_eip) +" possibly the stopPoint, " +hex(stopPoint) +"\n")
         
         dp (hex(stopPoint),hex(r_eip))
 
@@ -1021,95 +1024,193 @@ def addImgsToEmulation(pe,mu):
                     dp(traceback.format_exc(),res)
 
 
+
+class startParams:
+    def __init__(self):  
+        self.fillerQty=256
+        self.fillerQty2=0
+        self.startParamsQty=0x250
+        self.startParamsQty2=0x300
+        self.startParamsQty3=0x500
+        self.alreadyBackedUp=False
+        self.backupDistanceDict={}
+        self.backupStartParamsQty=0x250
+        self.backupStartParamsQty2=0x300
+        self.backupStartParamsQty3=0x500
+        self.backupDistanceDict={}
+        self.alreadyBackedUp=False
+        self.startAtZero=False
+
+    def setDistances(self,distanceDict, updatedVal):
+        if not self.alreadyBackedUp:
+            self.backupDistanceDict = {
+                name: info.get('distanceToPayload')
+                for name, info in distanceDict.items()
+                }
+            # print (yel,"before saving backup",res, self.backupStartParamsQty, self.backupStartParamsQty2,"normal",self.startParamsQty,self.startParamsQty2)
+            # self.backupStartParamsQty=self.startParamsQty
+            # self.backupStartParamsQty2=self.startParamsQty2
+            # self.backupStartParamsQty3=self.startParamsQty3
+
+            # print (yel,"after saving backup", res,self.backupStartParamsQty, self.backupStartParamsQty2,"normal",self.startParamsQty,self.startParamsQty2)
+        for entry in distanceDict.values():
+            entry['distanceToPayload'] = updatedVal
+        self.alreadyBackedUp=True
+        self.startParamsQty=updatedVal
+        self.startParamsQty2=updatedVal
+        self.startParamsQty3=updatedVal
+        self.startAtZero=True
+
+
+    def restoreDistances(self):
+        global distanceDict
+        # print ("restoreDistances")
+        for key, oldValue in self.backupDistanceDict.items():
+            if key in distanceDict and oldValue is not None:
+                distanceDict[key]['distanceToPayload'] = oldValue
+        self.fillerQty2=0
+        self.startAtZero=False
+
+        # self.startParamsQty=self.backupStartParamsQty
+        # self.startParamsQty2=self.backupStartParamsQty2
+        # self.startParamsQty3=self.backupStartParamsQty3
+    def setFillerQty2(self):
+        self.fillerQty2=self.fillerQty
+
+    def uiSetFillerQuantitySettings(self):
+        text= ("\n\n  ROP_ROCKET performs emulation to have calculte distances to strings or pointers, if needed.\n")
+        text+= ("  To obtain accurate results, enter the filler quantity, if any.\n\n")
+        text+="  Current Filler Quantity:\t"+gre+str(self.fillerQty) +res+( " (")+gre+hex(self.fillerQty)+res+")\n\n" 
+        text+=mag+"  Enter decimal or hexadecimal value below.\n " 
+        return text
+
+    def uiSetFillerQuantity(self):
+        print (self.uiSetFillerQuantitySettings())
+        userIN = False
+        while userIN != "e" or userIN !="x":        
+            print(yel + " ROP_ROCKET>"+ cya+"SetFillerQuantity> " +res, end="")
+            userIN = input()
+            print(res)
+
+            if userIN=="x" or userIN=="e":
+                break
+            try:
+                self.fillerQty= int(userIN)
+                print ("Filler Quantity: "+gre+hex(self.fillerQty)+ res+" ("+gre+str(self.fillerQty)+res+"). Type"+yel+" x "+res+"to exit")
+            except:
+                try:
+                    self.fillerQty= int(userIN,16)
+                    print ("Filler Quantity: "+gre+hex(self.fillerQty)+ res+" ("+gre+str(self.fillerQty)+res+"). Type"+yel+" x "+res+"to exit")
+
+                except:
+                    print (red,"  Not valid hexadecimal",res)
+
+sParams=startParams()
 distanceDict={ 
-    'targetDllString':{'distanceToPayload':0x400, 'numLoc':3,
+    'targetDllString':{'distanceToPayload':sParams.startParamsQty, 'numLoc':3,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'msvcrt.dll','size':12,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':12,'isText':True, 'String':'system','size':8,'NullAfterString':True,'isStruct':False},
         'loc3':{'distanceFromPayload':20,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
+        'totalSize':26
     },
 
-    'System':{'distanceToPayload':0x400, 'numLoc':3,
+    'System':{'distanceToPayload':sParams.startParamsQty, 'numLoc':3,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'msvcrt.dll','size':12,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':12,'isText':True, 'String':'system','size':8,'NullAfterString':True,'isStruct':False},
         'loc3':{'distanceFromPayload':20,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
+        'totalSize':26
     },
    
-    'lpProcName':{'distanceToPayload':0x700, 'numLoc':1,
+    'lpProcName':{'distanceToPayload':sParams.startParamsQty, 'numLoc':1,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':15,'NullAfterString':True,'isStruct':False},
+        'totalSize':15
     },
 
-    'WinExec':{'distanceToPayload':0x400, 'numLoc':1,
+    'WinExec':{'distanceToPayload':sParams.startParamsQty, 'numLoc':1,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
+        'totalSize':6
     },
 
-    'GPAWinExec':{'distanceToPayload':0x400, 'numLoc':3,
+    'GPAWinExec':{'distanceToPayload':sParams.startParamsQty, 'numLoc':3,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':14,'isText':True, 'String':'WinExec','size':9,'NullAfterString':True,'isStruct':False},
         'loc3':{'distanceFromPayload':21,'isText':True, 'String':'C:\\Roptester3\\calc.exe','size':26,'NullAfterString':True,'isStruct':False},
+        'totalSize':47
     },
     
-    'DeleteFileA':{'distanceToPayload':0x400, 'numLoc':1,
+    'DeleteFileA':{'distanceToPayload':sParams.startParamsQty, 'numLoc':1,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'C:\\My Files\\delete.txt','size':35,'NullAfterString':True,'isStruct':False},
+        'totalSize':35
     },
 
-    'GPADeleteFileA':{'distanceToPayload':0x400, 'numLoc':3,
+    'GPADeleteFileA':{'distanceToPayload':sParams.startParamsQty, 'numLoc':3,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':14,'isText':True, 'String':'DeleteFileA','size':13,'NullAfterString':True,'isStruct':False},
         'loc3':{'distanceFromPayload':27,'isText':True, 'String':'C:\\My Files\\delete.txt','size':26,'NullAfterString':True,'isStruct':False},
+        'totalSize':56
     },
     
-    'GPAHeapCreate':{'distanceToPayload':0x400, 'numLoc':2,
+    'GPAHeapCreate':{'distanceToPayload':sParams.startParamsQty, 'numLoc':2,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':14,'isText':True, 'String':'HeapCreate','size':12,'NullAfterString':True,'isStruct':False},
+        'totalSize':26
     },
     
-    'GPAHeapAlloc':{'distanceToPayload':0x400, 'numLoc':2,
+    'GPAHeapAlloc':{'distanceToPayload':sParams.startParamsQty, 'numLoc':2,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':14,'isText':True, 'String':'HeapCreate','size':12,'NullAfterString':True,'isStruct':False},
+        'totalSize':26
     },
 
-    'GPAOpenSCManagerA':{'distanceToPayload':0x400, 'numLoc':2,
+    'GPAOpenSCManagerA':{'distanceToPayload':sParams.startParamsQty, 'numLoc':2,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'advapi32.dll','size':14,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':14,'isText':True, 'String':'OpenSCManagerA','size':16,'NullAfterString':True,'isStruct':False},
+        'totalSize':30
     },
 
-    'GPAWriteProcessMemory':{'distanceToPayload':0x400, 'numLoc':2,
+    'GPAWriteProcessMemory':{'distanceToPayload':sParams.startParamsQty, 'numLoc':2,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':14,'isText':True, 'String':'WriteProcessMemory','size':20,'NullAfterString':True,'isStruct':False},
+        'totalSize':34
     },
 
-   'SEA':{'distanceToPayload':0x400, 'numLoc':2, # ShellExecuteA
+   'SEA':{'distanceToPayload':sParams.startParamsQty, 'numLoc':2, # ShellExecuteA
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'open','size':6,'NullAfterString':True,'isStruct':False},
-        'loc2':{'distanceFromPayload':6,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False}
+        'loc2':{'distanceFromPayload':6,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
+        'totalSize':12
     },
     
-    'GPAShellExecuteA':{'distanceToPayload':0x400, 'numLoc':2,
+    'GPAShellExecuteA':{'distanceToPayload':sParams.startParamsQty, 'numLoc':2,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'shell32.dll','size':13,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':13,'isText':True, 'String':'ShellExecuteA','size':15,'NullAfterString':True,'isStruct':False},
+        'totalSize':28
     },
 
-   'CSA':{'distanceToPayload':0x400, 'numLoc':3,  # CreateServiceA
+   'CSA':{'distanceToPayload':sParams.startParamsQty, 'numLoc':3,  # CreateServiceA
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'EvilService','size':13,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':13,'isText':True, 'String':'My EvilService','size':16,'NullAfterString':True,'isStruct':False},
         'loc3':{'distanceFromPayload':29,'isText':True, 'String':'C:\\Program Files\\VMware\\VMware Tools\\demo.exe','size':51,'NullAfterString':True,'isStruct':False},
+        'totalSize':80
     },
     
-    'ExCreateServiceA':{'distanceToPayload':0x400, 'numLoc':6,
+    'ExCreateServiceA':{'distanceToPayload':sParams.startParamsQty2, 'numLoc':6,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'advapi32.dll','size':14,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':14,'isText':True, 'String':'OpenSCManagerA','size':16,'NullAfterString':True,'isStruct':False},
         'loc3':{'distanceFromPayload':30,'isText':True, 'String':'CreateServiceA','size':16,'NullAfterString':True,'isStruct':False},
         'loc4':{'distanceFromPayload':46,'isText':True, 'String':'EvilService','size':13,'NullAfterString':True,'isStruct':False},
         'loc5':{'distanceFromPayload':59,'isText':True, 'String':'My EvilService','size':16,'NullAfterString':True,'isStruct':False},
         'loc6':{'distanceFromPayload':75,'isText':True, 'String':'C:\\Program Files\\VMware\\VMware Tools\\demo.exe','size':51,'NullAfterString':True,'isStruct':False},
+        'totalSize':126
     },
 
-    'CPA':{'distanceToPayload':0x400, 'numLoc':2,
+    'CPA':{'distanceToPayload':sParams.startParamsQty3, 'numLoc':2,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':6,'isText':True, 'String':'struct1','size':68,'NullAfterString':False,'isStruct':True},
         # 'loc3':{'distanceFromPayload':0x80,'isText':True, 'Strings':'struct2','size':17,'NullAfterString':False,'isStruct':True},
+        'totalSize':74
     },
 
-    'ExCreateProcessA':{'distanceToPayload':0x400, 'numLoc':7,
+    'ExCreateProcessA':{'distanceToPayload':sParams.startParamsQty2, 'numLoc':7,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'Urlmon.dll','size':12,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':12,'isText':True, 'String':'URLDownloadToFileA','size':20,'NullAfterString':True,'isStruct':False},
         'loc3':{'distanceFromPayload':32,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
@@ -1117,37 +1218,44 @@ distanceDict={
         'loc5':{'distanceFromPayload':62,'isText':True, 'String':'http:\\httpbin.org\\image\\jpeg','size':33,'NullAfterString':True,'isStruct':False},
         'loc6':{'distanceFromPayload':95,'isText':True, 'String':'download-file1.jpeg','size':21,'NullAfterString':True,'isStruct':False},
         'loc7':{'distanceFromPayload':116,'isText':True, 'String':'C:\\Roptester3\\calc.exe','size':26,'NullAfterString':True,'isStruct':False},
+        'totalSize':142
     },
 
-    'WriteProcessMemoryHeapCreate':{'distanceToPayload':0x400, 'numLoc':5,
+    'WriteProcessMemoryHeapCreate':{'distanceToPayload':sParams.startParamsQty2, 'numLoc':5,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':14,'isText':True, 'String':'HeapCreate','size':12,'NullAfterString':True,'isStruct':False},
         'loc3':{'distanceFromPayload':26,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
         'loc4':{'distanceFromPayload':40,'isText':True, 'String':'WriteProcessMemory','size':20,'NullAfterString':True,'isStruct':False},
         'loc5':{'distanceFromPayload':60,'isText':True, 'String':"calc",'size':6,'NullAfterString':True,'isStruct':False},
+        'totalSize':66
     },
 
-    'P32F':{'distanceToPayload':0x400, 'numLoc':1,
+    'P32F':{'distanceToPayload':sParams.startParamsQty, 'numLoc':1,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'struct1','size':40,'NullAfterString':False,'isStruct':True},
+        'totalSize':40
     },
-    'P32N':{'distanceToPayload':0x400, 'numLoc':1,
+    'P32N':{'distanceToPayload':sParams.startParamsQty, 'numLoc':1,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'struct1','size':40,'NullAfterString':False,'isStruct':True},
+        'totalSize':40
     },
-     'lpProcessInformation':{'distanceToPayload':0x400, 'numLoc':2,
+     'lpProcessInformation':{'distanceToPayload':sParams.startParamsQty, 'numLoc':2,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':6,'isText':True, 'String':'struct1','size':68,'NullAfterString':False,'isStruct':True},
+        'totalSize':74
     },
 
-    'UDTF':{'distanceToPayload':0x400, 'numLoc':2,
-        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'http://httpbin.org/image/jpeg','size':31,'NullAfterString':True,'isStruct':False},
-        'loc2':{'distanceFromPayload':31,'isText':True, 'String':'download-file1.jpeg','size':21,'NullAfterString':True,'isStruct':False},
+    'UDTF':{'distanceToPayload':sParams.startParamsQty, 'numLoc':2,
+        'loc2':{'distanceFromPayload':21,'isText':True, 'String':'http://httpbin.org/image/jpeg','size':31,'NullAfterString':True,'isStruct':False},
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'download-file1.jpeg','size':21,'NullAfterString':True,'isStruct':False},
+        'totalSize':52
     },
-    'RSKV':{'distanceToPayload':0x400, 'numLoc':2,
-        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'SYSTEM\\CurrentControlSet\\Control\\Terminal Server','size':53,'NullAfterString':True,'isStruct':False},
-        'loc2':{'distanceFromPayload':50,'isText':True, 'String':'fDenyTSConnections','size':21,'NullAfterString':True,'isStruct':False},
+    'RSKV':{'distanceToPayload':sParams.startParamsQty, 'numLoc':2,
+        'loc2':{'distanceFromPayload':21,'isText':True, 'String':'SYSTEM\\CurrentControlSet\\Control\\Terminal Server','size':53,'NullAfterString':True,'isStruct':False},
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'fDenyTSConnections','size':21,'NullAfterString':True,'isStruct':False},
+        'totalSize':74
     },
 
-    'ExRegSetKeyValueA':{'distanceToPayload':0x400, 'numLoc':8,
+    'ExRegSetKeyValueA':{'distanceToPayload':sParams.startParamsQty2, 'numLoc':8,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'advapi32.dll','size':14,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':14,'isText':True, 'String':'RegCreateKeyA','size':15,'NullAfterString':True,'isStruct':False},
         'loc3':{'distanceFromPayload':29,'isText':True, 'String':'advapi32.dll','size':14,'NullAfterString':True,'isStruct':False},
@@ -1156,28 +1264,39 @@ distanceDict={
         'loc6':{'distanceFromPayload':124,'isText':True, 'String':'randomkey','size':11,'NullAfterString':True,'isStruct':False},
         'loc7':{'distanceFromPayload':135,'isText':True, 'String':'calc','size':6,'NullAfterString':True,'isStruct':False},
         'loc8':{'distanceFromPayload':141,'isText':True, 'String':'C:\\Windows\\System32\\calc.exe','size':33,'NullAfterString':True,'isStruct':False},
+        'totalSize':174
     },
 
-    'ExHeapAlloc':{'distanceToPayload':0x400, 'numLoc':2,
+    'ExHeapAlloc':{'distanceToPayload':sParams.startParamsQty, 'numLoc':2,
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'kernel32.dll','size':14,'NullAfterString':True,'isStruct':False},
         'loc2':{'distanceFromPayload':14,'isText':True, 'String':'HeapCreate','size':12,'NullAfterString':True,'isStruct':False},
+        'totalSize':26
     },
 
-    'RCKV':{'distanceToPayload':0x400, 'numLoc':1,   #RegCreateKeyA
+    'RCKV':{'distanceToPayload':sParams.startParamsQty, 'numLoc':1,   #RegCreateKeyA
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'Software\\Microsoft\\Windows\\CurrentVersion\\Run','size':51,'NullAfterString':True,'isStruct':False},
+        'totalSize':51
     },
 
-    'new':{'distanceToPayload':0x400, 'numLoc':1,
-        'loc1':{'distanceFromPayload':0,'isText':True, 'String':'new','size':60,'NullAfterString':True,'isStruct':False},
+    'new':{'distanceToPayload':sParams.startParamsQty, 'numLoc':1,
+        'loc1':{'distanceFromPayload':0,'isText':True, 'String':None,'size':4,'NullAfterString':False,'isStruct':False},
+        'totalSize':4
     },
 
-    'CFA':{'distanceToPayload':0x400, 'numLoc':1,   # CreateFileA
+    'WPM':{'distanceToPayload':sParams.startParamsQty, 'numLoc':1,   # CreateFileA
+        'loc1':{'distanceFromPayload':0,'isText':False, 'String':'\\??\\c:\\Windows\\SysWOW64\\urlmon.dll','size':41,'NullAfterString':True,'isStruct':False},
+        'totalSize':41
+    },
+
+    'CFA':{'distanceToPayload':sParams.startParamsQty, 'numLoc':1,   # CreateFileA
         'loc1':{'distanceFromPayload':0,'isText':True, 'String':'\\??\\c:\\Windows\\SysWOW64\\urlmon.dll','size':41,'NullAfterString':True,'isStruct':False},
+        'totalSize':41
     },
 
     'empty':{'distanceToPayload':0x700, 'numLoc':5,
         'loc1':{'distanceFromPayload':0,'isText':False, 'String':None,'size':10,'NullAfterString':False,'isStruct':False},
-        'loc2':{'distanceFromPayload':0,'isText':False, 'String':None,'size':10,'NullAfterString':False,'isStruct':False}
+        'loc2':{'distanceFromPayload':0,'isText':False, 'String':None,'size':10,'NullAfterString':False,'isStruct':False},
+        'totalSize':20
     },
 }
 
@@ -1388,12 +1507,12 @@ class ropParms:
 
 
     def setDistanceLoc(self,patternType,stack,pivot):
-        print ("patternType",patternType)
+        # print ("patternType",patternType)
         dp ("setDistanceLoc")
         # print ("setDistanceLoc", patternType, hex(stack),hex(pivot))
 
         numLoc=distanceDict[patternType]["numLoc"]
-        print (cya,'numLoc', numLoc,res)
+        # print (cya,'numLoc', numLoc,res)
         if numLoc>=9:
             self.loc9=distanceDict[patternType]["loc9"]["distanceFromPayload"] +stack + pivot
             if distanceDict[patternType]["loc9"]["isText"]:
@@ -1424,18 +1543,18 @@ class ropParms:
             if distanceDict[patternType]["loc3"]["isText"]:
               self.locString3=  distanceDict[patternType]["loc3"]["String"]
             dp ("in loc3b")
-            print (hex(self.loc3), self.locString3)
+            # print (hex(self.loc3), self.locString3)
 
         if numLoc>=2:
             self.loc2=distanceDict[patternType]["loc2"]["distanceFromPayload"] +stack + pivot
             if distanceDict[patternType]["loc2"]["isText"]:
               self.locString2=  distanceDict[patternType]["loc2"]["String"] 
-            print (red,"loc 2",res,hex(self.loc2), self.locString2)      
+            # print (red,"loc 2",res,hex(self.loc2), self.locString2)      
         if numLoc >=1:
             self.loc1=distanceDict[patternType]["loc1"]["distanceFromPayload"] + stack + pivot
             if distanceDict[patternType]["loc1"]["isText"]:
               self.locString1=  distanceDict[patternType]["loc1"]["String"]
-            print (hex(self.loc1), self.locString1)
+            # print (hex(self.loc1), self.locString1)
         self.hasDistance=True
 
     def showShellLoc(self):
@@ -1470,7 +1589,7 @@ class ropParms:
                 dp("loc7:", hex(self.loc7),binaryToStr(mu.mem_read(self.loc7, 4)))
             except:
                 pass                
-            dp ("###3", self.loc3)
+            # dp ("###3", self.loc3)
             # dp("loc2:", hex(self.loc2),binaryToStr(mu.mem_read(self.loc2, 4)))
             # dp("loc3:", hex(self.loc3),binaryToStr(mu.mem_read(self.loc3, 4)))
             # dp("loc4:", hex(self.loc4),binaryToStr(mu.mem_read(self.loc4, 4)))
@@ -1566,7 +1685,7 @@ sysTarget2=0
 
 
 def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi,sysTarget,finalPivotGadget1, rValStr=None,patType=None,finalTypePattern=None):
-    print(blu,"rop_testerRunROP", "rValStr", rValStr,res, "patType",patType, "","finalTypePattern",finalTypePattern )
+    # print(blu,"rop_testerRunROP", "rValStr", rValStr,res, "patType",patType, "","finalTypePattern",finalTypePattern )
     global maxCount
     global winApiSyscallReached
     global oldEsp
@@ -1719,8 +1838,6 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
             except:
                 dp("memory writing error2!")
         
-
-
         image2=0x900000
         bCheckRetStart,newRet= checkRetStart(pe)
         if bCheckRetStart:
@@ -1735,8 +1852,6 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
             #### this is is what will be at 0xc0 - just verification for the emulation logs - not used by the tool currently.
             mu.mem_write(0xc0, b"\x99\x99\x99\x99")
             # print("fs",binaryToStr(mu.mem_read(0xc0, 0x4)))
-
-            
 
         except:
             print (red,"  Writing to fs:[0xc0] fails.",res)
@@ -1776,25 +1891,17 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
 
         # tracing all instructions with customized callback
         hook2=mu.hook_add(UC_HOOK_CODE, hook_code2)
-
-
         # emulate machine code in infinite time
         
         # mu.emu_start(ADDRESS2, ADDRESS2 + len(testCode))
         # dp ("stack2",binaryToStr(mu.mem_read(stack, 0x10s0)))
         # mu.emu_start(image2, image2 + len(testCode))
-        
         dp ("second rp.show()")
         RP.show(mu,ApiSyscall)
-        
-
         # dp ("loc 1 mem",binaryToStr(mu.mem_read(stack+0x700, 0x100)))
         # mu.emu_start(image2, 0xFFFFF)
         # mu.emu_start(image2, image2+200)
         mu.emu_start(image2, image2+0xFFFFF)
-
-
-
         # now dp out some registers
         dp(">>> Emulation done. Below is the CPU context")
 
@@ -1841,7 +1948,7 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         # giveStack(mu,32)
 
         try:
-
+            # print (red,"magic stop 2",res)
             mu.emu_stop()
             # dp ("stopped1")
             # mu.emu_start(image2, 0xFFFFFFFF)
@@ -1863,7 +1970,7 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         dp ("uc_err", uc_err)
         stopProcess = False
 
-        print ("1gOutput, locParam, locReg, winApiSyscallReached, givStDistance", gOutput, locParam, locReg, winApiSyscallReached, givStDistance)
+        # print ("1gOutput, locParam, locReg, winApiSyscallReached, givStDistance", gOutput, locParam, locReg, winApiSyscallReached, givStDistance)
         return gOutput, locParam, locReg, winApiSyscallReached, givStDistance
 
     except UcError as e:
@@ -1883,9 +1990,9 @@ def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi
         if ApiSyscall=="syscall":
             locParam=RP.giveParamLocOnStack(targetP,"syscall")
         else:
-            print (red,"targetP", targetP,res)
+            # print (red,"targetP", targetP,res)
             locParam=RP.giveParamLocOnStack(targetP,"winApi")
-        print ("\t", cya, "localparam", gre,hex(locParam), cya,"oldEsp", gre,hex(oldEsp),res,"givStDistance", hex(givStDistance),res)
+        # print ("\t", cya, "localparam", gre,hex(locParam), cya,"oldEsp", gre,hex(oldEsp),res,"givStDistance", hex(givStDistance),res)
         return gOutput, locParam,oldEsp,winApiSyscallReached,givStDistance
 
 rop_testerCalled=0
@@ -1988,6 +2095,8 @@ def rop_tester(testCode, ID=False, regWritable=False):
 
         try:
             mu.emu_stop()
+            # print (red,"magic stop: emulation done",res)
+
             dp ("stopped")
             mu=""
             # mu.release_handle()
@@ -2190,6 +2299,7 @@ def rop_testerFS(testCode, fsReg,fsAdjust, ID=False, regWritable=False):
         gOutput.setStackPivot(snapshotESP)
         gOutput.set(r_eax,r_ebx,r_ecx,r_edx,r_edi,r_esi,r_ebp,r_esp,True)
         try:
+            # print (red,"magic stop: emulation done 2",res)
             mu.emu_stop()
             dp ("stopped")
             mu=""
