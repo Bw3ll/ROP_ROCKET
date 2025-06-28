@@ -98,14 +98,14 @@ def uiShowOptionsMainMenu(x86,x64):
 
 	text += "  {}        \n".format(cya + "m" + res + " -" + gre + "  Generate Mov Dereference:" + yel + " VirtualProtect" + res)
 
-	# ---- Begin re-arranged pushad APIs ----
 
-	# Group 1: Memory Functions (kept at the top)
+
 	text += "  {}        \n".format(cya + "!" + res + " -" + gre + "  Generate pushad:" + yel + " VirtualProtect" + res)
 	text += "  {}        \n".format(cya + "@" + res + " -" + gre + "  Generate pushad:" + yel + " VirtualAlloc" + res)
+	text += "  {}        \n".format(cya + "va" + res + " -" + gre + " Generate pushad:" + yel + " VirtualAllocEx" + res)
 	text += "  {}        \n".format(cya + "wp" + res + " -" + gre + " Generate pushad:" + yel + " WriteProcessMemory" + res)
 	text += "  {}        \n".format(cya + "hc" + res + " -" + gre + " Generate pushad:" + yel + " HeapCreate" + res)
-	text += "  {}        \n".format(cya + "va" + res + " -" + gre + " Generate pushad:" + yel + " VirtualAllocEx" + res)
+	text += "  {}        \n".format(cya + "ha" + res + " -" + gre + " Generate pushad:" + yel + " HeapAlloc" + res)
 	text += "  {}        \n".format(cya + "we" + res + " -" + gre + " Generate pushad:" + yel + " WinExec" + res)
 	text += "  {}        \n".format(cya + "se" + res + " -" + gre + " Generate pushad:" + yel + " ShellExecuteA" + res)
 	text += "  {}        \n".format(cya + "cp" + res + " -" + gre + " Generate pushad:" + yel + " CreateProcessA" + res)
