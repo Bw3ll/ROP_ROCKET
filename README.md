@@ -72,7 +72,7 @@ This tool was inspired by the much older [JOP ROCKET](https://github.com/Bw3ll/J
 
 # Acknowledgement
 
-Shiva Shashank Kusuma works for Dr. Bramwell Brizendine as a graduate student to develop patterns for shellcodeless attacks. He has done great work, and he was also a co-speaker at DEFCON.
+Shiva Shashank Kusuma worked for Dr. Bramwell Brizendine as a graduate student to develop patterns for ROP ROCKET. He has done invaluable work, and he has been a co-speaker at DEFCON and Black Hat Arsenal. In 2025, Shiva also started contributing to the programming of ROP ROCKET.
 
 # Updates
 09/18/2023 - Various enhancements; further support for variant ways of leaking the far jump that leads to the Windows syscall.
