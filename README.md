@@ -71,8 +71,9 @@ This tool was inspired by the much older [JOP ROCKET](https://github.com/Bw3ll/J
 *Here the user used obfuscation to dynamically decode at runtime the address for a **xor eax, edi # ret**, which hypothetically he could not use otherwise. Once decoded, the **push r32 / ret** causes this to be immediately executed. This is a great way to use gadgets otherwise unavailable due to bad bytes. ROCKET completes this in seconds. Its ability to do this with integer overflow is all but guaranteed to work, assuming no issues with bad bytes or lack of availble registers (i.e. the user excluded too many registers).*
 
 # Acknowledgement
+This tool was created and written by [Dr. Bramwell Brizendine](https://www.linkedin.com/in/bramwell-b-22109b303/), beginning in early 2023. 
 
-Shiva Shashank Kusuma worked for Dr. Bramwell Brizendine as a graduate student to develop patterns for ROP ROCKET. He has done invaluable work, and he has been a co-speaker at DEFCON and Black Hat Arsenal. In 2025, Shiva also started contributing to the programming of ROP ROCKET.
+[Shiva Shashank Kusuma](https://www.linkedin.com/in/shashankpie/) worked for Dr. Bramwell Brizendine as a graduate student to develop patterns for ROP ROCKET. He has done invaluable work, and he has been a co-speaker at DEFCON and Black Hat Arsenal. In 2025, Shiva also started contributing to the programming of ROP ROCKET.
 
 # Updates
 09/18/2023 - Various enhancements; further support for variant ways of leaking the far jump that leads to the Windows syscall.
