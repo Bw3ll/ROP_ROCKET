@@ -5,7 +5,8 @@ Please note that this is still a work in progress, with some updated and enhance
 
 Work is ongoing with new capabilities regularly added at present. Please check back on a regular basis.
 
-![image](https://raw.githubusercontent.com/Bw3ll/ROP_ROCKET/main/rop%20rocket_screenshots/logo2024_90324.png?raw=true)
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/rop_rocket.jpg?raw=true)
+
 
 # Powerful ROP Capabilities
 ROP ROCKET is very powerful with some unique capabilities, which includes the following:
