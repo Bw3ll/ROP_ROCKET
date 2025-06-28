@@ -47,12 +47,14 @@ def genCh(gList):
 	return chunk
 
 
-def genCode2(showAll):
+def genCode2(fillerQty,showAll):
+	hxFillerQ=str(fillerQty)
 	if showAll:
-		chunk="""
-ch=genCh(gList)
+		chunk=f"""
 
-filler=b"\\x41"
+filler = b"\\x41"
+initialFiller =  {hxFillerQ}
+
 	
 """
 	if not showAll:
@@ -94,7 +96,16 @@ print (binaryToStr(payload))
 print (len(payload), "bytes")
 	
 """
+def genCode3b(showAll):
+	if showAll:
+		chunk="""
 
+print ("Generating payload...\\n")
+print (binaryToStr(payload))
+print (len(payload), "bytes")
+	
+"""
+	return chunk
 def genCode3(showAll):
 	if showAll:
 		chunk="""
