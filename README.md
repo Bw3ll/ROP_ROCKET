@@ -5,7 +5,7 @@ Please note that this is still a work in progress, with some updated and enhance
 
 Work is ongoing with new capabilities regularly added at present. Please check back on a regular basis.
 
-![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/rop_rocket.jpg?raw=true)
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/rop_rocket.png?raw=true)
 
 
 # Powerful ROP Capabilities
@@ -71,8 +71,9 @@ This tool was inspired by the much older [JOP ROCKET](https://github.com/Bw3ll/J
 *Here the user used obfuscation to dynamically decode at runtime the address for a **xor eax, edi # ret**, which hypothetically he could not use otherwise. Once decoded, the **push r32 / ret** causes this to be immediately executed. This is a great way to use gadgets otherwise unavailable due to bad bytes. ROCKET completes this in seconds. Its ability to do this with integer overflow is all but guaranteed to work, assuming no issues with bad bytes or lack of availble registers (i.e. the user excluded too many registers).*
 
 # Acknowledgement
+This tool was created and written by [Dr. Bramwell Brizendine](https://www.linkedin.com/in/bramwell-b-22109b303/), beginning in early 2023. 
 
-Shiva Shashank Kusuma works for Dr. Bramwell Brizendine as a graduate student to develop patterns for shellcodeless attacks. He has done great work, and he was also a co-speaker at DEFCON.
+[Shiva Shashank Kusuma](https://www.linkedin.com/in/shashankpie/) worked for Dr. Bramwell Brizendine as a graduate student to develop patterns for ROP ROCKET. He has done invaluable work, and he has been a co-speaker at DEFCON and Black Hat Arsenal. In 2025, Shiva also started contributing to the programming of ROP ROCKET.
 
 # Updates
 09/18/2023 - Various enhancements; further support for variant ways of leaking the far jump that leads to the Windows syscall.
@@ -81,3 +82,5 @@ Shiva Shashank Kusuma works for Dr. Bramwell Brizendine as a graduate student to
 Late March -April 3, 2024 - Extensive updates to emulation to improve and enhance efficiency; support for many more possibility options for individual gadgets to be generated; correction of bugs; **new release of VirtualAlloc and VirtualProtect** via pushad. While other tools have provided support for VirtualProtect and VirtualAlloc before, which is why we did not, we now feel it would be remiss not to include these, especially as these can be enhanced by the tool's capabilities. Created full templates for VirtualAlloc and VirtualProtect via pushad, that also includes shellcode (pop a calc).
 
 5/2024 - Massive revamping of Windows syscalls to greatly expand what can be found with real-world binaries. Even lengthy, undesirable gadgets that leak the FS register (needed for doing Windows syscalls in SysWow64, i.e. 32-bit) can be worked with in automated fashion. Numerous other minor enhancements.
+
+6/28/2025 -   Massive updates, including support for 17 new WinAPIs not previously included in ROP ROCKET. Added ability to define an initial overflow amount - this is relevant as it can affect calculations to strings or pointers when doing emulation.
