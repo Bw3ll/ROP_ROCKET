@@ -7045,39 +7045,41 @@ def genOutput64(myDict, typePattern=None):
 
 	cOut=whi+out
 	out+="gListQ = [\n"
+	cOut+="gListQ = [\n"
 
-	prevStackC2=[]
-	for g in myDict:
-		out+= "\t"+  "0x"+str(hx (img(t,myDict), 16))+ ", #" + disMini(myDict[t].g.raw, myDict[t].g.offset) + " # " + myDict[t].comment + " # " +myDict[t].g.mod +"\n"
-		for val in (prevStackC2):
-			out+= "\t" +"0x"+str(hx (val, 16))+ ", #\n"
+	# prevStackC2=[]
+	# for g in myDict:
+	# 	out+= "\t"+  "10x"+str(hx (img(t,myDict), 16))+ ", #" + disMini(myDict[t].g.raw, myDict[t].g.offset) + " # " + myDict[t].comment + " # " +myDict[t].g.mod +"\n"
+	# 	for val in (prevStackC2):
+	# 		out+= "\t" +"20x"+str(hx (val, 16))+ ", #\n"
 		
-		for val in (myDict[t].stack):
-			cOut+= "\t" + gre +"0x"+str(hx (val, 16))+ whi+ ", #\n"
+	# 	for val in (myDict[t].stack):
+	# 		cOut+= "\t" + gre +"30x"+str(hx (val, 16))+ whi+ ", #\n"
 
 
-		# for val in (myDict[t].stack):
-		# 	out+= "\t" +"0x"+str(hx (val, 16))+ ", #\n"
+	# 	# for val in (myDict[t].stack):
+	# 	# 	out+= "\t" +"0x"+str(hx (val, 16))+ ", #\n"
 
-		try:
-			myLen=len(myDict[t].g.stC2)   # this is just in case it is not there - backwards compatibility for earlier users
-		except:
-			myDict[t].g.stC2=[]			
-		prevStackC2=myDict[t].g.stC2	
-		t=t+1
-	out+="\t]\n\n"
+	# 	try:
+	# 		myLen=len(myDict[t].g.stC2)   # this is just in case it is not there - backwards compatibility for earlier users
+	# 	except:
+	# 		myDict[t].g.stC2=[]			
+	# 	prevStackC2=myDict[t].g.stC2	
+	# 	t=t+1
+	# out+="\t]\n\n"
 	
+	# print (cOut)
 	t=0
 	prevStackC2=[]
 	for g in myDict:
 		cOut+= "\t"+ gre+ "0x"+str(hx (img(t,myDict), 16))+ whi+", #" +yel+ disMini(myDict[t].g.raw, myDict[t].g.offset) + whi+" # " +cya+ myDict[t].comment + whi+" # " +blu+myDict[t].g.mod +"\n"
+		out+= "\t"+ "0x"+str(hx (img(t,myDict), 16))+ ", #"+ disMini(myDict[t].g.raw, myDict[t].g.offset) + " # " + myDict[t].comment +" # " +myDict[t].g.mod +"\n"
 		for val in (prevStackC2):
 			out+= "\t" +"0x"+str(hx (val, 16))+ ", #\n"
-		
+			cOut+= "\t" +"0x"+str(hx (val, 16))+ ", #\n"
 		for val in (myDict[t].stack):
 			cOut+= "\t" + gre +"0x"+str(hx (val, 16))+ whi+ ", #\n"
-
-
+			out+= "\t" + "0x"+str(hx (val, 16))+  ", #\n"
 		# for val in (myDict[t].stack):
 		# 	cOut+= "\t" + gre +"0x"+str(hx (val, 16))+ whi+ ", #\n"
 
@@ -7088,6 +7090,7 @@ def genOutput64(myDict, typePattern=None):
 		prevStackC2=myDict[t].g.stC2	
 		t=t+1
 	cOut+=whi+"\t]\n\n"
+	out+="\t]\n\n"
 	
 	outP=genCode2_64(False)
 	outP+="payload = ch\n"
