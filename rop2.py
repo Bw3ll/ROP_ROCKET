@@ -5791,7 +5791,8 @@ def findGeneric64(instruction,fgReg,reg,bad,length1, excludeRegs,espDesiredMovem
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
-
+				# myTest=disMini(myDict[p].raw, myDict[p].offset,64)
+				# print (myTest, myDict[p].length, myDict[p].opcode, red, freeBad,res)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
 					dp ("found ",instruction, reg) 
 					return True,p
@@ -5824,11 +5825,7 @@ def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDes
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
-				
-				myTest=disMini(myDict[p].raw, myDict[p].offset,64)
-				if "mov rax" in myTest:
-					print ("\tfindGenericOp264",myTest)
-
+				# myTest=disMini(myDict[p].raw, myDict[p].offset,64)
 				# dp ("here", myDict[p].length, myDict[p].op2)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
 					dp ("found ",instruction, reg)
@@ -9864,7 +9861,7 @@ def findStackPivot(reg,bad,length1, excludeRegs,availableRegs,comment):
 		package=pkBuild([cMEsp])
 		showChain(package)
 		return True, package
-	availableRegs2= copy.deepcopy(availableReags)
+	availableRegs2= copy.deepcopy(availableRegs)
 	if reg in availableRegs2:
 		availableRegs2.remove(reg)
 
@@ -12226,6 +12223,12 @@ def buildASLR_Bypass64(	):
 		availableRegs2= copy.deepcopy(availableRegs)
 		availableRegs2.remove(reg)
 
+		foundP1, p1 = findGeneric64("pop",reg,reg,bad,length1, excludeRegs,0)
+		if foundP1:
+			showChain(pkBuild([p1]),True,True,yel, "We found the pop " +reg, 64)
+			exit()
+
+	if 2==333:
 		foundM1, m1 = findGenericOp264("mov",reg,"esp",reg, bad,length1, excludeRegs,0)
 		if foundM1:
 			pk=pkBuild([m1]) #
@@ -19242,8 +19245,8 @@ def ui():
 			elif userIN[0:2] == "we":
 				genWinExecPushad()
 			elif userIN[0:2] == "as":
-				printTest()
-				# buildASLR_Bypass64()	
+				# printTest()
+				buildASLR_Bypass64()	
 			elif userIN[0:3] == "set":
 				sParams.uiSetFillerQuantity()
 			elif userIN[0:2] == "ct":

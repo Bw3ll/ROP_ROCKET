@@ -55,7 +55,7 @@ def checkFreeBadBytesTester(opt,fg,address, bad,myDict=None,pe=None,n=None, chec
 			pe[mod].aslrStatus
 			if pe[mod].aslrStatus:
 				print ("ASLR", mod, pe[mod].aslrStatus)
-				return True  ### we are ignoring for now
+				# return True  ### we are ignofring for now
 				return False
 	except:
 		pass
