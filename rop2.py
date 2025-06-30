@@ -37,6 +37,7 @@ import copy
 import multiprocessing
 import struct
 from rop2FuncTester import *
+
 platformType = platform.uname()[0]
 import signal
 try:
@@ -4252,9 +4253,13 @@ def disHereClean5(n, address, offset, mode):
 
 
 
-def disMini(CODED2, offset):
+def disMini(CODED2, offset,arch=32):
+	# print ("disMini",arch)
+	myCs=cs
+	if arch==64:
+		myCs=cs64
 	returnVal = ""
-	for i in cs.disasm(CODED2, offset):
+	for i in myCs.disasm(CODED2, offset):
 		val =  i.mnemonic + " " + i.op_str + " # "
 		returnVal +=val
 	returnVal=returnVal[:-3]
@@ -5815,10 +5820,14 @@ def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDes
 	dp ("findGeneric", instruction+reg)
 	bExists, myDict=fg.getFg(instruction,fgReg)
 	if bExists:
-		# dp ("It exists")
+		# print ("It exists")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				
+				myTest=disMini(myDict[p].raw, myDict[p].offset,64)
+				if "mov rax" in myTest:
+					print ("\tfindGenericOp264",myTest)
 
 				# dp ("here", myDict[p].length, myDict[p].op2)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
@@ -6388,17 +6397,27 @@ def img(p, fg2=None):
 		global fg  #not sure why global needed
 		try:
 			img=fg.rop[p].offset + pe[n].startLoc
+		# except Exception as e:
+		# 	print(red,"oh no", p, hex(p), pe[n].startLoc,res)
+			
+		# 	print (e)
+		# 	print(traceback.format_exc())
 		except:
 			# print(red,"oh no", p, hex(p), pe[n].startLoc,res)
 			pass
 	else:
 		try:
+			# print(red,"oh no", p, hex(p), pe[n].startLoc,res)
 
-			fg=fg2
-			img=fg.rop[p].offset + pe[n].startLoc
+			# print (3,len(fg), 4,len(fg2))
+			fg3=fg2
+			img=fg3.rop[p].offset + pe[n].startLoc
+		# except Exception as e:
 		except:
-			print (red+"error -> img:", p, res)
-			print (hex(p))
+			# print(traceback.format_exc())
+			# except:
+			print (red+"error -> img:", p, res, hex(p))
+
 			return p
 	return img
 
@@ -6412,7 +6431,9 @@ def setFinalPivotGadget(pk):
 	l2=giveLast(pk)
 	finalPivotGadget =l2
 
-def showChain(myDict,printYes=False,GiveText=False, color=None, title=None):
+def showChain(myDict,printYes=False,GiveText=False, color=None, title=None, arch=32):
+	# print ("showChain", arch)
+
 	t=0
 	if printYes:
 
@@ -6424,7 +6445,7 @@ def showChain(myDict,printYes=False,GiveText=False, color=None, title=None):
 		prevStackC2=[]
 		for rChObj in myDict:
 
-			print (t,"\t",  "0x"+str(hx (img(t,myDict), 8)) , disMini(myDict[t].g.raw, myDict[t].g.offset), " # ", myDict[t].comment,"#",myDict[t].g.mod )
+			print (t,"\t",  "0x"+str(hx (img(t,myDict), 8)) , disMini(myDict[t].g.raw, myDict[t].g.offset, arch), " # ", myDict[t].comment,"#",myDict[t].g.mod )
 			try:
 				myLen=len(myDict[t].g.stC2)   # this is just in case it is not there - backwards compatibility for earlier users
 			except:
@@ -6443,7 +6464,7 @@ def showChain(myDict,printYes=False,GiveText=False, color=None, title=None):
 		t=0
 		prevStackC2=[]
 		for rChObj in myDict:
-			dp (t,"\t",  "0x"+str(hx (img(t,myDict), 8)) , disMini(myDict[t].g.raw, myDict[t].g.offset), " # ", myDict[t].comment,"#",myDict[t].g.mod )
+			dp (t,"\t",  "0x"+str(hx (img(t,myDict), 8)) , disMini(myDict[t].g.raw, myDict[t].g.offset, arch), " # ", myDict[t].comment,"#",myDict[t].g.mod )
 			try:
 				myLen=len(myDict[t].g.stC2)   # this is just in case it is not there - backwards compatibility for earlier users
 			except:
@@ -6467,7 +6488,7 @@ def showChain(myDict,printYes=False,GiveText=False, color=None, title=None):
 		try:
 			prevStackC2=[]
 			for rChObj in myDict:
-				txt+= str(t)+"\t" +  "0x"+str(hx (img(t,myDict), 8)) + " " + disMini(myDict[t].g.raw, myDict[t].g.offset) + " # "+		 myDict[t].comment +" # "+myDict[t].g.mod +"\n"
+				txt+= str(t)+"\t" +  "0x"+str(hx (img(t,myDict), 8)) + " " + disMini(myDict[t].g.raw, myDict[t].g.offset, arch) + " # "+		 myDict[t].comment +" # "+myDict[t].g.mod +"\n"
 
 				try:
 					myLen=len(myDict[t].g.stC2)   # this is just in case it is not there - backwards compatibility for earlier users
@@ -7072,8 +7093,8 @@ def genOutput64(myDict, typePattern=None):
 	t=0
 	prevStackC2=[]
 	for g in myDict:
-		cOut+= "\t"+ gre+ "0x"+str(hx (img(t,myDict), 16))+ whi+", #" +yel+ disMini(myDict[t].g.raw, myDict[t].g.offset) + whi+" # " +cya+ myDict[t].comment + whi+" # " +blu+myDict[t].g.mod +"\n"
-		out+= "\t"+ "0x"+str(hx (img(t,myDict), 16))+ ", #"+ disMini(myDict[t].g.raw, myDict[t].g.offset) + " # " + myDict[t].comment +" # " +myDict[t].g.mod +"\n"
+		cOut+= "\t"+ gre+ "0x"+str(hx (img(t,myDict), 16))+ whi+", #" +yel+ disMini(myDict[t].g.raw, myDict[t].g.offset,64) + whi+" # " +cya+ myDict[t].comment + whi+" # " +blu+myDict[t].g.mod +"\n"
+		out+= "\t"+ "0x"+str(hx (img(t,myDict), 16))+ ", #"+ disMini(myDict[t].g.raw, myDict[t].g.offset,64) + " # " + myDict[t].comment +" # " +myDict[t].g.mod +"\n"
 		for val in (prevStackC2):
 			out+= "\t" +"0x"+str(hx (val, 16))+ ", #\n"
 			cOut+= "\t" +"0x"+str(hx (val, 16))+ ", #\n"
@@ -12181,6 +12202,40 @@ def findSPivot64(bad,excludeRegs, reg):
 		return False,-0x6
 
 
+ 
+def buildASLR_Bypass64(	):
+	# dp ("excludeRegs",excludeRegs,	 "bad", bad)
+	global rl
+	distEsp=0x300  # distance to start of parameters  - user input
+	distEsp2=0x300
+	distParam=0x55 # distance to lp parameter	- dynamically generated  possibly via emulation?  how has the stack changed since that point in time--run all gadgets previous to this in emulation to determine the offset needed.
+	distFinalESP=0x34  # distance to esp at end - dynamically generated. This is just a starting point - emulation will correct to the actual value.
+	destAfter=True
+	IncDec="dec"
+	length1=True
+
+	# availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
+	excludeRegs=[]
+	availableRegs=["rax","rbx","rcx","rdx","rsi","rdi","rsp","rbp","r8 ","r9 ","r10","r11","r12","r13","r14","r15"]
+	# availableRegs=[("rax", "eax"),("rbx", "ebx"),("rcx", "ecx"),("rdx", "edx"),("rsi","esi"),("rdi", "edi"),("rsp", "esp"),("rbp", "ebp"),("r8 ", "r8"),("r9 ", "r9"),("r10", "r10"),("r11", "r11"),("r12", "r12"),("r13", "r13"),("r14","r14"),("r15", "r15")]
+	# availableRegs=[	 "eax", "ebx", "ecx", "edx","esi", "edi", "esp", "ebp", "r8", "r9", "r10", "r11", "r12", "r13","r14", "r15","rax"]
+	# availableRegsB=["rbx","rcx","rdx","rsi","rdi","rsp","rbp","r8 ","r9 ","r10","r11","r12","r13","r14","r15"]
+	
+
+	for reg in availableRegs:
+		availableRegs2= copy.deepcopy(availableRegs)
+		availableRegs2.remove(reg)
+
+		foundM1, m1 = findGenericOp264("mov",reg,"esp",reg, bad,length1, excludeRegs,0)
+		if foundM1:
+			pk=pkBuild([m1]) #
+			showChain(pk,True,True,mag,"111111", 64)
+		for op2 in availableRegs:
+			foundM2, m2 = findGenericOp264("movQword",reg, op2,reg, bad,length1, excludeRegs,0)
+			if foundM2:
+				pk=pkBuild([m2]) #
+				showChain(pk,True,True,yel, "title222222", 64)
+	exit()
 def buildHG(bad,excludeRegs):
 	dp ("excludeRegs",excludeRegs,	 "bad", bad)
 	global rl
@@ -12227,6 +12282,7 @@ def buildHG(bad,excludeRegs):
 			fRet, pR1,rDict=findRet(bad,True)
 			fRetf, pRf1,rDict=findRetf(bad, True)
 		else:
+			print (red, "continue", cya, 1, res)
 			continue
 		for op2 in regsNotUsed:	
 			regsNotUsed2= copy.deepcopy(regsNotUsed)
@@ -16348,6 +16404,38 @@ xorDword = "xor dword"
 movConstant="mov constant"
 xchg="xchg"
 
+def printTest():
+	print(len(fg.pops64))
+	print(len(fg.popRSI))
+	print(len(fg.popRBX))
+	print(len(fg.popRCX))
+	print(len(fg.popRAX))
+	print(len(fg.popRDI))
+	print(len(fg.popRBP))
+	print(len(fg.popRSP))
+	print(len(fg.popRDX))
+	print(len(fg.popR8))
+	print(len(fg.popR9))
+	print(len(fg.popR10))
+	print(len(fg.popR11))
+	print(len(fg.popR12))
+	print(len(fg.popR13))	
+	print(len(fg.popR14))
+	print(len(fg.popR15))
+
+	dExists, myDict= fg.getFg("pop","RDX")
+
+	for each in myDict:
+		
+		print (each, type (each))
+		each =pkBuild([each])
+		try:
+			print (type(each), type(each[0]))
+			showChain(each,True,True,blu,"test", 64)
+			
+
+		except:
+			pass
 def printOutputs():
 	printRetDict(pop, "ALL", fg.pops)
 	printRetDict(pop, "eax", fg.popEAX)
@@ -19153,7 +19241,9 @@ def ui():
 				genVirtualAllocPushad()
 			elif userIN[0:2] == "we":
 				genWinExecPushad()
-			
+			elif userIN[0:2] == "as":
+				printTest()
+				# buildASLR_Bypass64()	
 			elif userIN[0:3] == "set":
 				sParams.uiSetFillerQuantity()
 			elif userIN[0:2] == "ct":
