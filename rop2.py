@@ -2268,157 +2268,157 @@ class doGadgets:
 				fg.junkBox64.add(check1)
 
 	def do64_retf_s(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.retfSingle64)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.retfSingle64)
 	def do64_pop(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		if "ptr" not in testVal:
 			if re.match( r'pop r[abcdspb]{2}', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.pops64)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.pops64)
 			if re.match( r'\bpop rsi\b|\bpop esi\b', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.popRSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.popRSI)
 			elif re.match( r'^pop [er]*b[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.popRBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.popRBX)
 			elif re.match( r'^pop [er]*c[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.popRCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.popRCX)
 			elif re.match( r'^pop [er]*a[x|l|h]+',testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.popRAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.popRAX)
 			elif re.match( r'\bpop rsi\b|\bpop esi\b', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.popRDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.popRDI)
 			elif re.match( r'\bpop rbp\b|\bpop esi\b', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.popRBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.popRBP)
 			elif re.match( r'\bpop rsp\b|\bpop esi\b',testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.popRSP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.popRSP)
 			elif re.match( r'^pop [er]*d[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popRDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popRDX)
 			elif re.match( r'^pop r8[dbw]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR8)
 			elif re.match( r'^pop r9[dbw]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR9)
 			elif re.match( r'^pop r10[dbw]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR10)
 			elif re.match( r'^pop r11[dbw]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR11)
 			elif re.match( r'^pop r12[dbw]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR12)
 			elif re.match( r'^pop r13[dbw]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR13)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR13)
 			elif re.match( r'^pop r14[dbw]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR14)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR14)
 			elif re.match( r'^pop r15[dbw]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR15)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popR15)
 			else:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popOther64)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popOther64)
 		else:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.popQword)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.popQword)
 			if re.match( r'^pop [qword|dword]+ ptr \[[er]*a[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.popQwordRAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.popQwordRAX)
 			elif re.match( r'^pop [qword|dword]+ ptr \[[er]*b[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.popQwordRBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.popQwordRBX)
 			elif re.match( r'^pop [qword|dword]+ ptr \[[er]*c[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.popQwordRCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.popQwordRCX)
 			elif re.match( r'^pop [qword|dword]+ ptr \[[er]*d[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordRDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordRDX)
 			elif re.match( r'^pop [qword|dword]+ ptr \[[er]*si', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.popQwordRSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.popQwordRSI)
 			elif re.match( r'^pop [qword|dword]+ ptr \[[er]*di', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.popQwordRDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.popQwordRDI)
 			elif re.match( r'^pop [qword|dword]+ ptr \[[er]*sp', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.popQwordRSP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.popQwordRSP)
 			elif re.match( r'^pop [qword|dword]+ ptr \[[er]*bp', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.popQwordRBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.popQwordRBP)
 			elif re.match( r'^pop [qword|dword]+ ptr \[r8', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR8)
 			elif re.match( r'^pop [qword|dword]+ ptr \[r9', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR9)
 			elif re.match( r'^pop [qword|dword]+ ptr \[r10', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR10)
 			elif re.match( r'^pop [qword|dword]+ ptr \[r11', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR11)
 			elif re.match( r'^pop [qword|dword]+ ptr \[r12', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR12)
 			elif re.match( r'^pop [qword|dword]+ ptr \[r13', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR13)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR13)
 			elif re.match( r'^pop [qword|dword]+ ptr \[r14', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR14)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR14)
 			elif re.match( r'^pop [qword|dword]+ ptr \[r15', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR15)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.popQwordR15)
 			else:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.popQwordOther)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.popQwordOther)
 
 	def do64_hg_push(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		if "ptr" not in testVal:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.hgPush64)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.hgPush64)
 			if re.match( r'^push [er]*a[x|l|h]+',testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.hgPushRAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.hgPushRAX)
 			elif re.match( r'^push [er]*b[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.hgPushRBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.hgPushRBX)
 			elif re.match( r'^push [er]*c[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.hgPushRCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.hgPushRCX)
 			elif re.match( r'\bpush ebp\b', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.hgPushRBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.hgPushRBP)
 			elif re.match( r'\bpush esp\b',testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.hgPushRSP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.hgPushRSP)
 			elif re.match( r'^push [er]*d[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushRDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushRDX)
 			elif re.match( r'\bpush edi\b', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.hgPushRDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.hgPushRDI)
 			elif re.match( r'\bpush esi\b', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.hgPushRSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.hgPushRSI)
 			elif re.match( r'\bpush [-0x]*[0-9a-f]+\b', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.hgPushConstant64)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.hgPushConstant64)
 			elif re.match( r'^push r8', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR8)
 			elif re.match( r'^push r9', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR9)
 			elif re.match( r'^push r10', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR10)
 			elif re.match( r'^push r11', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR11)
 			elif re.match( r'^push r12', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR12)
 			elif re.match( r'^push r13', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR13)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR13)
 			elif re.match( r'^push r14', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR14)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR14)
 			elif re.match( r'^push r15', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR15)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushR15)
 			else:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushOther64)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushOther64)
 		else:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.hgPushQword)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.hgPushQword)
 			if re.match( r'^push [qword|dword]+ ptr \[[er]*a[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.hgPushQwordRAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.hgPushQwordRAX)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*b[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.hgPushQwordRBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.hgPushQwordRBX)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*c[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.hgPushQwordRCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.hgPushQwordRCX)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*d[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordRDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordRDX)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*si', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.hgPushQwordRSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.hgPushQwordRSI)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*di', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.hgPushQwordRDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.hgPushQwordRDI)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*sp', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.hgPushQwordRSP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.hgPushQwordRSP)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*bp', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.hgPushQwordRBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.hgPushQwordRBP)
 			elif re.match( r'^push [qword|dword]+ ptr \[r8', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR8)
 			elif re.match( r'^push [qword|dword]+ ptr \[r9', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR9)
 			elif re.match( r'^push [qword|dword]+ ptr \[r10', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR10)
 			elif re.match( r'^push [qword|dword]+ ptr \[r11', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR11)
 			elif re.match( r'^push [qword|dword]+ ptr \[r12', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR12)
 			elif re.match( r'^push [qword|dword]+ ptr \[r13', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR13)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR13)
 			elif re.match( r'^push [qword|dword]+ ptr \[r14', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR14)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR14)
 			elif re.match( r'^push [qword|dword]+ ptr \[r15', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR15)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.hgPushQwordR15)
 			else:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.hgPushQwordOther)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.hgPushQwordOther)
 
 	def do64_ret(self, name: str, testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		# dp ("do_ret")
@@ -2451,798 +2451,799 @@ class doGadgets:
 		
 	def do64_push(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):	
 		if "ptr" not in testVal:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.push64)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.push64)
 			if re.match( r'^push [er]*a[x|l|h]+',testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.pushRAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.pushRAX)
 			elif re.match( r'^push [er]*b[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.pushRBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.pushRBX)
 			elif re.match( r'^push [er]*c[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.pushRCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.pushRCX)
 			elif re.match( r'\bpush ebp\b', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushRBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushRBP)
 			elif re.match( r'\bpush esp\b',testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.pushRSP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.pushRSP)
 			elif re.match( r'^push [er]*d[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushRDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushRDX)
 			elif re.match( r'\bpush edi\b', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.pushRDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.pushRDI)
 			elif re.match( r'\bpush esi\b', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.pushRSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.pushRSI)
 			elif re.match( r'^push r8', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR8)
 			elif re.match( r'^push r9', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR9)
 			elif re.match( r'^push r10', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR10)
 			elif re.match( r'^push r11', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR11)
 			elif re.match( r'^push r12', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR12)
 			elif re.match( r'^push r13', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR13)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR13)
 			elif re.match( r'^push r14', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR14)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR14)
 			elif re.match( r'^push r15', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR15)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushR15)
 			elif re.match( r'\bpush [-0x]*[0-9a-f]+\b', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.pushConstant64)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.pushConstant64)
 			# elif re.match( r'\bpush [qword|dword]+ ptr\b', testVal, re.M|re.I):
-			# 	addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.pushQword)
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.pushQword)
 			else:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushOther64)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushOther64)
 						# def disMini(CODED2, address, offset):
 			# test=disMini(raw, address, offset)
 		elif "gs:[r" in testVal or "gs:[0xc0]" in testVal:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGS)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGS)
 			if "rax" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRAX)
 			elif "rbx" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRBX)
 			elif "rcx" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRCX)
 			elif "rdx" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRDX)
 			elif "rdi" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRDI)
 			elif "rsi" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRSI)
 			elif "rbp" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSRBP)
 			elif "r8" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR8)
 			elif "r9" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR9)
 			elif "r10" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR10)
 			elif "r11" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR11)
 			elif "r12" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR12)
 			elif "r13" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR13)				
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR13)				
 			elif "r14" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR14)				
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR14)				
 			elif "r15" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR15)				
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGSR15)				
 		else:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.pushQword64)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.pushQword64)
 			if re.match( r'^push [qword|dword]+ ptr \[[er]*a[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.pushQwordRAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.pushQwordRAX)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*b[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.pushQwordRBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.pushQwordRBX)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*c[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.pushQwordRCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.pushQwordRCX)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*d[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordRDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordRDX)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*si', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.pushQwordRSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.pushQwordRSI)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*di', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.pushQwordRDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.pushQwordRDI)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*sp', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.pushQwordRSP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.pushQwordRSP)
 			elif re.match( r'^push [qword|dword]+ ptr \[[er]*bp', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordRBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordRBP)
 			elif re.match( r'^push [qword|dword]+ ptr \[r8', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR8)
 			elif re.match( r'^push [qword|dword]+ ptr \[r9', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR9)
 			elif re.match( r'^push [qword|dword]+ ptr \[r10', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR10)
 			elif re.match( r'^push [qword|dword]+ ptr \[r11', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR11)
 			elif re.match( r'^push [qword|dword]+ ptr \[r12', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR12)
 			elif re.match( r'^push [qword|dword]+ ptr \[r13', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR13)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR13)
 			elif re.match( r'^push [qword|dword]+ ptr \[r14', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR14)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR14)
 			elif re.match( r'^push [qword|dword]+ ptr \[r15', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR15)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.pushQwordR15)
 			elif "gs:[e" in testVal or "gs:[0xc0]" in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGS)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordGS)
 			else:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordOther)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.pushQwordOther)
 
 	def do64_inc(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.inc64)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.inc64)
 		if re.match( r'\binc [re]+si\b', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.incRSI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.incRSI)
 		elif re.match( r'\binc [re]+bp\b', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.incRBP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.incRBP)
 		elif re.match( r'\binc [re]+di\b', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.incRDI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.incRDI)
 		elif re.match( r'^inc [re]+ax',testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.incRAX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.incRAX)
 		elif re.match( r'^inc [re]+bx', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.incRBX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.incRBX)
 		elif re.match( r'\binc [re]+sp\b',testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.incRSP)	
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.incRSP)	
 		elif re.match( r'^inc [re]+cx', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.incRCX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.incRCX)
 		elif re.match( r'^inc [re]+dx', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incRDX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incRDX)
 		elif re.match( r'^inc r8', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR8)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR8)
 		elif re.match( r'^inc r9', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR9)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR9)
 		elif re.match( r'^inc r10', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR10)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR10)
 		elif re.match( r'^inc r11', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR11)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR11)
 		elif re.match( r'^inc r12', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR12)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR12)
 		elif re.match( r'^inc r13', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR13)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR13)
 		elif re.match( r'^inc r14', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR14)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR14)
 		elif re.match( r'^inc r15', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR15)			
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.incR15)			
 
 	def do64_dec(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.dec64)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.dec64)
 		if re.match( r'\bdec esi\b', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.decRSI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.decRSI)
 		elif re.match( r'\bdec ebp\b', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.decRBP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.decRBP)
 		elif re.match( r'\bdec edi\b', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.decRDI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.decRDI)
 		elif re.match( r'^dec eax',testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.decRAX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.decRAX)
 		elif re.match( r'^dec ebx', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.decRBX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.decRBX)
 		elif re.match( r'\bdec esp\b',testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.decRSP)	
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.decRSP)	
 		elif re.match( r'^dec ecx', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.decRCX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.decRCX)
 		elif re.match( r'^dec edx', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decRDX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decRDX)
 		elif re.match( r'^dec r8', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR8)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR8)
 		elif re.match( r'^dec r9', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR9)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR9)
 		elif re.match( r'^dec r10', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR10)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR10)
 		elif re.match( r'^dec r11', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR11)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR11)
 		elif re.match( r'^dec r12', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR12)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR12)
 		elif re.match( r'^dec r13', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR13)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR13)
 		elif re.match( r'^dec r14', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR14)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR14)
 		elif re.match( r'^dec r15', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR15)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR15)
 	
 	def do64_adc(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do64_add(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
 
 	def do64_add(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		if not re.match( r'^[add|adc]+ [qword|dword]+ ptr \[eax\], eax|[add|adc]+ [qword|dword]+ ptr \[ebx\], ebx|[add|adc]+ [qword|dword]+ ptr \[ecx\], ecx|[add|adc]+ [qword|dword]+ ptr \[edx\], edx|[add|adc]+ [qword|dword]+ ptr \[esi\], esi|[add|adc]+ [qword|dword]+ ptr \[edi\], edi|[add|adc]+ [qword|dword]+ ptr \[ebp\], ebp|[add|adc]+ [qword|dword]+ ptr \[esp\], esp|[add|adc]+ [byte|word|dword]+ ptr \[eax\], al|[add|adc]+ [byte|word|dword]+ ptr \[ebx\], bl|[add|adc]+ [byte|word|dword]+ ptr \[ecx\], cl|[add|adc]+ [byte|word|dword]+ ptr \[edx\], dl|[add|adc]+  [byte|word|dword]+ ptr \[eax ]+ eax\], al|[add|adc]+  [byte|word|dword]+ ptr \[ebx \+ ebx\], bl|[add|adc]+  [byte|word|dword]+ ptr \[ecx \+ ecx\], cl|[add|adc]+  [byte|word|dword]+ ptr \[edx \+ edx\], dl|[add|adc]+ [byte|word|dword]+ ptr \[e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+\]|[add|adc]+ [byte|word|dword]+ ptr \[e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+\]|[add|adc]+ [byte|word|dword]+ ptr \[e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+ [\+|\-]+ 0x', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.add64)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.add64)
 			if "ptr" not in testVal:
 				if re.match( r'^[add|adc]+ [er]*a[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.addRAX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.addRAX)
 				elif re.match( r'^[add|adc]+ [er]*b[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.addRBX)
+					# print (hex(saveq), red,"testVal",yel,testVal,res, "op_str", cya, op_str,res, gre, disTiny64(raw))
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.addRBX,"",None,"rbx")
 				elif re.match( r'^[add|adc]+ [er]*c[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.addRCX)
-				elif re.match( r'^[add|adc]+ [er]*sp', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.addRSP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.addRCX)
+				elif re.match( r'^[add|adc]+ [er]*sp', testVal, re.M|re.I):	
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.addRSP)
 					if re.match( r'^[add|adc]+ [er]*sp, [0]*[x]*[1-90a-f]+', testVal, re.M|re.I):
 						if not re.match( r'^[add|adc]+ [er]*sp, e', testVal, re.M|re.I):
-							addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.addRSPVal)
+							addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.addRSPVal)
 				elif re.match( r'^[add|adc]+ [er]*bp', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.addRBP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.addRBP)
 				elif re.match( r'^[add|adc]+ [er]*d[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addRDX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addRDX)
 				elif re.match( r'^[add|adc]+ [er]*di', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.addRDI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.addRDI)
 				elif re.match( r'^[add|adc]+ [er]*si', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.addRSI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.addRSI)
 				elif re.match( r'^[add|adc]* r8', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR8)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR8)
 				elif re.match( r'^[add|adc]* r9', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR9)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR9)
 				elif re.match( r'^[add|adc]* r10', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR10)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR10)
 				elif re.match( r'^[add|adc]* r11', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR11)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR11)
 				elif re.match( r'^[add|adc]* r12', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR12)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR12)
 				elif re.match( r'^[add|adc]* r13', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR13)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR13)
 				elif re.match( r'^[add|adc]* r14', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR14)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR14)
 				elif re.match( r'^[add|adc]* r15', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR15)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addR15)
 			else:
 			#### qWORDS
 				if re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.addQwordRAX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.addQwordRAX)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[[er]*b[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.addQwordRBX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.addQwordRBX)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[[er]*c[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.addQwordRCX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.addQwordRCX)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[[er]*sp', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.addQwordRSP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.addQwordRSP)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[[er]*bp', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.addQwordRBP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.addQwordRBP)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[[er]*d[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordRDX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordRDX)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[[er]*di', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.addQwordRDI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.addQwordRDI)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[[er]*si', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.addQwordRSI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.addQwordRSI)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[r8', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR8)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR8)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[r9', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR9)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR9)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[r10', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR10)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR10)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[r11', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR11)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR11)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[r12', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR12)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR12)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[r13', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR13)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR13)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[r14', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR14)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR14)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[r15', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR15)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR15)
 				if "gs:[r" in testVal or "gs:[0xc0]"  in testVal:
 					if re.match( r'^[add|adc]+ [er]*[abcdsibpbx]+, [qword|dword]+ ptr [fg]+s', testVal, re.M|re.I):
-						addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.addGS)
+						addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.addGS)
 
 	def do64_sub(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		if not re.match( r'^[sub|sbb]+ [qword|dword]+ ptr \[eax\], eax|[sub|sbb]+ [qword|dword]+ ptr \[ebx\], ebx|[sub|sbb]+ [qword|dword]+ ptr \[ecx\], ecx|[sub|sbb]+ [qword|dword]+ ptr \[edx\], edx|[sub|sbb]+ [qword|dword]+ ptr \[esi\], esi|[sub|sbb]+ [qword|dword]+ ptr \[edi\], edi|[sub|sbb]+ [qword|dword]+ ptr \[ebp\], ebp|[sub|sbb]+ [qword|dword]+ ptr \[esp\], esp|[sub|sbb]+ [byte|word|dword]+ ptr \[eax\], al|[sub|sbb]+ [byte|word|dword]+ ptr \[ebx\], bl|[sub|sbb]+ [byte|word|dword]+ ptr \[ecx\], cl|[sub|sbb]+ [byte|word|dword]+ ptr \[edx\], dl|[sub|sbb]+  [byte|word|dword]+ ptr \[eax ]+ eax\], al|[sub|sbb]+  [byte|word|dword]+ ptr \[ebx \+ ebx\], bl|[sub|sbb]+  [byte|word|dword]+ ptr \[ecx \+ ecx\], cl|[sub|sbb]+  [byte|word|dword]+ ptr \[edx \+ edx\], dl|[sub|sbb]+ [byte|word|dword]+ ptr \[e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+\]|[sub|sbb]+ [byte|word|dword]+ ptr \[e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+\]|[sub|sbb]+ [byte|word|dword]+ ptr \[e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+ [\+|\-]+ 0x', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.sub64)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.sub64)
 
 			if "qword" not in testVal:
 				if re.match( r'[sub|sbb]+ [er]*a[x|l|h]', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.subRAX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.subRAX)
 				elif re.match( r'[sub|sbb]+ [er]*b[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.subRBX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.subRBX)
 				elif re.match( r'[sub|sbb]+ [er]*c[x|l|h]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.subRCX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.subRCX)
 				elif re.match( r'[sub|sbb]+ [er]*d[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subRDX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subRDX)
 				elif re.match( r'^[sub|sbb]+ [er]*si', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.subRSI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.subRSI)
 				elif re.match( r'^[sub|sbb]+ [er]*di', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.subRDI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.subRDI)
 				elif re.match( r'^[sub|sbb]+ [er]*sp', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.subRSP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.subRSP)
 				elif re.match( r'^[sub|sbb]+ [er]*bp', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.subRBP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.subRBP)
 				elif re.match( r'^[sub|sbb]+ r8[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR8)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR8)
 				elif re.match( r'^[sub|sbb]+ r9[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR9)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR9)
 				elif re.match( r'^[sub|sbb]+ r10[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR10)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR10)
 				elif re.match( r'^[sub|sbb]+ r11[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR11)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR11)
 				elif re.match( r'^[sub|sbb]+ r12[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR12)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR12)
 				elif re.match( r'^[sub|sbb]+ r13[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR13)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR13)
 				elif re.match( r'^[sub|sbb]+ r14[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR14)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR14)
 				elif re.match( r'^[sub|sbb]+ r15[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR15)		
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subR15)		
 			else:
 				# Sub dword
 				if re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*[er]*a[x|l|h]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.subQwordRAX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.subQwordRAX)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*[er]*b[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.subQwordRBX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.subQwordRBX)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*[er]*c[x|l|h]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.subQwordRCX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.subQwordRCX)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*[er]*d[x|l|h]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordRDX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordRDX)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*[er]*si', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.subQwordRSI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.subQwordRSI)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*[er]*di', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.subQwordRDI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.subQwordRDI)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*[er]*sp', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.subQwordRSP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.subQwordRSP)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*[er]*bp', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.subQwordRBP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.subQwordRBP)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*r8[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR8)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR8)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*r9[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR9)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR9)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*r10[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR10)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR10)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*r11[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR11)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR11)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*r12[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR12)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR12)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*r13[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR13)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR13)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*r14[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR14)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR14)
 				elif re.match( r'^[sub|sbb]+ [dword|qword|byte|word]* [ptr]* [\[]*r15[bdw]*', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR15)		
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.subQwordR15)		
 				if "gs:[r" in testVal or "gs:[0xc0]"  in testVal:
 					if re.match( r'^[sub|sbb]+ [er]*[abcdsibpbx]+, [qword|dword]+ ptr gs', testVal, re.M|re.I):
-						addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.subGS)
+						addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.subGS)
 
 	def do64_sbb(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do64_sub(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
 
 	def do64_mul(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.mul)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.mul)
 		if not re.match( r'^imul', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.mulRAX)
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulRDX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.mulRAX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulRDX)
 		if re.match( r'^imul[b|w|l]* [er]*ax,', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.mulRAX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.mulRAX)
 		elif re.match( r'^imul[b|w|l]* [er]*bx,', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.mulRBX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.mulRBX)
 		elif re.match( r'^imul[b|w|l]* [er]*cx,', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.mulRCX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.mulRCX)
 		elif re.match( r'^imul[b|w|l]* [er]*dx,', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulRDX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulRDX)
 		elif re.match( r'^imul[b|w|l]* [er]*si,', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.mulRSI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.mulRSI)
 		elif re.match( r'^imul[b|w|l]* [er]*di, ', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.mulRDI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.mulRDI)
 		elif re.match( r'^imul[b|w|l]* [er]*sp, ', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.mulRSP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.mulRSP)
 		elif re.match( r'^imul[b|w|l]* [er]*bp, ', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.mulRBP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.mulRBP)
 		elif re.match( r'^imul[b|w|l]* r8[bdw]*', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR8)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR8)
 		elif re.match( r'^imul[b|w|l]* r9[bdw]*', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR9)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR9)
 		elif re.match( r'^imul[b|w|l]* r10[bdw]*', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR10)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR10)
 		elif re.match( r'^imul[b|w|l]* r11[bdw]*', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR11)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR11)
 		elif re.match( r'^imul[b|w|l]* r12[bdw]*', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR12)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR12)
 		elif re.match( r'^imul[b|w|l]* r13[bdw]*', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR13)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR13)
 		elif re.match( r'^imul[b|w|l]* r14[bdw]*', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR14)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR14)
 		elif re.match( r'^imul[b|w|l]* r15[bdw]*', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR15)		
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.mulR15)		
 
 	def do64_imul(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do64_mul(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
 
 	def do64_div(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.div)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.div)
 		if re.match( r'\bdiv\b|\bdivb\b|\bdivw\b|\bdivl\b|\bdivwl|\bdivbwl\b|\bidiv\b|\bidivb\b|\bidivw\b|\bidivl\b|\bidivwl|\bidivbwl\b', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.divRAX)
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.divRDX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.divRAX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.divRDX)
 
 	def do64_idiv(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do64_div(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
 
 	def do64_lea(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.lea)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.lea)
 		if re.match( r'^lea [er]*a[x|l|h]+|^lea [dword|qword|byte|word]+ ptr \[[er]*a[x|l|h]', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.leaRAX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.leaRAX)
 		elif re.match( r'^lea [er]*b[x|l|h]+|^lea [dword|qword|byte|word]+ ptr \[[er]*b[x|l|h]', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.leaRBX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.leaRBX)
 		elif re.match( r'^lea [er]*c[x|l|h]+|^lea [dword|qword|byte|word]+ ptr \[[er]*c[x|l|h]', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.leaRCX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.leaRCX)
 		elif re.match( r'^lea [er]*d[x|l|h]+|^lea [dword|qword|byte|word]+ ptr \[[er]*d[x|l|h]', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.leaRDX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.leaRDX)
 		elif re.match( r'^lea [er]*si|^lea [dword|qword|byte|word]+ ptr \[[er]*si', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.leaRSI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.leaRSI)
 		elif re.match( r'^lea [er]*di|^lea [dword|qword|byte|word]+ ptr \[[er]*di', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.leaRDI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.leaRDI)
 		elif re.match( r'^lea [er]*bp|^lea [dword|qword|byte|word]+ ptr \[[er]*bp', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.leaRBP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.leaRBP)
 		elif re.match( r'^lea [er]*sp|^lea [dword|qword|byte|word]+ ptr \[[er]*sp', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.leaRSP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.leaRSP)
 		elif re.match( r'^lea r8 |lea [dword|qword|byte|word]+ ptr \[r8 ', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.leaR8)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.leaR8)
 		elif re.match( r'^lea r9 |lea [dword|qword|byte|word]+ ptr \[r9 ', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.leaR9)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.leaR9)
 		elif re.match( r'^lea r10|lea [dword|qword|byte|word]+ ptr \[r10', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.leaR10)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.leaR10)
 		elif re.match( r'^lea r11|lea [dword|qword|byte|word]+ ptr \[r11', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.leaR11)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.leaR11)
 		elif re.match( r'^lea r12|lea [dword|qword|byte|word]+ ptr \[r12', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.leaR12)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.leaR12)
 		elif re.match( r'^lea r13|lea [dword|qword|byte|word]+ ptr \[r13', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.leaR13)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.leaR13)
 		elif re.match( r'^lea r14|lea [dword|qword|byte|word]+ ptr \[r14', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.leaR14)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.leaR14)
 		elif re.match( r'^lea r15|lea [dword|qword|byte|word]+ ptr \[r15', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.leaR15)	
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.leaR15)	
 
 	def do64_xchg(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.xchg64)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.xchg64)
 		if not re.match( r'^xchg [er]+ax, [er]+ax|^xchg [er]+bx, [er]+bx|^xchg [er]+cx, [er]+cx|^xchg [er]+dx, [er]+dx|^xchg [er]+si, [er]+si|^xchg [er]+di, [er]+di|^xchg [er]+sp, [er]+sp|^xchg [er]+bp, [er]+bp|^xchg ax, ax|^xchg bx, bx|^xchg cx, cx|^xchg dx, dx|^xchg si, si|^xchg di, di|^xchg sp, sp|^xchg bp, bp|^xchg al, al|^xchg bl, bl|^xchg cl, cl|^xchg dl, dl|xchg r8, r8|xchg r9, r9|xchg r10, r10|xchg r11, r11|xchg r12, r12|xchg r13, r13|xchg r14, r14|xchg r15, r15', testVal, re.M|re.I):
 			if re.match( r'^xchg [er]+ax, |^xchg [erabcdsbp189012345]+[xspi]*, [er]+ax', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.xchgRAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.xchgRAX)
 			if re.match( r'^xchg [er]+bx, |^xchg [erabcdsbp189012345]+[xspi]*, [er]+bx', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.xchgRBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.xchgRBX)
 			if re.match( r'^xchg [er]+cx, |^xchg [erabcdsbp189012345]+[xspi]*, [er]+cx', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.xchgRCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.xchgRCX)
 			if re.match( r'^xchg [er]+dx, |^xchg [erabcdsbp189012345]+[xspi]*, [er]+dx', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgRDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgRDX)
 			if re.match( r'^xchg [er]+si, |^xchg [erabcdsbp189012345]+[xspi]*, [er]+si', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.xchgRSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.xchgRSI)
 			if re.match( r'^xchg [er]+di, |^xchg [erabcdsbp189012345]+[xspi]*, [er]+di', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.xchgRDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.xchgRDI)
 			if re.match( r'^xchg [er]+bp, |^xchg [erabcdsbp189012345]+[xspi]*, [er]+bp', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.xchgRBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.xchgRBP)
 			if re.match( r'^xchg [er]+sp, |^xchg [erabcdsbp189012345]+[xspi]*, [er]+sp', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xchgRSP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xchgRSP)
 			if "gs:[r" in testVal or "gs:[0xc0]"  in testVal:
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, esp, fg.xchgGS)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, esp, fg.xchgGS)
 			if re.match( r'^xchg r8|xchg [erabcdsbp189012345]+[xspi]*, r8' , testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR8)
 			if re.match( r'^xchg r9|xchg [erabcdsbp189012345]+[xspi]*, r9' , testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR9)
 			if re.match( r'^xchg r10|xchg [erabcdsbp189012345]+[xspi]*, r10 ', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR10)
 			if re.match( r'^xchg r11|xchg [erabcdsbp189012345]+[xspi]*, r11 ', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR11)
 			if re.match( r'^xchg r12|xchg [erabcdsbp189012345]+[xspi]*, r12 ', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR12)
 			if re.match( r'^xchg r13|xchg [erabcdsbp189012345]+[xspi]*, r13 ', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR13)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR13)
 			if re.match( r'^xchg r14|xchg [erabcdsbp189012345]+[xspi]*, r14 ', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR14)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR14)
 			if re.match( r'^xchg r15|xchg [erabcdsbp189012345]+[xspi]*, r15 ', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR15)	
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xchgR15)	
 
 	def do64_neg(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.neg)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.neg)
 		if re.match( r'^neg [er]*a[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.negRAX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.negRAX)
 		elif re.match( r'^neg [er]*b[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.negRBX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.negRBX)
 		elif re.match( r'^neg [er]*c[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.negRCX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.negRCX)
 		elif re.match( r'^neg [er]*d[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negRDX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negRDX)
 		elif re.match( r'^neg [er]*si', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.negRSI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.negRSI)
 		elif re.match( r'^neg [er]*di', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.negRDI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.negRDI)
 		elif re.match( r'neg [er]*sp', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.negRSP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.negRSP)
 		elif re.match( r'^neg [er]*bp', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.negRBP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.negRBP)
 		elif re.match( r'^neg r8', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR8)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR8)
 		elif re.match( r'^neg r9', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR9)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR9)
 		elif re.match( r'^neg r10', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR10)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR10)
 		elif re.match( r'^neg r11', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR11)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR11)
 		elif re.match( r'^neg r12', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR12)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR12)
 		elif re.match( r'^neg r13', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR13)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR13)
 		elif re.match( r'^neg r14', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR14)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR14)
 		elif re.match( r'^neg r15', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR15)	
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.negR15)	
 
 	def do64_xor(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.xor)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.xor)
 		if "ptr" not in testVal:
 			if re.match( r'^xor [er]*a[x|l|h]+', testVal, re.M|re.I):
 				if re.match( r'^xor eax, eax', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.xorZeroRAX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.xorZeroRAX)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.xorRAX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.xorRAX)
 			elif re.match( r'^xor [er]*b[x|l|h]+', testVal, re.M|re.I):
 				if re.match( r'^xor ebx, ebx', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.xorZeroRBX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.xorZeroRBX)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.xorRBX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.xorRBX)
 			elif re.match( r'^xor [er]*c[x|l|h]+', testVal, re.M|re.I):
 				if re.match( r'^xor ecx, ecx', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.xorZeroRCX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.xorZeroRCX)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.xorRCX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.xorRCX)
 			elif re.match( r'^xor [er]*d[x|l|h]+', testVal, re.M|re.I):
 				if re.match( r'^xor edx, edx', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorZeroRDX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorZeroRDX)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorRDX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorRDX)
 			elif re.match( r'^xor [er]*si', testVal, re.M|re.I):
 				if re.match( r'^xor esi, esi', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.xorZeroRSI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.xorZeroRSI)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.xorRSI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.xorRSI)
 			elif re.match( r'^xor [er]*di', testVal, re.M|re.I):
 				if re.match( r'^xor edi, edi', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.xorZeroRDI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.xorZeroRDI)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.xorRDI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.xorRDI)
 			elif re.match( r'^xor [er]*sp', testVal, re.M|re.I):
 				if re.match( r'^xor esp, esp', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xorZeroRSP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xorZeroRSP)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xorRSP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xorRSP)
 			elif re.match( r'^xor [er]*bp', testVal, re.M|re.I):
 				if re.match( r'^xor ebp, ebp', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.xorZeroRBP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.xorZeroRBP)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.xorRBP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.xorRBP)
 			elif re.match( r'^xor r8', testVal, re.M|re.I):
 				if re.match( r'^xor r8, r8', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.xorZeroR8)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.xorZeroR8)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.xorR8)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.xorR8)
 			elif re.match( r'^xor r9', testVal, re.M|re.I):
 				if re.match( r'^xor r9, r9', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.xorZeroR9)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.xorZeroR9)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.xorR9)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.xorR9)
 			elif re.match( r'^xor r10', testVal, re.M|re.I):
 				if re.match( r'^xor r10, r10', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.xorZeroR10)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.xorZeroR10)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.xorR10)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.xorR10)
 			elif re.match( r'^xor r11', testVal, re.M|re.I):
 				if re.match( r'^xor r11, r11', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.xorZeroR11)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.xorZeroR11)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.xorR11)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.xorR11)
 			elif re.match( r'^xor r12', testVal, re.M|re.I):
 				if re.match( r'^xor r12, r12', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.xorZeroR12)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.xorZeroR12)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.xorR12)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.xorR12)
 			elif re.match( r'^xor r13', testVal, re.M|re.I):
 				if re.match( r'^xor r13, r13', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.xorZeroR13)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.xorZeroR13)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.xorR13)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.xorR13)
 			elif re.match( r'^xor r14', testVal, re.M|re.I):
 				if re.match( r'^xor r14, r14', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.xorZeroR14)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.xorZeroR14)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.xorR14)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.xorR14)
 			elif re.match( r'^xor r15', testVal, re.M|re.I):
 				if re.match( r'^xor r15, r15', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.xorZeroR15)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.xorZeroR15)
 				else:
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.xorR15)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.xorR15)
 		else:
 			if re.match( r'^xor [qword|dword]+ ptr \[[er]*a[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.xorQwordRAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.xorQwordRAX)
 			elif re.match( r'^xor [qword|dword]+ ptr \[[er]*b[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.xorQwordRBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.xorQwordRBX)
 			elif re.match( r'^xor [qword|dword]+ ptr \[[er]*c[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.xorQwordRCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.xorQwordRCX)
 			elif re.match( r'^xor [qword|dword]+ ptr \[[er]*d[x|l|h]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorQwordRDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorQwordRDX)
 			elif re.match( r'^xor [qword|dword]+ ptr \[[er]*si', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.xorQwordRSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.xorQwordRSI)
 			elif re.match( r'^xor [qword|dword]+ ptr \[[er]*di', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.xorQwordRDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.xorQwordRDI)
 			elif re.match( r'^xor [qword|dword]+ ptr \[[er]*sp', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xorQwordRSP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xorQwordRSP)
 			elif re.match( r'^xor [qword|dword]+ ptr \[[er]*bp', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.xorQwordRBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.xorQwordRBP)
 			elif re.match( r'^xor [qword|dword]+ ptr \[r8', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR8)
 			elif re.match( r'^xor [qword|dword]+ ptr \[r9', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR9)
 			elif re.match( r'^xor [qword|dword]+ ptr \[r10', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR10)
 			elif re.match( r'^xor [qword|dword]+ ptr \[r11', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR11)
 			elif re.match( r'^xor [qword|dword]+ ptr \[r12', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR12)
 			elif re.match( r'^xor [qword|dword]+ ptr \[r13', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR13)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR13)
 			elif re.match( r'^xor [qword|dword]+ ptr \[r14', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR14)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR14)
 			elif re.match( r'^xor [qword|dword]+ ptr \[r15', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR15)	
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR15)	
 			if "gs:[e" in testVal or "gs:[0xc0]"  in testVal:
 				if re.match( r'^xor [er]*[abcdsibpbx189012345]+, [qword|dword]+ ptr gs', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xorGS)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xorGS)
 	
 	def do64_mov(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		if re.match( r'^mov [er]*[abcds89012345]+[xlspbi]+, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 			# if not re.match( r'^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]*|^mov [er]*b[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*b[x|l|h]+|^mov [er]*c[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*c[x|l|h]*|^mov [er]*d[x|l|h]+, [dword|qword|byte|word]+ [ptr]* \[[er]*d[x|l|h]+|^mov [er]*di, [dword|qword|byte|word]+ [ptr]* \[[er]*di|^mov [er]*si, [dword|qword|byte|word]+ [ptr]* \[[er]*si|^mov [er]*sp, [dword|qword|byte|word]+ [ptr]* \[[er]*sp|^mov [er]*bp, [dword|qword|byte|word]+ [ptr]* \[[er]*bp|mov [er]*a[x|l]+, [er]*a[x|l|h]+|mov [er]*b[x|l]+, [er]*b[x|l|h]+|mov [er]*c[x|l|h]+, [er]*c[x|l|h]+|mov [er]*d[x|l]+, [er]*d[x|l|h]+|mov [er]*di, [er]*di|mov [er]*si, [er]*si|mov [er]*bp, [er]*bp+|mov [er]*sp, [er]*sp|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h] [+|-]+|^mov [dword|qword|byte|word]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]* [+|-]+ |^mov [er]*[abcdspb01234589]+[x|l|i|p]+, [dword|qword|byte|word]+ ptr \[0x|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]+ [+|-]+|^mov [er]*[abcdspb01234589]+[x|l|i|p]+, es', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.mov64)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.mov64)
 			if re.match( r'^mov [er]*a[x|l]+, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.movRAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.movRAX)
 			elif re.match( r'^mov [er]*b[x|l]+, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.movRBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.movRBX)
 			elif re.match( r'^mov [er]*c[x|l]+, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.movRCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.movRCX)
 			elif re.match( r'^mov [er]*d[x|l]+, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.movRDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.movRDX)
 			elif re.match( r'^mov [er]*si, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.movRSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.movRSI)
 			elif re.match( r'^mov [er]*di, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.movRDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.movRDI)
 			elif re.match( r'^mov [er]*sp, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movRSP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movRSP)
 			elif re.match( r'^mov [er]*bp, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.movRBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.movRBP)
 			elif re.match( r'^mov r8, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.movR8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.movR8)
 			elif re.match( r'^mov r9, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.movR9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.movR9)
 			elif re.match( r'^mov r10, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.movR10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.movR10)
 			elif re.match( r'^mov r11, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.movR11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.movR11)
 			elif re.match( r'^mov r12, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.movR12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.movR12)
 			elif re.match( r'^mov r13, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.movR13)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.movR13)
 			elif re.match( r'^mov r14, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movR14)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movR14)
 			elif re.match( r'^mov r15, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movR15)	
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movR15)	
 		
 		elif re.match( r'^mov [er]*[abcds01234589]+[xlspbi]+, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 			# if not re.match( r'^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]*|^mov [er]*b[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*b[x|l|h]+|^mov [er]*c[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*c[x|l|h]*|^mov [er]*d[x|l|h]+, [dword|qword|byte|word]+ [ptr]* \[[er]*d[x|l|h]+|^mov [er]*di, [dword|qword|byte|word]+ [ptr]* \[[er]*di|^mov [er]*si, [dword|qword|byte|word]+ [ptr]* \[[er]*si|^mov [er]*sp, [dword|qword|byte|word]+ [ptr]* \[[er]*sp|^mov [er]*bp, [dword|qword|byte|word]+ [ptr]* \[[er]*bp|mov [er]*a[x|l]+, [er]*a[x|l|h]+|mov [er]*b[x|l]+, [er]*b[x|l|h]+|mov [er]*c[x|l|h]+, [er]*c[x|l|h]+|mov [er]*d[x|l]+, [er]*d[x|l|h]+|mov [er]*di, [er]*di|mov [er]*si, [er]*si|mov [er]*bp, [er]*bp+|mov [er]*sp, [er]*sp|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h] [+|-]+|^mov [dword|qword|byte|word]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]* [+|-]+ |^mov [er]*[abcdspb01234589]+[x|l|i|p]+, [dword|qword|byte|word]+ ptr \[0x|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]+ [+|-]+|^mov [er]*[abcdspb01234589]+[x|l|i|p]+, es', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.movQword2)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.movQword2)
 			#   mov eax, [qword|dword]+ ptr [eax]
 			if re.match( r'^mov [er]*a[x|l]+, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.movQword2RAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.movQword2RAX)
 			elif re.match( r'^mov [er]*b[x|l]+, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.movQword2RBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.movQword2RBX)
 			elif re.match( r'^mov [er]*c[x|l]+, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.movQword2RCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.movQword2RCX)
 			elif re.match( r'^mov [er]*d[x|l]+, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.movQword2RDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.movQword2RDX)
 			elif re.match( r'^mov [er]*si, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.movQword2RSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.movQword2RSI)
 			elif re.match( r'^mov [er]*di, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.movQword2RDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.movQword2RDI)
 			elif re.match( r'^mov [er]*sp, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movQword2RSP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movQword2RSP)
 			elif re.match( r'^mov [er]*bp, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.movQword2RBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.movQword2RBP)
 			elif re.match( r'^mov r8, [qword|dword]+ ptr', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.movQword2R8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.movQword2R8)
 			elif re.match( r'^mov r9, [qword|dword]+ ptr', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.movQword2R9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.movQword2R9)
 			elif re.match( r'^mov r10, [qword|dword]+ ptr', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.movQword2R10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.movQword2R10)
 			elif re.match( r'^mov r11, [qword|dword]+ ptr', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.movQword2R11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.movQword2R11)
 			elif re.match( r'^mov r12, [qword|dword]+ ptr', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.movQword2R12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.movQword2R12)
 			elif re.match( r'^mov r13, [qword|dword]+ ptr', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.movQword2R13)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.movQword2R13)
 			elif re.match( r'^mov r14, [qword|dword]+ ptr', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movQword2R14)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movQword2R14)
 			elif re.match( r'^mov r15, [qword|dword]+ ptr', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movQword2R15)	
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movQword2R15)	
 		elif re.match( r'^mov [er]*[abcds]+[xlspbi]+, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 			# if not re.match( r'^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]*|^mov [er]*b[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*b[x|l|h]+|^mov [er]*c[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*c[x|l|h]*|^mov [er]*d[x|l|h]+, [dword|qword|byte|word]+ [ptr]* \[[er]*d[x|l|h]+|^mov [er]*di, [dword|qword|byte|word]+ [ptr]* \[[er]*di|^mov [er]*si, [dword|qword|byte|word]+ [ptr]* \[[er]*si|^mov [er]*sp, [dword|qword|byte|word]+ [ptr]* \[[er]*sp|^mov [er]*bp, [dword|qword|byte|word]+ [ptr]* \[[er]*bp|mov [er]*a[x|l]+, [er]*a[x|l|h]+|mov [er]*b[x|l]+, [er]*b[x|l|h]+|mov [er]*c[x|l|h]+, [er]*c[x|l|h]+|mov [er]*d[x|l]+, [er]*d[x|l|h]+|mov [er]*di, [er]*di|mov [er]*si, [er]*si|mov [er]*bp, [er]*bp+|mov [er]*sp, [er]*sp|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h] [+|-]+|^mov [dword|qword|byte|word]+ ptr \[[er]*[abcdspb]+[x|l|h|i|p]+ [+|-]+ |^mov [er]*[abcdspb]+[x|l|i|p]+, [dword|qword|byte|word]+ ptr \[0x|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]+ [+|-]+|^mov [er]*[abcdspb]+[x|l|i|p]+, es', testVal, re.M|re.I):
 			#add
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.movConstant64)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.movConstant64)
 			if re.match( r'^mov [er]*a[x|l]+, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov [er]*ax, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.movConstantRAX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.movConstantRAX)
 			elif re.match( r'^mov [er]*b[x|l]+, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov [er]*bx, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.movConstantRBX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.movConstantRBX)
 			elif re.match( r'^mov [er]*c[x|l]+, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov [er]*cx, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.movConstantRCX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.movConstantRCX)
 			elif re.match( r'^mov [er]*d[x|l]+, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov [er]*dx, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.movConstantRDX)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.movConstantRDX)
 			elif re.match( r'^mov [er]*si, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov [er]*si, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.movConstantRSI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.movConstantRSI)
 			elif re.match( r'^mov [er]*di, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov [er]*di, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.movConstantRDI)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.movConstantRDI)
 			elif re.match( r'^mov [er]*sp, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov [er]*sp, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movConstantRSP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movConstantRSP)
 			elif re.match( r'^mov [er]*bp, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov [er]*bp, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.movConstantRBP)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.movConstantRBP)
 			elif re.match( r'^mov r8[bdw]*, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov r8, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.movConstantR8)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.movConstantR8)
 			elif re.match( r'^mov r9[bdw]*, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov r9, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.movConstantR9)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.movConstantR9)
 			elif re.match( r'^mov r10[bdw]*, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov r10, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.movConstantR10)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.movConstantR10)
 			elif re.match( r'^mov r11[bdw]*, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov r11, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.movConstantR11)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.movConstantR11)
 			elif re.match( r'^mov r12[bdw]*, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov r12, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.movConstantR12)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.movConstantR12)
 			elif re.match( r'^mov r13[bdw]*, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov r13, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.movConstantR13)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.movConstantR13)
 			elif re.match( r'^mov r14[bdw]*, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov r14, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movConstantR14)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movConstantR14)
 			elif re.match( r'^mov r15[bdw]*, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 				if not re.match( r'^mov r15, [er]*[abcds]+[xipb]+', testVal, re.M|re.I):
-					addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movConstantR15)
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movConstantR15)
 
 		#mov dword
 		# elif re.match( r'^mov [qword|dword]+ ptr \[[er]*', testVal, re.M|re.I):
 		elif "ptr" in testVal:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.movQword)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.movQword)
 			if re.match( r'^mov [qword|dword]+ ptr \[[er]*a[x|l]+.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[[er]*a[x|l]+.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.movQwordRAX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.movQwordRAX)
 			elif re.match( r'^mov [qword|dword]+ ptr \[[er]*b[x|l]+.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[[er]*b[x|l]+.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.movQwordRBX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.movQwordRBX)
 			elif re.match( r'^mov [qword|dword]+ ptr \[[er]*c[x|l]+.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[[er]*c[x|l]+.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.movQwordRCX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.movQwordRCX)
 			elif re.match( r'^mov [qword|dword]+ ptr \[[er]*d[x|l]+.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[[er]*d[x|l]+.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.movQwordRDX)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.movQwordRDX)
 			elif re.match( r'^mov [qword|dword]+ ptr \[[er]*di.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[[er]*di.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.movQwordRDI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.movQwordRDI)
 			elif re.match( r'^mov [qword|dword]+ ptr \[[er]*si.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[[er]*si.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.movQwordRSI)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.movQwordRSI)
 			elif re.match( r'^mov [qword|dword]+ ptr \[[er]*bp.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[[er]*bp.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.movQwordRBP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.movQwordRBP)
 			elif re.match( r'^mov [qword|dword]+ ptr \[[er]*sp.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[[er]*sp.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movQwordRSP)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movQwordRSP)
 			elif re.match( r'^mov [qword|dword]+ ptr \[r8.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[r8.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.movR8)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.movR8)
 			elif re.match( r'^mov [qword|dword]+ ptr \[r9.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[r9.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.movR9)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.movR9)
 			elif re.match( r'^mov [qword|dword]+ ptr \[r10.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[r10.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.movR10)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.movR10)
 			elif re.match( r'^mov [qword|dword]+ ptr \[r11.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[r11.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.movR11)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.movR11)
 			elif re.match( r'^mov [qword|dword]+ ptr \[r12.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[r12.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.movR12)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.movR12)
 			elif re.match( r'^mov [qword|dword]+ ptr \[r13.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[r13.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.movR13)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.movR13)
 			elif re.match( r'^mov [qword|dword]+ ptr \[r14.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[r14.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movR14)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movR14)
 			elif re.match( r'^mov [qword|dword]+ ptr \[r15.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[r15.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movR15)	
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movR15)	
 		if "gs:[e" in testVal or "gs:[0xc0]" in testVal:
 			if re.match( r'^mov [er]*[abcdsibpbx]+, [qword|dword]+ ptr gs', testVal, re.M|re.I):
-				addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movGSSpecial)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movGSSpecial)
 
 
 	def do64_popal(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.popal64)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.popal64)
 	def do64_popad(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do64_popal(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
 	
 	def do64_pushal(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.pushad64)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.pushad64)
 	def do64_pushad(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do64_pushal(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
 	
@@ -3251,15 +3252,15 @@ class doGadgets:
 
 	def do64_shl(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		if "ptr" in testVal:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.shlQword)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.shlQword)
 		else:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.shl64)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.shl64)
 
 	def do64_shr(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		if "ptr" in testVal:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.shrQword)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.shrQword)
 		else:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.shr64)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.shr64)
 
 
 	def do64_sar(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
@@ -3268,98 +3269,98 @@ class doGadgets:
 
 	def do64_rcr(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		if "ptr" in testVal:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.rcrQword)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.rcrQword)
 		else:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.rcr64)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.rcr64)
 
 	def do64_ror(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do64_rcr(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
 
 	def do64_rcl(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		if "ptr" in testVal:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.rclQword)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.rclQword)
 		else:
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.rcl64)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.rcl64)
 
 	def do64_rol(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do64_rcl(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
 
 	def do64_not(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.notInst64)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.notInst64)
 		if re.match( r'^not [er]*a[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.notInstRAX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.notInstRAX)
 		elif re.match( r'^not [er]*b[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.notInstRBX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.notInstRBX)
 		elif re.match( r'^not [er]*c[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.notInstRCX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.notInstRCX)
 		elif re.match( r'^not [er]*d[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.notInstRDX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.notInstRDX)
 		elif re.match( r'^not [er]*si', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.notInstRSI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.notInstRSI)
 		elif re.match( r'^not [er]*di', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.notInstRDI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.notInstRDI)
 		elif re.match( r'not [er]*sp', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.notInstRSP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.notInstRSP)
 		elif re.match( r'^not [er]*bp', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.notInstRBP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.notInstRBP)
 		elif re.match( r'^not r8', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.notInstR8)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.notInstR8)
 		elif re.match( r'^not r9', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.notInstR9)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.notInstR9)
 		elif re.match( r'^not r10', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.notInstR10)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.notInstR10)
 		elif re.match( r'^not r11', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.notInstR11)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.notInstR11)
 		elif re.match( r'^not r12', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.notInstR12)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.notInstR12)
 		elif re.match( r'^not r13', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.notInstR13)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.notInstR13)
 		elif re.match( r'^not r14', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.notInstR14)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.notInstR14)
 		elif re.match( r'^not r15', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.notInstR15)	
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.notInstR15)	
 
 	def do64_and(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.andInst64)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.andInst64)
 		if re.match( r'^and [er]*a[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.andInstRAX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.andInstRAX)
 		elif re.match( r'^and [er]*b[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.andInstRBX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.andInstRBX)
 		elif re.match( r'^and [er]*c[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.andInstRCX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.andInstRCX)
 		elif re.match( r'^and [er]*d[x|l|h]+', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.andInstRDX)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.andInstRDX)
 		elif re.match( r'^and [er]*si', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.andInstRSI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.andInstRSI)
 		elif re.match( r'^and [er]*di', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.andInstRDI)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.andInstRDI)
 		elif re.match( r'and [er]*sp', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.andInstRSP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.andInstRSP)
 		elif re.match( r'^and [er]*bp', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.andInstRBP)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.andInstRBP)
 		elif re.match( r'^and r8', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.andInstR8)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.andInstR8)
 		elif re.match( r'^and r9', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.andInstR9)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.andInstR9)
 		elif re.match( r'^and r10', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.andInstR10)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.andInstR10)
 		elif re.match( r'^and r11', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.andInstR11)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.andInstR11)
 		elif re.match( r'^and r12', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.andInstR12)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.andInstR12)
 		elif re.match( r'^and r13', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.andInstR13)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.andInstR13)
 		elif re.match( r'^and r14', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.andInstR14)
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.andInstR14)
 		elif re.match( r'^and r15', testVal, re.M|re.I):
-			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.andInstR15)	
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.andInstR15)	
 
 	def do64_unusual(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.unusual64)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.unusual64)
 
 	def do64_fs(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		dp("do func fs")
-		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.fs64)
+		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.fs64)
 	def do64_go_gs(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		dp("do_go_gs")
 		addGadgetNoCheck(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.fsSpecial64)
@@ -5816,6 +5817,24 @@ def findGeneric64(instruction,fgReg,reg,bad,length1, excludeRegs,espDesiredMovem
 		# dp ("return false ", instruction)
 		return False,0
 
+
+def findAdd64(instruction,fgReg, op2List, bad,length1, excludeRegs,espDesiredMovement=0,isVal=False):
+	dp ("instruction", instruction, "fgReg", fgReg, "op2List", op2List)
+	bExists, myDict=fg.getFg(instruction,fgReg)
+	if bExists:
+		# print ("It exists")
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
+			for p in myDict:
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				myTest=disMini(myDict[p].raw, myDict[p].offset,64)
+				for op2 in op2List:
+					print (myTest, "-","fgReg", yel,fgReg,res,"myDict[p].op1", red,myDict[p].op1, res,"myDict[p].op2", red,myDict[p].op2, res,"desired op2:", yel,op2, res)
+					if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
+						print (gre,"found",res)
+						return True,p
+			dp ("findGeneric2 returning False" )
+			return False,0
+	return False,0
 def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDesiredMovement=0,isVal=False):
 	dp ("instruction", instruction, "reg", reg, "op2", op2)
 	dp ("findGeneric", instruction+reg)
@@ -5826,6 +5845,7 @@ def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDes
 			for p in myDict:
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 				# myTest=disMini(myDict[p].raw, myDict[p].offset,64)
+				# print (myTest, "-", myDict[p].op2, ":", op2, "fgReg", fgReg, "-", "eg", reg )
 				# dp ("here", myDict[p].length, myDict[p].op2)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
 					dp ("found ",instruction, reg)
@@ -12201,44 +12221,36 @@ def findSPivot64(bad,excludeRegs, reg):
 
  
 def buildASLR_Bypass64(	):
-	# dp ("excludeRegs",excludeRegs,	 "bad", bad)
-	global rl
-	distEsp=0x300  # distance to start of parameters  - user input
-	distEsp2=0x300
-	distParam=0x55 # distance to lp parameter	- dynamically generated  possibly via emulation?  how has the stack changed since that point in time--run all gadgets previous to this in emulation to determine the offset needed.
-	distFinalESP=0x34  # distance to esp at end - dynamically generated. This is just a starting point - emulation will correct to the actual value.
-	destAfter=True
-	IncDec="dec"
-	length1=True
+	pass
+	# exit()
 
-	# availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
-	excludeRegs=[]
-	availableRegs=["rax","rbx","rcx","rdx","rsi","rdi","rsp","rbp","r8 ","r9 ","r10","r11","r12","r13","r14","r15"]
-	# availableRegs=[("rax", "eax"),("rbx", "ebx"),("rcx", "ecx"),("rdx", "edx"),("rsi","esi"),("rdi", "edi"),("rsp", "esp"),("rbp", "ebp"),("r8 ", "r8"),("r9 ", "r9"),("r10", "r10"),("r11", "r11"),("r12", "r12"),("r13", "r13"),("r14","r14"),("r15", "r15")]
-	# availableRegs=[	 "eax", "ebx", "ecx", "edx","esi", "edi", "esp", "ebp", "r8", "r9", "r10", "r11", "r12", "r13","r14", "r15","rax"]
-	# availableRegsB=["rbx","rcx","rdx","rsi","rdi","rsp","rbp","r8 ","r9 ","r10","r11","r12","r13","r14","r15"]
+def loadReg64(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None):
+	espDesiredMovement=0
+	checkAll=False
 	
+	freeBadGoalVal=checkFreeBadBytes(opt,fg,val,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+	if freeBadGoalVal:
+		checkAll=True
 
-	for reg in availableRegs:
-		availableRegs2= copy.deepcopy(availableRegs)
-		availableRegs2.remove(reg)
+	if val==0:
+		foundXor, Xor1 = findGenericOp264("xor",reg,reg,reg, bad,length1, excludeRegs,0)
 
+		if foundXor:
+			showChain(pkBuild([Xor1]),True,True,gre, "We found the xorf " +reg, 64)
+			return foundXor, Xor1
+	if freeBadGoalVal:
+		# foundP1, p1,pDict=findPop(reg,bad,length1,excludeRegs,isVal)
 		foundP1, p1 = findGeneric64("pop",reg,reg,bad,length1, excludeRegs,0)
-		if foundP1:
-			showChain(pkBuild([p1]),True,True,yel, "We found the pop " +reg, 64)
-			exit()
 
-	if 2==333:
-		foundM1, m1 = findGenericOp264("mov",reg,"esp",reg, bad,length1, excludeRegs,0)
-		if foundM1:
-			pk=pkBuild([m1]) #
-			showChain(pk,True,True,mag,"111111", 64)
-		for op2 in availableRegs:
-			foundM2, m2 = findGenericOp264("movQword",reg, op2,reg, bad,length1, excludeRegs,0)
-			if foundM2:
-				pk=pkBuild([m2]) #
-				showChain(pk,True,True,yel, "title222222", 64)
-	exit()
+		if foundP1:
+			comment2="load " + reg
+			if comment!=None:
+				comment2+= ", " + comment
+			chP=chainObj(p1, comment2, [val])
+			print ("returning true")
+			return foundP1, chP
+
+	return False, 0
 def buildHG(bad,excludeRegs):
 	dp ("excludeRegs",excludeRegs,	 "bad", bad)
 	global rl

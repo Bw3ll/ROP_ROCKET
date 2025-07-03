@@ -1,6 +1,10 @@
 import timeit
 # from rop2 import binaryToStr, checkPlease
 from helpers import *
+from capstone import *
+cs64 = Cs(CS_ARCH_X86, CS_MODE_64)
+cs = Cs(CS_ARCH_X86, CS_MODE_32)
+
 # fg=None
 # dp ("loading gadgets module")
 
@@ -25,7 +29,7 @@ pe = {}
 	# dp (dllDict)
 
 
-def newGadget(address, pe,n,offset, op_strL,raw, mod, length, myDict2, c2,opOffset=None):
+def newGadget(address, pe,n,offset, op_strL,raw, mod, length, myDict2, c2,opOffset=None,myArch=32):
 	# dp ("newGadget", address)
 	offsetEmBase=offset+pe[n].emBase
 
@@ -34,7 +38,7 @@ def newGadget(address, pe,n,offset, op_strL,raw, mod, length, myDict2, c2,opOffs
 	fg.ropLookup[mod][offset]=offsetEmBase
 
 
-	obj = gadgets(address, offsetEmBase, offset,op_strL, raw, mod, length,c2,opOffset)
+	obj = gadgets(address, offsetEmBase, offset,op_strL, raw, mod, length,c2,opOffset,myArch)
 	myDict2[offsetEmBase]=obj
 	fg.rop[offsetEmBase]=obj
 	# dp ("***", hex(address),"off", hex(offset), "offsetEmBase", hex(offsetEmBase))
@@ -43,11 +47,41 @@ def newGadget(address, pe,n,offset, op_strL,raw, mod, length, myDict2, c2,opOffs
 	dp("outsky", fg.ropLookup[mod][offset])
 	return obj
 
-def addGadget(address,pe, n,offset, op_str,raw, mod, c2=False, reg=None, myDict2=None):
+def disTiny64(raw):
+	returnVal = ""
+	
+
+	for i in cs64.disasm(raw, 0):
+		val =  i.mnemonic + " " + i.op_str + " # "
+		returnVal +=val
+	returnVal=returnVal[:-3]
+	return returnVal
+
+
+def disTinyOpStr(raw,arch):
+	myCs=cs
+	if arch==64:
+		myCs=cs64
+	returnVal = ""
+	for i in myCs.disasm(raw, 0):
+		returnVal=i.op_str
+		break
+	returnValL = returnVal.split(", ")
+
+	return returnVal,returnValL
+
+def addGadget64(address,pe, n,offset, op_str,raw, mod, c2=False, reg=None, myDict2=None):
+	addGadget(address,pe, n,offset, op_str,raw, mod, c2, reg, myDict2,64)
+
+def addGadget(address,pe, n,offset, op_str,raw, mod, c2=False, reg=None, myDict2=None,myArch=32):
 	# dp ("addGadget",op_str)
+	opOffset=None
+	
 	safe,length, op_str=checkPlease(raw,c2)
 
-	
+	test=(disTiny64(raw))
+
+
 	# dp ("**************************************************** >", op_str)
 	if safe:
 		if ", " in op_str:
@@ -58,7 +92,10 @@ def addGadget(address,pe, n,offset, op_str,raw, mod, c2=False, reg=None, myDict2
 			# dp ("oplen",len(op_strL))
 		op_strL=op_str.split(", ")
 		# dp ("op_strL",op_strL)
-		obj=newGadget(address,pe,n, offset, op_strL,raw, mod, length, myDict2, c2)
+		if "add rbx" in test:
+			# print("addGadget",  hex(offset), "-", op_str, "-", op_strL,test)
+			pass
+		obj=newGadget(address,pe,n, offset, op_strL,raw, mod, length, myDict2, c2,opOffset, myArch)
 		return obj
 	return False
 def addGadgetJmp(address, pe,n,offset, op_str,raw, mod, c2=False, reg=None, myDict2=None, opOffset=None):
@@ -253,8 +290,9 @@ class hgRopChainOld: 								# hypothetical - not using - doing a different dire
 		self.p2=p2
 		self.p1StackAdjust=p1StackAdjust
 		self.p2StackAdjust=p1StackAdjust
+
 class gadgets:
-	def __init__(self, address, offsetEmBase, offset,op_strL,raw,mod, length,c2,opOffset=None): #, name):
+	def __init__(self, address, offsetEmBase, offset,op_strL,raw,mod, length,c2,opOffset=None,myArch=32): #, name):
 		self.offset=offset
 		self.offsetEmBase=offsetEmBase
 		self.addressRet=address
@@ -267,7 +305,11 @@ class gadgets:
 		self.op2=None
 		self.opOffset=opOffset
 		self.FSIndex=None
+		self.arch=myArch  #not all x64 is initialized as 64, e.g. JMP, call, TODO
 		
+		op_str, op_strL=disTinyOpStr(raw,self.arch)
+		
+
 		try:
 			self.op1=op_strL[0]
 		except:
