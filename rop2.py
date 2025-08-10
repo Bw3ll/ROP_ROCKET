@@ -13070,8 +13070,6 @@ def aslrLogo():
 	return text
 def buildASLR_Bypass64(	):
 	print (aslrLogo())
-	input()
-	# exit()
 	apiCode="NtQueryInformationProcess"
 	apiCode="NtQueryInformationThread"
 	apiCodes=["NtQueryInformationProcess","NtQueryInformationThread"]
