@@ -29,6 +29,7 @@ ADDRESS = 0x1000000
 new=b'\x5d\xc3'
 
 shellList=[]
+cs64 = Cs(CS_ARCH_X86, CS_MODE_64)
 
 red ='\u001b[31;1m'
 gre = '\u001b[32;1m'
@@ -244,6 +245,349 @@ def errorESP(mu):
     regVal = mu.mem_read(esp,4)
     regVal= int.from_bytes(regVal, "little")
     dp ("deref", regVal)
+
+class gadgetRegs64:
+    def __init__(self):
+        self.reg = {}
+        pass
+
+    def set(self,
+                 rax, rbx, rcx, rdx,
+                 rsi, rdi, rbp, rsp,
+                 r8, r9, r10, r11,
+                 r12, r13, r14, r15,
+                 changed=False):
+        if changed:
+            # core diffs
+            self.diffRax = rax - self.rax
+            self.diffRbx = rbx - self.rbx
+            self.diffRcx = rcx - self.rcx
+            self.diffRdx = rdx - self.rdx
+            self.diffRsi = rsi - self.rsi
+            self.diffRdi = rdi - self.rdi
+
+            # pack initial diffs
+            self.diffs = {
+                "rax": self.diffRax, "rbx": self.diffRbx,
+                "rcx": self.diffRcx, "rdx": self.diffRdx,
+                "rsi": self.diffRsi, "rdi": self.diffRdi
+            }
+
+            # RBP diff (with fallback)
+            try:
+                self.diffRbp = rbp - self.rbp
+            except AttributeError:
+                self.diffRbp = 0xDEADDEADDEADDEAD
+            self.diffs["rbp"] = self.diffRbp
+            # RSP diff (with dp print and fallback)
+            try:
+                self.diffRsp = rsp - self.rsp
+                self.diffs["rsp"] = self.diffRsp
+                dp("diffRsp", hex(self.diffRsp),
+                   "rsp", hex(rsp), "old rsp", hex(self.rsp))
+            except AttributeError:
+                self.diffRsp = 0xDEADDEADDEADDEAD
+                self.diffs["rsp"] = self.diffRsp
+            # the high regs
+            for name, new, old_attr in (
+                ("r8",  r8,  "r8"),  ("r9",  r9,  "r9"),
+                ("r10", r10, "r10"), ("r11", r11, "r11"),
+                ("r12", r12, "r12"), ("r13", r13, "r13"),
+                ("r14", r14, "r14"), ("r15", r15, "r15"),
+            ):
+                try:
+                    diff = new - getattr(self, old_attr)
+                except AttributeError:
+                    diff = 0xDEADDEADDEADDEAD
+                self.diffs[name] = diff
+                setattr(self, f"diff{name.capitalize()}", diff)
+
+            # clobber check
+            self.clobberFree = (sum(self.diffs.values()) == 0)
+
+        # store current state
+        self.rax, self.rbx, self.rcx, self.rdx = rax, rbx, rcx, rdx
+        self.rsi, self.rdi, self.rbp, self.rsp = rsi, rdi, rbp, rsp
+        self.r8, self.r9, self.r10, self.r11 = r8, r9, r10, r11
+        self.r12, self.r13, self.r14, self.r15 = r12, r13, r14, r15
+        # keep a snapshot for pivot math
+        self.rsp2 = rsp
+
+        # register lookup
+        self.reg = {
+            "rax": self.rax, "rbx": self.rbx,
+            "rcx": self.rcx, "rdx": self.rdx,
+            "rsi": self.rsi, "rdi": self.rdi,
+            "rbp": self.rbp, "rsp": self.rsp,
+            "r8":  self.r8,  "r9":  self.r9,
+            "r10": self.r10, "r11": self.r11,
+            "r12": self.r12, "r13": self.r13,
+            "r14": self.r14, "r15": self.r15,
+        }
+        # print (yel,"self.reg", res,self.reg)
+        self.error = False
+
+    def setStackPivot(self, new_rsp):
+        # track how far we've pivoted
+        self.diffRspSP = new_rsp - self.rsp2
+
+    def giveSP(self):
+        return getattr(self, "diffRspSP", None)
+
+    def setRegWrit(self, regName, newVal):
+        if regName in self.reg:
+            setattr(self, regName, newVal)
+            self.reg[regName] = newVal
+
+    def giveRegLoc(self, r):
+        # print (gre,"giveRegLoc",res,r)
+        try:
+            # print(self.reg)
+            return self.reg.get(r, None)
+        except Exception as e:
+            print ("Error2: ", e)
+            print(traceback.format_exc())
+
+    def CalculateRemainingRegs(self, first, second):
+        regs = ["rax","rbx","rcx","rdx","rsi","rdi","rbp","rsp","r8","r9","r10","r11","r12","r13","r14","r15"]
+        regs.remove(first)
+        regs.remove(second)
+        dp(regs)
+        dict_look_up = {"rax": self.diffRax, "rbx": self.diffRbx, "rcx": self.diffRcx, "rdx": self.diffRdx, "rsi": self.diffRsi, "rdi": self.diffRdi, "rbp": self.diffRbp, "rsp": self.diffRsp, "r8": self.diffR8, "r9": self.diffR9, "r10": self.diffR10, "r11": self.diffR11, "r12": self.diffR12, "r13": self.diffR13, "r14": self.diffR14, "r15": self.diffR15}
+        val = 0
+        for r in regs:
+            val += dict_look_up[r]
+        dp("difference", val)
+        self.hgDiff = val
+
+    def setError(self, val):
+        dp("setError", val)
+        self.error = True
+        self.errorType = val
+
+    def show(self):
+        print("Final results:")
+        if not self.error:
+            print("\trax", hex(self.rax), "rbx", hex(self.rbx), "rcx", hex(self.rcx), "rdx", hex(self.rdx), "rsi", hex(self.rsi), "rdi", hex(self.rdi), "rbp", hex(self.rbp), "rsp", hex(self.rsp))
+            print("\tr8", hex(self.r8), "r9", hex(self.r9), "r10", hex(self.r10), "r11", hex(self.r11), "r12", hex(self.r12), "r13", hex(self.r13), "r14", hex(self.r14), "r15", hex(self.r15))
+            print("\tdiff rax", hex(self.diffRax), "diff rbx", hex(self.diffRbx), "diff rcx", hex(self.diffRcx), "diff rdx", hex(self.diffRdx), "diff rsi", hex(self.diffRsi), "diff rdi", hex(self.diffRdi), "diff rbp", hex(self.diffRbp), "diff rsp", hex(self.diffRsp), "diff r8", hex(self.diffR8), "diff r9", hex(self.diffR9), "diff r10", hex(self.diffR10), "diff r11", hex(self.diffR11), "diff r12", hex(self.diffR12), "diff r13", hex(self.diffR13), "diff r14", hex(self.diffR14), "diff r15", hex(self.diffR15))
+        else:
+            print("*Error:", self.errorType)
+
+    def giveChanged(self, skipEsp=True):
+        availableRegs = ["rax","rbx","rcx","rdx","rsi","rdi","rbp","rsp","r8","r9","r10","r11","r12","r13","r14","r15"]
+        try:
+            dict_look_up = {"rax": self.diffRax, "rbx": self.diffRbx, "rcx": self.diffRcx, "rdx": self.diffRdx, "rsi": self.diffRsi, "rdi": self.diffRdi, "rbp": self.diffRbp, "rsp": self.diffRsp, "r8": self.diffR8, "r9": self.diffR9, "r10": self.diffR10, "r11": self.diffR11, "r12": self.diffR12, "r13": self.diffR13, "r14": self.diffR14, "r15": self.diffR15}
+            dict_look_up2 = {"rax": self.rax, "rbx": self.rbx, "rcx": self.rcx, "rdx": self.rdx, "rsi": self.rsi, "rdi": self.rdi, "rbp": self.rbp, "rsp": self.rsp, "r8": self.r8, "r9": self.r9, "r10": self.r10, "r11": self.r11, "r12": self.r12, "r13": self.r13, "r14": self.r14, "r15": self.r15}
+        except:
+            pass
+        changedDiff = {}
+        changedVal = {}
+        if skipEsp:
+            availableRegs.remove("rsp")
+        try:
+            for r in availableRegs:
+                if dict_look_up[r] != 0:
+                    changedDiff[r] = dict_look_up[r]
+                    changedVal[r] = dict_look_up2[r]
+        except:
+            pass
+        if not changedDiff:
+            return False, {}, {}
+        return True, changedDiff, changedVal
+
+    def checkFree(self, regs, remExc=None, espGuard=0x100):
+        # print("checkFree", regs, remExc)
+        if remExc in ("ds", "fs", "es","gs"):
+            return False, 0
+        try:
+            regs = set(regs)
+        except:
+            pass
+        if remExc is not None:
+            try:
+                for r1 in remExc:
+                    regs.discard(r1)
+            except:
+                pass
+        try:
+            for r in regs:
+                try:
+                    if self.diffs.get(r, 0) != 0:
+                        return False, 0
+                except:
+                    return False, 0
+            try:
+                if self.diffRsp <= espGuard:
+                    return True, self.diffRsp
+            except:
+                pass
+            return False, 0
+        except Exception as e:
+            dp(f"cfree ERROR: {e}")
+            dp(traceback.format_exc())
+            return False, 0
+
+    def checkFreeTester(self, regs, remExc=None, espGuard=0x100):
+        # print("checkFreeTester", regs, remExc)
+        if remExc in ("ds", "fs", "es","gs"):
+            return False, 0
+        try:
+            regs = set(regs)
+        except:
+            pass
+        if remExc is not None:
+            try:
+                if isinstance(remExc, list):
+                    for r1 in remExc:
+                        regs.discard(r1)
+                elif isinstance(remExc, str):
+                    regs.discard(remExc)
+            except Exception as e:
+                print(traceback.format_exc())
+        try:
+            for r in regs:
+                try:
+                    if self.diffs.get(r, 0) != 0:
+                        return False, 0
+                except:
+                    return False, 0
+            try:
+                if self.diffRsp <= espGuard:
+                    return True, self.diffRspSP
+            except:
+                pass
+            return True, self.diffRspSP
+        except Exception as e:
+            dp(f"cfree ERROR: {e}")
+            dp(traceback.format_exc())
+            return False, 0
+
+    def verifyValSame(self, reg1, reg2):
+        # print("verifyValSame", reg1, reg2)
+        if reg1 in ("ds", "fs", "es","gs") or reg2 in ("ds", "fs", "es","gs"):
+            return False, 0
+        if rVal[reg1] == self.reg[reg2]:
+            # print("it is the same")
+            return True
+        else:
+            # print("it is not the same", hex(self.reg[reg1]), hex(rVal[reg2]), reg1, reg2)
+            return False
+
+    def verifyRegUnchanged(self, reg):
+        dict_look_up = {
+            "rax": self.diffRax, "rbx": self.diffRbx, "rcx": self.diffRcx, "rdx": self.diffRdx,
+            "rsi": self.diffRsi, "rdi": self.diffRdi, "rbp": self.diffRbp,
+            "r8": self.diffR8,   "r9": self.diffR9,   "r10": self.diffR10, "r11": self.diffR11,
+            "r12": self.diffR12, "r13": self.diffR13, "r14": self.diffR14, "r15": self.diffR15,
+            "rsp": self.diffRsp
+        }
+        if dict_look_up[reg] == 0:
+            # print("it is unchanged")
+            return True
+        else:
+            # print("it changed", hex(self.reg[reg]))
+            return False
+
+    def start(self, gRegsObj):
+        self.rax  = gRegsObj.rax;  self.rbx  = gRegsObj.rbx
+        self.rcx  = gRegsObj.rcx;  self.rdx  = gRegsObj.rdx
+        self.rsi  = gRegsObj.rsi;  self.rdi  = gRegsObj.rdi
+        self.rbp  = gRegsObj.rbp;  self.rsp  = gRegsObj.rsp
+        self.r8   = gRegsObj.r8;   self.r9   = gRegsObj.r9
+        self.r10  = gRegsObj.r10;  self.r11  = gRegsObj.r11
+        self.r12  = gRegsObj.r12;  self.r13  = gRegsObj.r13
+        self.r14  = gRegsObj.r14;  self.r15  = gRegsObj.r15
+        self.rsp2 = gRegsObj.rsp
+
+    def setRbp(self, ebpVal):
+        self.rbp = ebpVal
+        rVal["rbp"] = ebpVal
+
+    def setRsp(self, espVal):
+        self.rsp  = espVal
+        self.rsp2 = espVal
+        rVal["rsp"] = espVal
+
+    
+    def setRaxTemp(self, val): self.rax = val
+    def setRbxTemp(self, val): self.rbx = val
+    def setRcxTemp(self, val): self.rcx = val
+    def setRdxTemp(self, val): self.rdx = val
+    def setRsiTemp(self, val): self.rsi = val
+    def setRdiTemp(self, val): self.rdi = val
+    def setRbpTemp(self, val): self.rbp = val
+
+    def checkForPops(self, findEspPops):
+        dp("checkForPops findEspPops", findEspPops)
+        try:
+            dict_look_up = {
+                "rax": self.rax,   "rbx": self.rbx,   "rcx": self.rcx,   "rdx": self.rdx,
+                "rsi": self.rsi,   "rdi": self.rdi,   "rbp": self.rbp,   "rsp": self.rsp,
+                "r8":  self.r8,    "r9":  self.r9,    "r10": self.r10,  "r11": self.r11,
+                "r12": self.r12,   "r13": self.r13,   "r14": self.r14,   "r15": self.r15
+            }
+            numDict_look_up = {
+                0: 0x4141414141414141, 1: 0x4242424242424242,
+                2: 0x4343434343434343, 3: 0x4444444444444444,
+                4: 0x4545454545454545, 5: 0x4646464646464646
+            }
+            t = 0
+            for r in findEspPops:
+                curVal     = dict_look_up[r]
+                desiredVal = numDict_look_up[t]
+                dp("cur", hex(curVal), "desiredVal", hex(desiredVal))
+                if curVal == desiredVal:
+                    dp("cur=desired")
+                else:
+                    return False
+                t += 1
+            return True
+        except Exception as e:
+            dp("cfB ERROR: %s" % e)
+            dp(traceback.format_exc())
+            dp("except: returning false")
+            return False
+
+    def checkForBad(self, excludeRegs, espDesiredMovement):
+        dp("checkForBad excludeRegs", excludeRegs, "espDesiredMovement", espDesiredMovement)
+        espDList = isinstance(espDesiredMovement, list)
+        if self.error:
+            return False
+        try:
+            dict_look_up = {
+                "rax": self.diffRax, "rbx": self.diffRbx, "rcx": self.diffRcx, "rdx": self.diffRdx,
+                "rsi": self.diffRsi, "rdi": self.diffRdi, "rbp": self.diffRbp, "rsp": self.diffRsp,
+                "r8": self.diffR8,   "r9": self.diffR9,   "r10": self.diffR10, "r11": self.diffR11,
+                "r12": self.diffR12, "r13": self.diffR13, "r14": self.diffR14, "r15": self.diffR15
+            }
+            if not espDList:
+                for r in excludeRegs:
+                    val = dict_look_up[r]
+                    if val != 0 or self.diffRsp != espDesiredMovement:
+                        dp("checkForBad FALSE")
+                        dp("val", val, espDesiredMovement)
+                        return False
+                    else:
+                        dp("checkForBad TRUE")
+                        return True
+            else:
+                espMin=espDesiredMovement[0]
+                espMax=espDesiredMovement[1]
+                for r in excludeRegs:
+                    val = dict_look_up[r]
+                    if val != 0 or self.diffRsp < espMin or self.diffRsp > espMax:
+                        dp("checkForBad FALSE")
+                        dp("val", val, espDesiredMovement)
+                        return False
+                    else:
+                        dp("checkForBad TRUE")
+                        return True
+        except Exception as e:
+            dp(f"cfB ERROR: {e}")
+            dp(traceback.format_exc())
+            dp("except: returning false")
+            return False
 
 class gadgetRegs:
     def __init__(self):  
@@ -647,9 +991,31 @@ rVal["esi"]=0x666eeee
 rVal["ebp"]=0xdeadcad
 rVal["esp"]=0xdeadcad
 
-
-
 gRegs.set(rVal["eax"], rVal["ebx"], rVal["ecx"], rVal["edx"], rVal["edi"], rVal["esi"], None,None)
+
+# initialize 64‑bit register tester and reference values
+gRegs64 = gadgetRegs64()
+
+rVal64 = {
+    "rax": 0x1111222211112222,
+    "rbx": 0x2222333322223333,
+    "rcx": 0x3333444433334444,
+    "rdx": 0x4444555544445555,
+    "rsi": 0x5555666655556666,
+    "rdi": 0x6666777766667777,
+    "rbp": 0xDEADC0DEDEADC0DE,
+    "rsp": 0xFEEDFACEFEEDFACE,
+    "r8":  0x8888999988889999,
+    "r9":  0x9999AAAA9999AAAA,
+    "r10": 0xAAAABBBBAAAABBBB,
+    "r11": 0xBBBBCCCCBBBBCCCC,
+    "r12": 0xCCCCDDDDCCCCDDDD,
+    "r13": 0xDDDDEEEEDDDDEEEE,
+    "r14": 0xEEEEFFFFEEEEFFFF,
+    "r15": 0xFFFF0000FFFF0000,
+}
+
+gRegs64.set(rVal64["rax"], rVal64["rbx"], rVal64["rcx"], rVal64["rdx"], rVal64["rsi"], rVal64["rdi"], rVal64["rbp"], rVal64["rsp"], rVal64["r8"],  rVal64["r9"],  rVal64["r10"], rVal64["r11"], rVal64["r12"], rVal64["r13"], rVal64["r14"], rVal64["r15"])
 
 
 
@@ -788,7 +1154,7 @@ doAfterPivot=False
 givStDistance=0xdeadc0de
 
 def hook_code2(uc, address, size, user_data):
-    # print ("hook_code2")
+    # print (red,"hook_code2",res)
     global winApiSyscallReached
     global maxCount
     global stopProcess
@@ -888,6 +1254,151 @@ def hook_code2(uc, address, size, user_data):
         stopProcess=True
         winApiSyscallReached=True
 
+    try:
+        shells = uc.mem_read(address, size)
+    except Exception as e:
+        # dp ("Error: ", e)
+        # dp(traceback.format_exc())
+        instructLine += " size: 0x%x" % size + '\t'  # size is overflow - why so big?
+        outFile.write("abrupt end:  " + instructLine)
+        # print("abrupt end: error reading line of shellcode")
+        stopProcess = True
+        # return # terminate func early   --don't comment - we want to see the earlyrror
+    programCounter=0  # just temp 0
+    bad_instruct = False
+ 
+    verbose=True
+    if verbose:
+        instructLine += giveRegs(uc,32)
+        instructLine += str(programCounter) + ": 0x%x" % address + "\t"
+
+    t=0
+    
+    for i in cs.disasm(shells, address):
+        valInstruction = i.mnemonic + " " + i.op_str  # + " " + shells.hex()
+        instructLine += valInstruction + '\n'
+        # shells = uc.mem_read(sbase, size)
+        # print(yel,instructLine,res)
+        if verbose:
+            outFile.write(instructLine)
+        if t == 0:
+            mnemonic = i.mnemonic
+            op_str = i.op_str
+            # dp ("mnemonic op_str", mnemonic, op_str)
+            break
+        t += 1
+    if shells == b'\x00\x00':
+        # print ("increment bad instruction by 1")
+        bad_instruct_count += 1
+        # print (instructLine)
+        if bad_instruct_count > 5:
+            bad_instruct = True
+    if bad_instruct:
+        # print ("bad instruction-stopping")
+        stopProcess = True
+
+
+def hook_code264(uc, address, size, user_data):
+    # print (red,"hook_code2",res)
+    global winApiSyscallReached
+    global maxCount
+    global stopProcess
+    global oldEsp
+    global ApiSyscall
+    global sysTarget2
+    if stopProcess:
+        # print ("** StopProces --> stopping")
+        # print (red,"magic stop: stopProcess",res)
+
+        uc.emu_stop()
+    
+    global outFile
+    global bad_instruct_count
+    shells = b''
+    instructLine=""
+    global RP
+    global targetP
+    global doAfterPivot
+    global finalPivotGadgetG
+    global bGiveStack
+    global givStDistance
+    global ApiSyscall
+
+    r_esp = uc.reg_read(UC_X86_REG_RSP)
+    r_eip = uc.reg_read(UC_X86_REG_RIP)
+    oldEsp=r_esp
+
+    try:
+        # locParam=RP.giveParamLocOnStack(targetP, ApiSyscall)
+        if ApiSyscall=="syscall":
+            locParam=RP.giveParamLocOnStack(targetP,"syscall")
+        else:
+            if "loc" not in targetP:
+                locParam=RP.giveParamLocOnStack(targetP,"winApi")
+                locParam2=uc.mem_read(locParam,4)
+                # print("in else", hex(locParam), "param2",binaryToStr(locParam2), red, "targetP",targetP, res, yel, "ApiSyscall", ApiSyscall)
+            else:
+                locParam2=b'\x99\x99\x99\x99'
+    except:
+        # print ("in the except2")
+        pass
+   
+    if ApiSyscall!="syscall":
+        # print ("finalPivotGadgetG",hex(finalPivotGadgetG))
+        if doAfterPivot:
+            bGiveStack, givStDistance= giveStack(uc,64)
+            doAfterPivot=False
+        if address==finalPivotGadgetG:
+            # print (red, "this is it!!!!",res)
+            doAfterPivot=True
+    elif ApiSyscall=="syscall":
+        if doAfterPivot:
+            # print ("address:", hex(address))
+            bGiveStack, givStDistance= giveStackSys(uc,64)
+            doAfterPivot=False
+        if address==finalPivotGadgetG:
+            # print (red, "reached final pivot gadget",res,hex(finalPivotGadgetG))
+            doAfterPivot=True
+
+
+    # dp ("locParam2", binaryToStr(bytes(locParam2)))
+    maxCount+=1
+    if maxCount > 20000:
+        print ("Emulation max exceeded. Stopping.")
+        stopProcess=True
+    try:
+        # print ("locParam2", (locParam2), binaryToStr(locParam2))
+        # print ("locParam2", hex(locParam2))
+        stopPoint = int.from_bytes(locParam2, 'little')
+
+    except:
+        # print ("in the except")
+        stopPoint=0x9999999
+    if stopPoint==r_eip and stopPoint !=0:
+        # print ("special stopping process: EIP is at ", hex(r_eip))
+        outFile.write("special stopping process: EIP is at " + hex(r_eip) +" possibly the stopPoint, " +hex(stopPoint) +"\n")
+        
+        dp (hex(stopPoint),hex(r_eip))
+
+        stopProcess=True
+        if stopPoint !=0:
+            winApiSyscallReached=True
+            # print (gre, "winApiSyscallReached=True!!!!!!!!!!!!!!!!!!!",res)
+    elif (sysTarget2==r_eip and ApiSyscall=="syscall"):
+        # print ("special stopping process: EIP is at WinAPI (simulated at 0x55667799) or gadget to invoke Syscall")
+        outFile.write("special stopping process: EIP is at WinAPI (simulated at 0x55667799) or gadget to invoke Syscall - EIP at " + hex(r_eip))
+        
+        dp (hex(sysTarget2),hex(r_eip))
+        stopProcess=True
+        winApiSyscallReached=True
+    elif r_eip == 0x55667799:
+        # print ("special stopping process: EIP is at WinAPI (simulated at 0x55667799) or gadget to invoke Syscall!!")
+        outFile.write("special stopping process: EIP is at WinAPI (simulated at 0x55667799) or gadget to invoke Syscall - EIP at " + hex(r_eip))
+        
+        dp (hex(sysTarget2),hex(r_eip))
+        stopProcess=True
+        winApiSyscallReached=True
+
 
     try:
         shells = uc.mem_read(address, size)
@@ -905,16 +1416,16 @@ def hook_code2(uc, address, size, user_data):
  
     verbose=True
     if verbose:
-        instructLine += giveRegs(uc,32)
+        instructLine += giveRegs(uc,64)
         instructLine += str(programCounter) + ": 0x%x" % address + "\t"
 
     t=0
     
-    for i in cs.disasm(shells, address):
+    for i in cs64.disasm(shells, address):
         valInstruction = i.mnemonic + " " + i.op_str  # + " " + shells.hex()
         instructLine += valInstruction + '\n'
         # shells = uc.mem_read(sbase, size)
-        # dp (instrssuctLine)
+        # print(yel,instructLine,res)
         if verbose:
             outFile.write(instructLine)
         if t == 0:
@@ -935,21 +1446,28 @@ def hook_code2(uc, address, size, user_data):
         # print ("bad instruction-stopping")
         stopProcess = True
 
-def checkRetStart(pe):
-    highest=0x1005000
+def checkRetStart(pe,arch=32, maxCode=None):
+    # print ("maxAddress",maxAddress)
+    if arch==32:
+        highest=0x1005000
+    elif arch==64:
+        highest=maxAddress-0x100000
+
     start=0x1005000
     startRet=0x900000
     itIsCaught=False
     for q in pe:
         if pe[q].emBase !=0:     
             topSizeForMod=pe[q].emBase + len(pe[q].data)+0x40000
-            # print (q, hex(pe[q].emBase),    "topSizeForMod", hex(topSizeForMod))
+            # print (q, yel,hex(pe[q].emBase),res,    "topSizeForMod", hex(topSizeForMod), len(hex(topSizeForMod)))
             if startRet >= pe[q].emBase and startRet <= topSizeForMod:
                 # print (red,"it is caught here!!",res)
                 itIsCaught=True
             if topSizeForMod > highest:
                 highest=topSizeForMod
-    # print ("highest", hex(highest))
+    # print ("highest", hex(highest), len(hex(highest)))
+    # if arch==64:
+    #     print (hex(maxCode))
     if itIsCaught:
         highestTxt=hex(highest)
         highestTxt=highestTxt[:-3]
@@ -957,8 +1475,10 @@ def checkRetStart(pe):
         highest=int(highestTxt,16)
         # print (hex(highest), highestTxt)
         newRet=highest-0x2000
+
         return True, newRet
     else:
+        # exit()
         return False, 0
 def checkNeeds(pe):
     highest=0x1005000
@@ -1298,6 +1818,18 @@ distanceDict={
         'loc2':{'distanceFromPayload':0,'isText':False, 'String':None,'size':10,'NullAfterString':False,'isStruct':False},
         'totalSize':20
     },
+
+    'NtQueryInformationProcess':{'distanceToPayload':sParams.startParamsQty, 'numLoc':1,
+        'loc1':{'distanceFromPayload':0,'isText':False, 'String':'aaaaaaaa','size':8,'NullAfterString':False,'isStruct':False},
+        'totalSize':26
+    },
+
+    'NtQueryInformationThread':{'distanceToPayload':sParams.startParamsQty, 'numLoc':2,
+        'loc1':{'distanceFromPayload':0,'isText':False, 'String':'aaaaaaaa','size':8,'NullAfterString':False,'isStruct':False},
+        'loc2':{'distanceFromPayload':8,'isText':False, 'String':'bbbbbbbb','size':8,'NullAfterString':False,'isStruct':False},   #TEB 
+        'totalSize':26
+    },
+
 }
 
 
@@ -1561,10 +2093,12 @@ class ropParms:
         dp ("shellcode location: ", hex (self.shellcode))
     def show(self,mu,ApiSyscall):
         if ApiSyscall=="winApi":
+            # print ("self.winApi",hex(self.winApi))
             dp("winApi:", hex(self.winApi),binaryToStr(mu.mem_read(self.winApi, 4)))
             dp("Return address:", hex(self.RA), binaryToStr(mu.mem_read(self.RA, 4)))
         if self.hasDistance:
-            dp("loc1:", hex(self.loc1),binaryToStr(mu.mem_read(self.loc1, 4)))
+            
+            # print(gre,"loc1:",res, hex(self.loc1),binaryToStr(mu.mem_read(self.loc1, 4)))
             try:
                 dp("loc2:", hex(self.loc2),binaryToStr(mu.mem_read(self.loc2, 4)))
             except:
@@ -1682,6 +2216,254 @@ targetP=None
 fakeWinAPIInner=b'\x99\x77\x66\x55'
 ApiSyscall="winApi"
 sysTarget2=0
+
+
+
+def rop_testerRunROP64(pe, n, gadgets, distEsp, IncDec, numP, targetP2, targetR, PWinApi, sysTarget, finalPivotGadget1, rValStr=None, patType=None, finalTypePattern=None):
+    # print ("rop_testerRunROP64 patType",patType, "finalTypePattern", finalTypePattern)
+    global maxCount, winApiSyscallReached, oldEsp, ApiSyscall
+    global fakeWinAPIInner, sysTarget2, RP, targetP, finalPivotGadgetG
+    global stopProcess, outFile, stack2, doAfterPivot
+    global bGiveStack, givStDistance, bad_instruct_count
+
+    maxCount = 0
+    targetP = targetP2
+    sysTarget2 = sysTarget
+    RP = None
+
+    bad_instruct_count = 0
+    bGiveStack = False
+    givStDistance = 0xdeadc0de
+    finalPivotGadgetG = finalPivotGadget1
+    doAfterPivot = False
+    winApiSyscallReached = False
+    stopProcess = False
+
+    sizeG = len(gadgets)
+    outFile.write(
+        "New Emulation (x86-64)\n" +
+        "*" * 100 +
+        f"  length gadgets: {sizeG}  (0x{sizeG:x})\n"
+    )
+
+    dp("rop_testerRunROP64", targetP, targetR)
+    dp("*" * 100)
+    doGC()
+    try:
+        outFile.write(rValStr or "")
+    except:
+        pass
+
+    gOutput = gadgetRegs64()
+    gOutput.start(gRegs64)
+
+    try:
+        # —— Initialize emulator in X86-64 mode ——
+        global maxAddress
+        mu = Uc(UC_ARCH_X86, UC_MODE_64)
+        maxCode = 0x5005000
+        # maxCode =0x55000000
+        # maxCode = 0x50000
+
+         # test=0x1500003ff8
+        try:    mu.mem_unmap(0x00000000, maxCode)
+        except: pass
+        try:    mu.mem_map(0x00000000, maxCode)
+        except: print(red, "mem_map error, emulation may fail", res)
+
+        # —— Prepare stack & ROP state ——
+        stack = 0x150000  # pick a 64-bit–sized region
+        stack2 = stack
+
+        ApiSyscall = "syscall" if targetP == "sysInvoke" else "winApi"
+        RP = ropParms(ApiSyscall, IncDec, distEsp, stack, numP)
+
+        if rValStr is not None:
+            patsRValStr = ["targetDllString", "lpProcName", "System"]
+            key = finalTypePattern or (rValStr if rValStr in patsRValStr else patType)
+            RP.setDistanceLoc(key, stack, distanceDict[key]["distanceToPayload"])
+
+        # print ("ApiSyscall",ApiSyscall)
+        RP.show(mu, ApiSyscall)
+        RP.setShellcode("after", ApiSyscall)
+        RP.showShellLoc()
+
+        EXTRA_ADDR = 0x50000
+        beginTesting = b"\xC3" * 13
+
+        # write some marker pages
+        mu.mem_write(EXTRA_ADDR, b'\xCC' * 3 + b'\x90'*3 + b'\xCC'*3 + b'\x90'*3 + b'\xCC'*3 + b'\x90'*3 + b'\xCC'*3)
+        mu.mem_write(stack, gadgets)
+
+        # fake WinAPI trampoline
+        try:
+            mu.mem_write(PWinApi, fakeWinAPIInner)
+        except UcError:
+            dp("ERROR writing fakeWinAPIInner, mapping a page")
+            base = int(hex(PWinApi)[:-4] + "0000", 16)
+            mu.mem_map(base, 0x10000)
+            mu.mem_write(PWinApi, fakeWinAPIInner)
+
+        # Another fake pointer
+        fakeInner2 = 0x55667799
+        try:
+            mu.mem_write(fakeInner2, b'\x00'*5)
+        except UcError:
+            base = int(hex(fakeInner2)[:-4] + "0000", 16)
+            mu.mem_map(base, 0x10000)
+            mu.mem_write(fakeInner2, b'\x00'*5)
+
+        # test code region
+        # image2, newRet = checkRetStart(pe,64,maxCode)
+        # if newRet: image2 = newRet
+        image2=0x900000
+
+        bCheckRetStart,newRet = checkRetStart(pe,64,maxCode)
+        if bCheckRetStart:
+            image2=newRet
+        try:
+            mu.mem_write(image2,beginTesting)
+        except:
+            mu.mem_map(image2, 0x10000)
+            mu.mem_write(image2,beginTesting)
+
+        # scratch fs:[0xc0]
+        try:
+            mu.mem_write(0xc0, b"\x99\x99\x99\x99")
+        except:
+            print(red, "Writing to fs:[0xc0] fails.", res)
+
+        addImgsToEmulation(pe, mu)
+
+        # small test stub
+        testCode64 = b'\x90' * 15 + b'\xC3' * 13
+        # print ("ADDRESS",hex(ADDRESS))
+        # mu.mem_map(ADDRESS, 0x1000)
+        mu.mem_write(ADDRESS, testCode64)
+        maxSize = len(testCode64)
+        maxAddress = ADDRESS + maxSize - 1
+
+        # —— Initialize all 64‑bit registers ——
+        mu.reg_write(UC_X86_REG_RAX, gRegs64.rax)
+        mu.reg_write(UC_X86_REG_RBX, gRegs64.rbx)
+        mu.reg_write(UC_X86_REG_RCX, gRegs64.rcx)
+        mu.reg_write(UC_X86_REG_RDX, gRegs64.rdx)
+        mu.reg_write(UC_X86_REG_RSI, gRegs64.rsi)
+        mu.reg_write(UC_X86_REG_RDI, gRegs64.rdi)
+        mu.reg_write(UC_X86_REG_R8,  gRegs64.r8)
+        mu.reg_write(UC_X86_REG_R9,  gRegs64.r9)
+        mu.reg_write(UC_X86_REG_R10, gRegs64.r10)
+        mu.reg_write(UC_X86_REG_R11, gRegs64.r11)
+        mu.reg_write(UC_X86_REG_R12, gRegs64.r12)
+        mu.reg_write(UC_X86_REG_R13, gRegs64.r13)
+        mu.reg_write(UC_X86_REG_R14, gRegs64.r14)
+        mu.reg_write(UC_X86_REG_R15, gRegs64.r15)
+        mu.reg_write(UC_X86_REG_RSP, stack)
+        mu.reg_write(UC_X86_REG_RBP, stack - 800)
+        gOutput.setRsp(stack)
+        gOutput.setRbp(stack - 800)
+
+        giveRegOuts(mu)
+
+        # trace instructions
+        hook2 = mu.hook_add(UC_HOOK_CODE, hook_code264)
+
+        dp("second RP.show()")
+        RP.show(mu, ApiSyscall)
+
+        # print ("image2, image2 + 0xFFFFF",hex(image2), hex(image2 + 0xFFFFF))
+        # print ("image2",image2)
+        try:
+            mu.emu_start(image2, image2 + 0xFFFFF)
+        except:
+            # print ("in the except64")
+            regs = {
+            'rax': mu.reg_read(UC_X86_REG_RAX),
+            'rbx': mu.reg_read(UC_X86_REG_RBX),
+            'rcx': mu.reg_read(UC_X86_REG_RCX),
+            'rdx': mu.reg_read(UC_X86_REG_RDX),
+            'rsi': mu.reg_read(UC_X86_REG_RSI),
+            'rdi': mu.reg_read(UC_X86_REG_RDI),
+            'rbp': mu.reg_read(UC_X86_REG_RBP),
+            'rsp': mu.reg_read(UC_X86_REG_RSP),
+            'r8':  mu.reg_read(UC_X86_REG_R8),
+            'r9':  mu.reg_read(UC_X86_REG_R9),
+            'r10': mu.reg_read(UC_X86_REG_R10),
+            'r11': mu.reg_read(UC_X86_REG_R11),
+            'r12': mu.reg_read(UC_X86_REG_R12),
+            'r13': mu.reg_read(UC_X86_REG_R13),
+            'r14': mu.reg_read(UC_X86_REG_R14),
+            'r15': mu.reg_read(UC_X86_REG_R15)}
+            gOutput.set(**regs,     changed=True)
+            
+        dp(">>> Emulation done; CPU context:")
+        regs = {
+            'rax': mu.reg_read(UC_X86_REG_RAX),
+            'rbx': mu.reg_read(UC_X86_REG_RBX),
+            'rcx': mu.reg_read(UC_X86_REG_RCX),
+            'rdx': mu.reg_read(UC_X86_REG_RDX),
+            'rsi': mu.reg_read(UC_X86_REG_RSI),
+            'rdi': mu.reg_read(UC_X86_REG_RDI),
+            'rbp': mu.reg_read(UC_X86_REG_RBP),
+            'rsp': mu.reg_read(UC_X86_REG_RSP),
+            'r8':  mu.reg_read(UC_X86_REG_R8),
+            'r9':  mu.reg_read(UC_X86_REG_R9),
+            'r10': mu.reg_read(UC_X86_REG_R10),
+            'r11': mu.reg_read(UC_X86_REG_R11),
+            'r12': mu.reg_read(UC_X86_REG_R12),
+            'r13': mu.reg_read(UC_X86_REG_R13),
+            'r14': mu.reg_read(UC_X86_REG_R14),
+            'r15': mu.reg_read(UC_X86_REG_R15),
+        }
+        gOutput.set(**regs, changed=True)
+
+        # compute parameter vs. register locations
+        if targetR is not None:
+            locReg   = gOutput.giveRegLoc(regs64.to64(targetR))
+            locParam = RP.giveParamLocOnStack(targetP, ApiSyscall)
+            # print ("-------------- targetR",targetP,hex(locParam), ApiSyscall)
+
+        else:
+            locParam = locReg = 0
+
+        outFile.write("finalPivotGadgetG: " + hex(finalPivotGadgetG) + "\n")
+
+        if targetR is not None:
+            diffPR = locParam - locReg
+            dp("API/Syscall Reached?", winApiSyscallReached)
+            dp(f"locParam({targetP})=0x{locParam:x}, locReg({targetR})=0x{locReg:x}, diff=0x{diffPR:x}")
+            RP.show(mu, ApiSyscall)
+
+        # clean up
+        try:    mu.emu_stop()
+        except: pass
+        try:    mu.mem_unmap(0x00000000, maxCode)
+        except: pass
+        mu.hook_del(hook2)
+        stopProcess = False
+        # print ("-------------- targetR",targetP,hex(locParam), ApiSyscall)
+        
+
+        return gOutput, locParam, locReg, winApiSyscallReached, givStDistance
+
+    # except UcError as e:
+        # on error, dump regs and return what we can
+    except Exception as e:
+        # print ("Error2: ", e)
+        # print("traceback:",traceback.format_exc())
+        # print ("in error ")
+        doGC()
+        errorMsg = traceback.format_exc()
+        giveRegOuts(mu)
+        outFile.write(errorMsg)
+        gOutput.setError(e)
+        try:    locReg = gOutput.giveRegLoc(targetR)
+        except: 
+            # print ("some problem")
+            locReg = None
+        # print (gre,"targetP,ApiSyscall",targetP,ApiSyscall,res)
+        locParam = RP.giveParamLocOnStack(targetP, ApiSyscall)
+        return gOutput, locParam, locReg, winApiSyscallReached, givStDistance
 
 
 def rop_testerRunROP(pe,n,gadgets, distEsp,IncDec,numP,targetP2,targetR, PWinApi,sysTarget,finalPivotGadget1, rValStr=None,patType=None,finalTypePattern=None):

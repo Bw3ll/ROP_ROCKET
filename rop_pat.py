@@ -1451,7 +1451,27 @@ pat3 = {
 		'9': {'valStr': 'ViewSize', 'val': 0xd88, 'specHan':False, 'hasStr':False, 'parStr': True, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'ViewSize'},
 		'10': {'valStr': 'InheritDisposition', 'val': 0x1, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'InheritDisposition'},
 		'11': {'valStr': 'AllocationType', 'val': 0, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'AllocationType'},
-		'12': {'valStr': 'Protect', 'val': 0x2, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'Protect'},
+		'12': {'valStr': 'Protect', 'val': 0x2, 'specHan':False, 'hasStr':False, 'parStr': None, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None, 'com':'Protect'}
+		}
 		}
 
+patSys64={
+
+
+		'NtQueryInformationThread':{
+		'2':{'r':'rdx', 'val':0, 'com':'ThreadBasicInformation', 'hasStr':False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'1':{'r':'r8', 'val':0, 'com':'buffer for THREAD_BASIC_INFORMATION', 'hasStr':False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':"loc1"},
+		'3':{'r':'r9', 'val':0x30, 'com':'sizeof(THREAD_BASIC_INFORMATION) ', 'hasStr':False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'4':{'r':'rax', 'val':0x25, 'com':'NtQueryInformationThread SSN (all Win. 10-11)', 'hasStr':False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'5':{'r':'r10', 'val':0xFFFFFFFFFFFFFFFE, 'com':'first parm from rcx ', 'hasStr':False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'retrieve':{'loc':'loc2', 'com':'retrieving TEB'}
+		},
+			'NtQueryInformationProcess':{
+		'2':{'r':'rdx', 'val':0, 'com':'ProcessInformationClass = 0 (BasicInfo)', 'hasStr':False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'1':{'r':'r8', 'val':0, 'com':'ProcessInformation buffer', 'hasStr':False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':'loc1'},
+		'3':{'r':'r9', 'val':0x30, 'com':'Buffer size ', 'hasStr':False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'4':{'r':'rax', 'val':0x19, 'com':'NtQueryInformationProcess SSN (all Win. 10-11)', 'hasStr':False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'5':{'r':'r10', 'val':0xFFFFFFFFFFFFFFFF, 'com':'first parm from rcx - current process  ', 'hasStr':False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
+		'retrieve':{'loc':'loc1', 'com':'PEB'}
+		}	
 }

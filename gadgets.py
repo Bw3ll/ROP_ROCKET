@@ -19,7 +19,7 @@ esp="esp"
 
 mod = {}
 pe = {}
-
+curArch=32
 
 
 	# for item in myPE.DIRECTORY_ENTRY_IMPORT:
@@ -39,6 +39,8 @@ def newGadget(address, pe,n,offset, op_strL,raw, mod, length, myDict2, c2,opOffs
 
 
 	obj = gadgets(address, offsetEmBase, offset,op_strL, raw, mod, length,c2,opOffset,myArch)
+
+
 	myDict2[offsetEmBase]=obj
 	fg.rop[offsetEmBase]=obj
 	# dp ("***", hex(address),"off", hex(offset), "offsetEmBase", hex(offsetEmBase))
@@ -57,27 +59,77 @@ def disTiny64(raw):
 	returnVal=returnVal[:-3]
 	return returnVal
 
+def disTinyCnt(raw,arch,length):
+	myCs=cs
+	if arch==64:
+		myCs=cs64
+	returnVal = ""
+	
+	# for i in myCs.disasm(raw, 0):
+	# 	val =  i.mnemonic + " " + i.op_str + " # "
+	# 	returnVal +=val
+	t=0
+	for i in myCs.disasm(raw, 0):
+		t=t+1
 
-def disTinyOpStr(raw,arch):
+	f=t-1		
+	if f==0:
+		f=1
+	return f
+
+
+def disTinyOpStr(raw, arch):
+	myCs=cs
+
+	if arch==32:
+		myCs = cs
+	elif arch==64:
+		myCs = cs64
+	op1=None
+	op2=None
+	# decode just the first instruction
+	for i in myCs.disasm(raw, 0):
+		# full text, exactly as before
+		returnVal = f"{i.mnemonic} {i.op_str}"
+
+		# drop only the first word (the mnemonic)
+		#	"mov eax, ebx"  →  "eax, ebx"
+		#	"pop rax"	   →  "rax"
+		if " " in returnVal:
+			operands_str = returnVal.split(" ", 1)[1]
+		else:
+			operands_str = ""
+		break
+	# split into up to two pieces, trimming whitespace
+	parts = [p.strip() for p in operands_str.split(",", 1)]
+	op1 = parts[0] if len(parts) >= 1 else None
+	op2 = parts[1] if len(parts) >= 2 else None
+
+	return returnVal, op1, op2
+
+def disTinyOpStrOld(raw,arch):
 	myCs=cs
 	if arch==64:
 		myCs=cs64
 	returnVal = ""
 	for i in myCs.disasm(raw, 0):
-		returnVal=i.op_str
+		returnVal=i.mnemonic + " " + i.op_str
 		break
 	returnValL = returnVal.split(", ")
 
+	
+	print ("(******",returnVal,returnValL, ")", arch)
 	return returnVal,returnValL
 
 def addGadget64(address,pe, n,offset, op_str,raw, mod, c2=False, reg=None, myDict2=None):
 	addGadget(address,pe, n,offset, op_str,raw, mod, c2, reg, myDict2,64)
 
+
 def addGadget(address,pe, n,offset, op_str,raw, mod, c2=False, reg=None, myDict2=None,myArch=32):
 	# dp ("addGadget",op_str)
 	opOffset=None
 	
-	safe,length, op_str=checkPlease(raw,c2)
+	safe,length, op_str=checkPlease(raw,c2,myArch)
 
 	test=(disTiny64(raw))
 
@@ -98,6 +150,7 @@ def addGadget(address,pe, n,offset, op_str,raw, mod, c2=False, reg=None, myDict2
 		obj=newGadget(address,pe,n, offset, op_strL,raw, mod, length, myDict2, c2,opOffset, myArch)
 		return obj
 	return False
+
 def addGadgetJmp(address, pe,n,offset, op_str,raw, mod, c2=False, reg=None, myDict2=None, opOffset=None):
 	# safe,length, op_str=checkPlease(raw,c2)
 	# dp("addGadgetJmp bytes", len(raw))
@@ -293,37 +346,58 @@ class hgRopChainOld: 								# hypothetical - not using - doing a different dire
 
 class gadgets:
 	def __init__(self, address, offsetEmBase, offset,op_strL,raw,mod, length,c2,opOffset=None,myArch=32): #, name):
-		self.offset=offset
-		self.offsetEmBase=offsetEmBase
-		self.addressRet=address
-		self.raw=raw
-		self.length=length
-		self.mod=mod
-		self.mnemonic=""
-		self.emulated=False
-		self.op1=None
-		self.op2=None
-		self.opOffset=opOffset
-		self.FSIndex=None
-		self.arch=myArch  #not all x64 is initialized as 64, e.g. JMP, call, TODO
-		
-		op_str, op_strL=disTinyOpStr(raw,self.arch)
-		
+		# print ("myArch",myArch)
+		try:
+			self.offset=offset
+			self.offsetEmBase=offsetEmBase
+			self.addressRet=address
+			self.raw=raw
+			self.length=length
+			self.mod=mod
+			self.mnemonic=""
+			self.emulated=False
+			self.op1=None
+			self.op2=None
+			self.opOffset=opOffset
+			self.FSIndex=None
+			self.arch=myArch  #not all x64 is initialized as 64, e.g. JMP, call, TODO
+			
+			# print (1,myArch, self.arch,2)
+			# test0=(disTiny64(raw))
+			
+			try:
+				returnValStr, op1, op2=disTinyOpStr(raw,self.arch)
+			except:
+				print ("opps!!!!")
+				pass
+			# print("ops", returnValStr, op1, op2)
+			if myArch==64:
+				t=disTinyCnt(raw,self.arch,length)
+				self.length=t
 
-		try:
-			self.op1=op_strL[0]
-		except:
-			pass
-		try:
-			self.op2=op_strL[1]
-		except:
-			pass
-		if not c2:
-			self.opcode="c3"
-		else:
-			self.opcode="c2"
-		self.c2Adjust=None
-		self.stC2=[]
+			
+			try:
+				self.op1=op1
+			except:
+				# print ("in except1")
+
+				pass
+			try:
+				self.op2=op2
+			except:
+				# print ("in except2")
+				pass
+			# print ("self.ops", self.op1, self.op2)
+			if not c2:
+				self.opcode="c3"
+			else:
+				self.opcode="c2"
+			self.c2Adjust=None
+			self.stC2=[]
+		except Exception as e:
+			print (e)
+			print("class gadgets\n",traceback.format_exc())
+		# print (1)
 
 	def setFSIndex(self,val):
 		self.FSIndex=val
@@ -831,6 +905,7 @@ class foundGadgets:
 		self.xorZero = {}
 		self.pushad = {}
 		self.popal = {}
+		self.syscall64={}
 		self.shl = {}
 		self.shr = {}
 		self.shlDword = {}
@@ -1389,6 +1464,8 @@ class foundGadgets:
 		self.movR15 = {}
 		self.movGSSpecial = {}
 		self.popal64 = {}
+		self.syscall64 = {}
+		self.rdgsbase64 = {}
 		self.pushad64 = {}
 		self.shlQword = {}
 		self.shl64 = {}
@@ -1437,8 +1514,8 @@ class foundGadgets:
 		self.fsSpecial64 = {}
 
 
-	def getFg(self,mystr,reg=None):
-		# dp ("getfFg")
+	def getFg(self,mystr,reg=""):
+		# print ("getfFg", reg, len(reg))
 		try:
 			reg=reg.upper()
 			mystr=mystr+reg
@@ -1447,6 +1524,7 @@ class foundGadgets:
 			pass
 		# dp ("getFg", mystr)
 		if hasattr(self,mystr):
+			# print ("mystr", mystr)
 			myDict=getattr(self,mystr)
 			if len(myDict) > 0:
 				dp ("\t\tgetfFg: it exists2", mystr, len(myDict))
@@ -1794,6 +1872,8 @@ class foundGadgets:
 		self.xorZero = {**self.xorZero, **old.xorZero}
 		self.pushad = {**self.pushad, **old.pushad}
 		self.popal = {**self.popal, **old.popal}
+		self.syscall64 = {**self.syscall64, **old.syscall64}
+		self.rdgsbase64 = {**self.rdgsbase64, **old.rdgsbase64}
 		self.shl = {**self.shl, **old.shl}
 		self.shr = {**self.shr, **old.shr}
 		self.shlDword = {**self.shlDword, **old.shlDword}
@@ -2376,6 +2456,7 @@ class foundGadgets:
 		self.movR15 = {**self.movR15, **old.movR15}
 		self.movGSSpecial = {**self.movGSSpecial, **old.movGSSpecial}
 		self.popal64 = {**self.popal64, **old.popal64}
+		self.syscall64 = {**self.syscall64, **old.syscall64}
 		self.pushad64 = {**self.pushad64, **old.pushad64}
 		self.shlQword = {**self.shlQword, **old.shlQword}
 		self.shl64 = {**self.shl64, **old.shl64}

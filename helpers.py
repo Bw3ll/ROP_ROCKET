@@ -4,8 +4,12 @@ import gc
 import logging
 import sys
 import traceback
+from gadgetChecker import *
+
 
 cs = Cs(CS_ARCH_X86, CS_MODE_32)
+cs64 = Cs(CS_ARCH_X86, CS_MODE_64)
+
 logging.basicConfig(filename='myLog.log', level=logging.DEBUG)
 
 
@@ -42,6 +46,210 @@ def truncate(num, bits):
 	v= hex((num + (1 << bits)) % (1 << bits))
 	return int(v,16)
 
+class Regs:  ## make x32 version later
+	def __init__(self):
+		self.availableRegs=["rax","rbx","rcx","rdx","rsi","rdi","rsp","rbp","r8","r9","r10","r11","r12","r13","r14","r15"]
+		self.availableRegs32=["eax","ebx","ecx","edx","esi","edi","esp","ebp","r8d","r9d","r10d","r11d","r12d","r13d","r14d","r15d"]
+		self.availableRegs16=["ax","bx","cx","dx","si","di","sp","bp","r8w","r9w","r10w","r11w","r12w","r13w","r14w","r15w"]
+		self.availableRegs8h=["ah","bh","ch","dh","sih","dih","sph","bph","r8h","r9h","r10h","r11h","r12h","r13h","r14h","r15h"]
+		self.availableRegs8l=["al","bl","cl","dl","sil","dil","spl","bpl","r8b","r9b","r10b","r11b","r12b","r13b","r14b","r15b"]
+		self.r64To32=dict(zip(self.availableRegs,self.availableRegs32))
+		self.r64To16=dict(zip(self.availableRegs,self.availableRegs16))
+		self.r64To8h=dict(zip(self.availableRegs,self.availableRegs8h))
+		self.r32To64=dict(zip(self.availableRegs32,self.availableRegs))
+		self.r64To8l=dict(zip(self.availableRegs,self.availableRegs8l))
+
+		self.all_64_32 = self.availableRegs + self.availableRegs32
+		self.workSet = set()
+		self.workSet2 = set()
+		self.workSet3 = set()
+		self.workSet4 = set()
+		self.workSet5 = set()
+
+
+
+		# Option 2: all 64-, 32- and 16-bit registers
+		self.all_64_32_16 = (
+			self.availableRegs
+			+ self.availableRegs32
+			+ self.availableRegs16
+		)
+
+		# Option 3: all 64-, 32-, 16- and low-8-bit registers
+		self.all_64_32_16_8l = (
+			self.availableRegs
+			+ self.availableRegs32
+			+ self.availableRegs16
+			+ self.availableRegs8l
+		)
+
+	def r64r32(self,reg):
+		return self.r64To32[reg]
+	def r64r16(self,reg):
+		return self.r64To16[reg]
+	def r64r8l(self,reg):
+		return self.r64To8l[reg]
+	def r64r32(self, reg):
+		return self.r64To32[reg]
+	def r64r16(self, reg):
+		return self.r64To16[reg]
+	def r64r8l(self, reg):
+		return self.r64To8l[reg]
+	def give32to8(self, reg):
+		r=[]
+		try:
+			r = [reg, self.r64To32[reg], self.r64To16[reg], self.r64To8l[reg]]
+		except:
+			reg=self.to64(reg)
+			r = [reg, self.r64To32[reg], self.r64To16[reg], self.r64To8l[reg]]	
+		return set(r)
+	def give32to8h(self, reg):
+		r=[]
+		try:
+			r = [reg, self.r64To32[reg], self.r64To16[reg],
+				 self.r64To8h[reg], self.r64To8l[reg]]
+		except:
+			reg = self.to64(reg)
+			r = [reg, self.r64To32[reg], self.r64To16[reg],
+				 self.r64To8h[reg], self.r64To8l[reg]]
+		return set(r)
+	def give32to16(self, reg):
+		r=[]
+		try:
+			r = [reg, self.r64To32[reg], self.r64To16[reg]]
+		except:
+			reg =   self.to64(reg)
+			r = [reg, self.r64To32[reg], self.r64To16[reg]]
+		return set(r)
+	def give32(self, reg):
+		r=[]
+		try:
+			r = [reg, self.r64To32[reg]]
+		except:
+			reg =  self.to64(reg)
+			reg = [reg, self.r64To32[reg]]
+
+		return set(r)
+	def to64(self, reg):
+		# 64-bit already
+		if reg in self.availableRegs:
+			return reg
+		# 32-bit → 64-bit
+		if reg in self.availableRegs32:
+			return self.r32To64[reg]
+		# 16-bit → 64-bit (same index in availableRegs16 ↔ availableRegs)
+		if reg in self.availableRegs16:
+			idx = self.availableRegs16.index(reg)
+			return self.availableRegs[idx]
+		# 8-bit low → 64-bit
+		if reg in self.availableRegs8l:
+			idx = self.availableRegs8l.index(reg)
+			return self.availableRegs[idx]
+		# 8-bit high → 64-bit
+		if reg in self.availableRegs8h:
+			idx = self.availableRegs8h.index(reg)
+			return self.availableRegs[idx]
+	def genWorkingSet(self,option=3,num=1,):
+		if num==1:
+			if option == 1:
+				self.workSet = set(self.all_64_32)
+			elif option ==0:
+				self.workSet = set(self.availableRegs)
+			elif option == 2:
+				self.workSet = set(self.all_64_32_16)
+			elif option == 3:
+				self.workSet = set(self.all_64_32_16_8l)
+			return self.workSet
+		elif num==2:
+			if option == 1:
+				self.workSet2 = set(self.all_64_32)
+			elif option ==0:
+				self.workSet2 = set(self.availableRegs)
+			elif option == 2:
+				self.workSet2 = set(self.all_64_32_16)
+			elif option == 3:
+				self.workSet2 = set(self.all_64_32_16_8l)
+			return self.workSet2
+		elif num==3:
+			if option == 1:
+				self.workSet3 = set(self.all_64_32)
+			elif option ==0:
+				self.workSet3 = set(self.availableRegs)
+			elif option == 2:
+				self.workSet3 = set(self.all_64_32_16)
+			elif option == 3:
+				self.workSet3 = set(self.all_64_32_16_8l)
+			return self.workSet3
+		elif num==4:
+			if option == 1:
+				self.workSet4 = set(self.all_64_32)
+			elif option ==0:
+				self.workSet4 = set(self.availableRegs)
+			elif option == 2:
+				self.workSet4 = set(self.all_64_32_16)
+			elif option == 3:
+				self.workSet4 = set(self.all_64_32_16_8l)
+			return self.workSet4
+		elif num==5:
+			if option == 1:
+				self.workSet5 = set(self.all_64_32)
+			elif option ==0:
+				self.workSet5 = set(self.availableRegs)
+			elif option == 2:
+				self.workSet5 = set(self.all_64_32_16)
+			elif option == 3:
+				self.workSet5 = set(self.all_64_32_16_8l)
+			return self.workSet5
+	def rem(self, reg, num=1):
+		if reg in self.availableRegs:
+			base = reg
+		elif reg in self.availableRegs32:
+			base = self.r32To64[reg]
+		elif reg in self.availableRegs16:
+			idx = self.availableRegs16.index(reg)
+			base = self.availableRegs[idx]
+		elif reg in self.availableRegs8l:
+			idx = self.availableRegs8l.index(reg)
+			base = self.availableRegs[idx]
+		family = {
+			base,
+			self.r64To32[base],
+			self.r64To16[base],
+			self.r64To8l[base],
+		}
+		if num==1:
+			self.workSet -= family
+		elif num==2:
+			self.workSet2 -= family
+		elif num==3:
+			self.workSet3 -= family
+		elif num==4:
+			self.workSet4 -= family
+		elif num==5:
+			self.workSet5 -= family
+	def rem2(self,reg, availableRegs):
+		# print ("rem2", reg)
+		if reg in self.availableRegs:
+			base = reg
+		elif reg in self.availableRegs32:
+			base = self.r32To64[reg]
+		elif reg in self.availableRegs16:
+			idx = self.availableRegs16.index(reg)
+			base = self.availableRegs[idx]
+		elif reg in self.availableRegs8l:
+			idx = self.availableRegs8l.index(reg)
+			base = self.availableRegs[idx]
+		elif reg==0:
+			return availableRegs
+		family = {
+			base,
+			self.r64To32[base],
+			self.r64To16[base],
+			self.r64To8l[base],
+		}
+		availableRegs -= family
+		return availableRegs
+regs64=Regs()
 
 def checkFreeBadBytesTester(opt,fg,address, bad,myDict=None,pe=None,n=None, checkImg=False,isVal=False, tellWhy=False):
 	# dp("checkFreeBadBytes helpers", address,hx(address) )
@@ -383,11 +591,16 @@ def binaryToStr(binary, mode = None):
 		dp(e)
 
 
-def checkPlease (raw1, c2=False):
+def checkPlease (raw1, c2=False,arch=32):
 	returnVal = ""
 	t=0  #ret
 	op_str=""
-	for i in cs.disasm(raw1, 0):
+	if arch==32:
+		myCs=cs
+	elif arch==64:
+		myCs=cs64
+
+	for i in myCs.disasm(raw1, 0):
 		val =  i.mnemonic + " " + i.op_str + " "
 		bad = re.match( r'^call|^jmp|^jo|^jno|^jsn|^js|^je|^jz|^jne|^jnz|^jb|^jnae|^jc|^jnb|^jae|^jnc|^jbe|^jna|^ja|^jnben|^jl|^jnge|^jge|^jnl|^jle|^jng|^jg|^jnle|^jp|^jpe|^jnp|^jpo|^jczz|^jecxz|^jmp|^int|^retf|^db|^hlt|lcall|ljmp|loop', val, re.M|re.I)
 		bad = re.match( r'^call|^jmp|^jo|^jno|^jsn|^js|^je|^jz|^jne|^jnz|^jb|^jnae|^jc|^jnb|^jae|^jnc|^jbe|^jna|^ja|^jnben|^jl|^jnge|^jge|^jnl|^jle|^jng|^jg|^jnle|^jp|^jpe|^jnp|^jpo|^jczz|^jecxz|^jmp|^int|^db|^hlt|lcall|ljmp|loop', val, re.M|re.I)
