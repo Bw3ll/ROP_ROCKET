@@ -87,6 +87,7 @@ def uiShowOptionsMainMenu(x86,x64):
 	
 	text = "\n"
 	text += "  {}   x86:{}\tx64:{}\n".format(cya + "r" + res + " -" + gre + "  Capture ROP Gadgets. " + yel, togx86Ex + yel, togx64Ex)
+	text += "  {}        \n".format(cya + "as" + res + " -" + gre + " Generate x64, High Entropy ASLR bypasses for" +mag+" Kernel32, Kernelbase, NTDLL" + res)
 	text += "  {}        \n".format(cya + "g" + res + " -" + gre + "  Generate Heaven's Gate x32 to x64." + res)
 	text += "  {}        \n".format(cya + "t" + res + " -" + gre + "  Generate Heaven's Gate x64 to x32." + res)
 
@@ -120,6 +121,11 @@ def uiShowOptionsMainMenu(x86,x64):
 	text += "  {}        \n".format(cya + "df" + res + " -" + gre + " Generate pushad:" + yel + " DeleteFileA" + res)
 	text += "  {}        \n".format(cya + "u" + res + " -" + gre + "  Generate pushad:" + yel + " URLDownloadToFileA" + res)
 	text += "  {}        \n".format(cya + "os" + res + " -" + gre + " Generate pushad:" + yel + " OpenSCManagerA" + res)
+
+
+	text += "  {}        \n".format(cya + "nqt" + res + " -" + gre + "  Generate"+blu+" x64 Windows syscall:" + yel + " NtQueryInformationThread" + res)
+	text += "  {}        \n".format(cya + "nqp" + res + " -" + gre + " Generate "+blu+"x64 Windows syscall:" + yel + " NtQueryInformationProcess" + res)
+
 	text += "  {}        \n".format(cya + "cs" + res + " -" + gre + " Generate pushad:" + yel + " CreateServiceA" + res)
 	text += "  {}        \n".format(cya + "set" + res + " -" + gre + "  Set initial overflow value (if applicable)" + res)
 	text += "  {}        \n".format(cya + "o" + res + " -" + gre + "  Obfuscate gadget/value" + res)
@@ -128,6 +134,8 @@ def uiShowOptionsMainMenu(x86,x64):
 	text += "  {}        \n".format(cya + "f" + res + " -" + gre + "  PE file submenu" + res)
 	text += "  {}        \n".format(cya + "w" + res + " -" + gre + "  Find individual gadgets / wildcard" + res)
 	text += "  {}        \n".format(cya + "c" + res + " -" + gre + "  Save config file [" + res + "config.cfg" + gre + "] with current selections" + res)
+	text += "  {}        \n".format(cya + "res" + res + " -" + gre + "  Researcher Mode (special setttings)" + res)
+
 	text += "  {}        \n".format(cya + "h" + res + " -" + gre + "  Display options" + res)
 
 	print (text)

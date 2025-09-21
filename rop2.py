@@ -25,6 +25,9 @@ from helpers import *
 from gadgets import foundGadgets
 from gadgets import *
 from rop_pat import *
+from aslrMods import *
+from pathlib import Path
+import textwrap
 
 import math
 import platform
@@ -74,7 +77,7 @@ whi = '\u001b[37m'
 res = '\u001b[0m'
 res2 = '\u001b[0m'
 
-opt={"bImgExc":True,"bSystemDlls":True,"bOtherDlls":True,"bImgExcExtracted":True,"bSystemDllsExtracted":True,"bOtherDllsExtracted":True, "bx86Extracted":False,"bx64Extracted":False, "bx86Get":True, "bx64Get":True, "bx86Print":True, "bx64Print":True, "lenMax":0x10,"bytesMax":0x15, "acceptASLR": False, "acceptSEH":False, "acceptSystemWin":False, "acceptCFG":False, "checkForBadBytes":True,"badBytes":b'', "lookupMod":sys.argv[1], "regsExc":[]}
+opt={"bImgExc":True,"bSystemDlls":True,"bOtherDlls":True,"bImgExcExtracted":True,"bSystemDllsExtracted":True,"bOtherDllsExtracted":True, "bx86Extracted":False,"bx64Extracted":False, "bx86Get":True, "bx64Get":True, "bx86Print":True, "bx64Print":True, "lenMax":0x10,"bytesMax":0x15, "acceptASLR": False, "acceptSEH":False, "acceptSystemWin":False, "acceptCFG":False, "checkForBadBytes":True,"badBytes":b'', "lookupMod":sys.argv[1], "regsExc":[], "researcherMode":False, "maxChainAttempts":20, "timeout":0x99999999}
 # "badBytes":b'\x93\x09\x11\x02\x03\x66\x05\x06\x03\x16
 # "regsExc":["eax","ebx","ecx"]
 
@@ -85,6 +88,10 @@ my_stdout = open( 1, "w", buffering = 400000 )
 sys.stdout = my_stdout
 sys.stdout=oldsysOut
 configOptions={}
+
+THIS_DIR   = Path(__file__).resolve().parent 
+OUTPUT_DIR = THIS_DIR / "output"			
+OUTPUT_DIR.mkdir(exist_ok=True)
 
 myPE=""
 peName=""
@@ -357,10 +364,10 @@ def Extraction():
 			dp(traceback.format_exc())
 
 	except Exception as e:
-		dp ("problem2")
+		print ("problem2")
 
-		dp (e)
-		dp(traceback.format_exc())
+		print (e)
+		print(traceback.format_exc())
 
 def findDLL_IAT(dllName):
 	# dp ("findDLL_IAT", dllName)
@@ -891,6 +898,15 @@ class doGadgets:
 		# specialMissing.add(name)
 		# self.do_unusual(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False)		
 
+	def do64(self, name: str, testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL,c2=False):
+		check1=raw.hex()+hex(saveq)
+		if (check1) not in fg.junkBox and "ret" != name:
+			do = f"do64_{name}"
+			if hasattr(self, do) and callable(func := getattr(self, do)):
+				obj=func(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2)
+				dp("do func64", name, hex(offL[lGoBack]))
+				fg.junkBox64.add(check1)
+
 	def do2(self, name: str, testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL,c2=False):
 		check1=raw.hex()+hex(saveq)
 		if (check1) not in fg.junkBox:
@@ -1338,6 +1354,7 @@ class doGadgets:
 		elif re.match( r'^dec edx', testVal, re.M|re.I):
 			addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, edx, fg.decEDX)
 	
+
 	def do_adc(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do_add(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
 
@@ -1826,8 +1843,6 @@ class doGadgets:
 				pass
 
 
-
-
 	def do_popal(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.popal)
 	def do_popad(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
@@ -1939,14 +1954,7 @@ class doGadgets:
 				dp("go func64", name, hex(offL[lGoBack]))
 				fg.junkBox64.add(check1)
 
-	def do64(self, name: str, testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL,c2=False):
-		check1=raw.hex()+hex(saveq)
-		if (check1) not in fg.junkBox and "ret" != name:
-			do = f"do64_{name}"
-			if hasattr(self, do) and callable(func := getattr(self, do)):
-				obj=func(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2)
-				dp("do func64", name, hex(offL[lGoBack]))
-				fg.junkBox64.add(check1)	
+
 	def go64_jmp(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2):
 		if "qword" not in testVal:
 			if re.match( r'\bjmp rsi\b', testVal, re.M|re.I):
@@ -2633,6 +2641,11 @@ class doGadgets:
 		elif re.match( r'^dec r15', testVal, re.M|re.I):
 			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.decR15)
 	
+
+
+	def do64_syscall(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
+		addGadget(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.syscall64)
+
 	def do64_adc(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do64_add(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
 
@@ -2644,7 +2657,7 @@ class doGadgets:
 					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.addRAX)
 				elif re.match( r'^[add|adc]+ [er]*b[x|l|h]+', testVal, re.M|re.I):
 					# print (hex(saveq), red,"testVal",yel,testVal,res, "op_str", cya, op_str,res, gre, disTiny64(raw))
-					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.addRBX,"",None,"rbx")
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.addRBX)
 				elif re.match( r'^[add|adc]+ [er]*c[x|l|h]+', testVal, re.M|re.I):
 					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.addRCX)
 				elif re.match( r'^[add|adc]+ [er]*sp', testVal, re.M|re.I):	
@@ -2710,10 +2723,10 @@ class doGadgets:
 					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR14)
 				elif re.match( r'^[add|adc]+ [dword|qword|byte|word]+ [ptr]* \[r15', testVal, re.M|re.I):
 					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.addQwordR15)
-				if "gs:[r" in testVal or "gs:[0xc0]"  in testVal:
-					if re.match( r'^[add|adc]+ [er]*[abcdsibpbx]+, [qword|dword]+ ptr [fg]+s', testVal, re.M|re.I):
-						addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.addGS)
-
+			if "gs:[r" in testVal or "gs:[0xc0]"  in testVal:
+				if re.match( r'^[add|adc]+ [er]*[abcdsibpbx]+, [qword|dword]+ ptr gs', testVal, re.M|re.I):
+					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.addGS)
+			
 	def do64_sub(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		if not re.match( r'^[sub|sbb]+ [qword|dword]+ ptr \[eax\], eax|[sub|sbb]+ [qword|dword]+ ptr \[ebx\], ebx|[sub|sbb]+ [qword|dword]+ ptr \[ecx\], ecx|[sub|sbb]+ [qword|dword]+ ptr \[edx\], edx|[sub|sbb]+ [qword|dword]+ ptr \[esi\], esi|[sub|sbb]+ [qword|dword]+ ptr \[edi\], edi|[sub|sbb]+ [qword|dword]+ ptr \[ebp\], ebp|[sub|sbb]+ [qword|dword]+ ptr \[esp\], esp|[sub|sbb]+ [byte|word|dword]+ ptr \[eax\], al|[sub|sbb]+ [byte|word|dword]+ ptr \[ebx\], bl|[sub|sbb]+ [byte|word|dword]+ ptr \[ecx\], cl|[sub|sbb]+ [byte|word|dword]+ ptr \[edx\], dl|[sub|sbb]+  [byte|word|dword]+ ptr \[eax ]+ eax\], al|[sub|sbb]+  [byte|word|dword]+ ptr \[ebx \+ ebx\], bl|[sub|sbb]+  [byte|word|dword]+ ptr \[ecx \+ ecx\], cl|[sub|sbb]+  [byte|word|dword]+ ptr \[edx \+ edx\], dl|[sub|sbb]+ [byte|word|dword]+ ptr \[e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+\]|[sub|sbb]+ [byte|word|dword]+ ptr \[e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+\]|[sub|sbb]+ [byte|word|dword]+ ptr \[e[abcdxsdbpi]+ [\+|\-]+ e[abcdxsdbpi]+ [\+|\-]+ 0x', testVal, re.M|re.I):
 			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.sub64)
@@ -2788,6 +2801,7 @@ class doGadgets:
 				if "gs:[r" in testVal or "gs:[0xc0]"  in testVal:
 					if re.match( r'^[sub|sbb]+ [er]*[abcdsibpbx]+, [qword|dword]+ ptr gs', testVal, re.M|re.I):
 						addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.subGS)
+
 
 	def do64_sbb(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do64_sub(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
@@ -3066,83 +3080,116 @@ class doGadgets:
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR14)
 			elif re.match( r'^xor [qword|dword]+ ptr \[r15', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.xorR15)	
-			if "gs:[e" in testVal or "gs:[0xc0]"  in testVal:
-				if re.match( r'^xor [er]*[abcdsibpbx189012345]+, [qword|dword]+ ptr gs', testVal, re.M|re.I):
-					addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xorGS)
+		if "gs:[e" in testVal or "gs:[0xc0]"  in testVal:
+			if re.match( r'^xor [er]*[abcdsibpbx189012345]+, [qword|dword]+ ptr gs', testVal, re.M|re.I):
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.xorGS)
 	
 	def do64_mov(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		if re.match( r'^mov [er]*[abcds89012345]+[xlspbi]+, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-			# if not re.match( r'^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]*|^mov [er]*b[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*b[x|l|h]+|^mov [er]*c[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*c[x|l|h]*|^mov [er]*d[x|l|h]+, [dword|qword|byte|word]+ [ptr]* \[[er]*d[x|l|h]+|^mov [er]*di, [dword|qword|byte|word]+ [ptr]* \[[er]*di|^mov [er]*si, [dword|qword|byte|word]+ [ptr]* \[[er]*si|^mov [er]*sp, [dword|qword|byte|word]+ [ptr]* \[[er]*sp|^mov [er]*bp, [dword|qword|byte|word]+ [ptr]* \[[er]*bp|mov [er]*a[x|l]+, [er]*a[x|l|h]+|mov [er]*b[x|l]+, [er]*b[x|l|h]+|mov [er]*c[x|l|h]+, [er]*c[x|l|h]+|mov [er]*d[x|l]+, [er]*d[x|l|h]+|mov [er]*di, [er]*di|mov [er]*si, [er]*si|mov [er]*bp, [er]*bp+|mov [er]*sp, [er]*sp|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h] [+|-]+|^mov [dword|qword|byte|word]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]* [+|-]+ |^mov [er]*[abcdspb01234589]+[x|l|i|p]+, [dword|qword|byte|word]+ ptr \[0x|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]+ [+|-]+|^mov [er]*[abcdspb01234589]+[x|l|i|p]+, es', testVal, re.M|re.I):
+		if re.match( r'^mov [er]*[abcds89012345]+[xlspbi]*, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			# if not re.match( r'^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]*|^mov [er]*b[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*b[x|l|h]+|^mov [er]*c[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*c[x|l|h]*|^mov [er]*d[x|l|h]+, [dword|qword|byte|word]+ [ptr]* \[[er]*d[x|l|h]+|^mov [er]*di, [dword|qword|byte|word]+ [ptr]* \[[er]*di|^mov [er]*si, [dword|qword|byte|word]+ [ptr]* \[[er]*si|^mov [er]*sp, [dword|qword|byte|word]+ [ptr]* \[[er]*sp|^mov [er]*bp, [dword|qword|byte|word]+ [ptr]* \[[er]*bp|mov [er]*a[x|l]+, [er]*a[x|l|h]+|mov [er]*b[x|l]+, [er]*b[x|l|h]+|mov [er]*c[x|l|h]+, [er]*c[x|l|h]+|mov [er]*d[x|l]+, [er]*d[x|l|h]+|mov [er]*di, [er]*di|mov [er]*si, [er]*si|mov [er]*bp, [er]*bp+|mov [er]*sp, [er]*sp|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h] [+|-]+|^mov [dword|qword|byte|word]+ ptr \[[er]*[abcdrspb01234589]+[x|l|h|i|p]* [+|-]+ |^mov [er]*[abcdrspb01234589]+[x|l|i|p]+, [dword|qword|byte|word]+ ptr \[0x|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]+ [+|-]+|^mov [er]*[abcdrspb01234589]+[x|l|i|p]+, es', testVal, re.M|re.I):
+			
 			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.mov64)
-			if re.match( r'^mov [er]*a[x|l]+, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			if re.match( r'^mov [er]*a[x|l]+, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.movRAX)
-			elif re.match( r'^mov [er]*b[x|l]+, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*b[x|l]+, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.movRBX)
-			elif re.match( r'^mov [er]*c[x|l]+, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*c[x|l]+, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.movRCX)
-			elif re.match( r'^mov [er]*d[x|l]+, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*d[x|l]+, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.movRDX)
-			elif re.match( r'^mov [er]*si, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*si, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.movRSI)
-			elif re.match( r'^mov [er]*di, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*di, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.movRDI)
-			elif re.match( r'^mov [er]*sp, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*sp, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movRSP)
-			elif re.match( r'^mov [er]*bp, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*bp, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.movRBP)
-			elif re.match( r'^mov r8, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			if re.match(r'^mov r8, [er]*[abcdrspb01234589x]+[xlhip]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.movR8)
-			elif re.match( r'^mov r9, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov r9, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.movR9)
-			elif re.match( r'^mov r10, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov r10, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.movR10)
-			elif re.match( r'^mov r11, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov r11, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.movR11)
-			elif re.match( r'^mov r12, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov r12, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.movR12)
-			elif re.match( r'^mov r13, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov r13, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.movR13)
-			elif re.match( r'^mov r14, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov r14, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movR14)
-			elif re.match( r'^mov r15, [er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov r15, [er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movR15)	
 		
-		elif re.match( r'^mov [er]*[abcds01234589]+[xlspbi]+, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
-			# if not re.match( r'^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]*|^mov [er]*b[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*b[x|l|h]+|^mov [er]*c[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*c[x|l|h]*|^mov [er]*d[x|l|h]+, [dword|qword|byte|word]+ [ptr]* \[[er]*d[x|l|h]+|^mov [er]*di, [dword|qword|byte|word]+ [ptr]* \[[er]*di|^mov [er]*si, [dword|qword|byte|word]+ [ptr]* \[[er]*si|^mov [er]*sp, [dword|qword|byte|word]+ [ptr]* \[[er]*sp|^mov [er]*bp, [dword|qword|byte|word]+ [ptr]* \[[er]*bp|mov [er]*a[x|l]+, [er]*a[x|l|h]+|mov [er]*b[x|l]+, [er]*b[x|l|h]+|mov [er]*c[x|l|h]+, [er]*c[x|l|h]+|mov [er]*d[x|l]+, [er]*d[x|l|h]+|mov [er]*di, [er]*di|mov [er]*si, [er]*si|mov [er]*bp, [er]*bp+|mov [er]*sp, [er]*sp|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h] [+|-]+|^mov [dword|qword|byte|word]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]* [+|-]+ |^mov [er]*[abcdspb01234589]+[x|l|i|p]+, [dword|qword|byte|word]+ ptr \[0x|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]+ [+|-]+|^mov [er]*[abcdspb01234589]+[x|l|i|p]+, es', testVal, re.M|re.I):
+		elif re.match( r'^mov [er]*[abcds01234589]+[xlspbi]*, [qword|dword]+ ptr \[[er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			# if not re.match( r'^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]*|^mov [er]*b[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*b[x|l|h]+|^mov [er]*c[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*c[x|l|h]*|^mov [er]*d[x|l|h]+, [dword|qword|byte|word]+ [ptr]* \[[er]*d[x|l|h]+|^mov [er]*di, [dword|qword|byte|word]+ [ptr]* \[[er]*di|^mov [er]*si, [dword|qword|byte|word]+ [ptr]* \[[er]*si|^mov [er]*sp, [dword|qword|byte|word]+ [ptr]* \[[er]*sp|^mov [er]*bp, [dword|qword|byte|word]+ [ptr]* \[[er]*bp|mov [er]*a[x|l]+, [er]*a[x|l|h]+|mov [er]*b[x|l]+, [er]*b[x|l|h]+|mov [er]*c[x|l|h]+, [er]*c[x|l|h]+|mov [er]*d[x|l]+, [er]*d[x|l|h]+|mov [er]*di, [er]*di|mov [er]*si, [er]*si|mov [er]*bp, [er]*bp+|mov [er]*sp, [er]*sp|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h] [+|-]+|^mov [dword|qword|byte|word]+ ptr \[[er]*[abcdrspb01234589]+[x|l|h|i|p]* [+|-]+ |^mov [er]*[abcdrspb01234589]+[x|l|i|p]+, [dword|qword|byte|word]+ ptr \[0x|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]+ [+|-]+|^mov [er]*[abcdrspb01234589]+[x|l|i|p]+, es', testVal, re.M|re.I):
 			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.movQword2)
-			#   mov eax, [qword|dword]+ ptr [eax]
-			if re.match( r'^mov [er]*a[x|l]+, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			if re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr \[[er]*a[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.movQword2RAX)
-			elif re.match( r'^mov [er]*b[x|l]+, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr \[[er]*b[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.movQword2RBX)
-			elif re.match( r'^mov [er]*c[x|l]+, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr \[[er]*c[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.movQword2RCX)
-			elif re.match( r'^mov [er]*d[x|l]+, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr \[[er]*d[x|l|h|i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.movQword2RDX)
-			elif re.match( r'^mov [er]*si, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr \[[er]*s[i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.movQword2RSI)
-			elif re.match( r'^mov [er]*di, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr \[[er]*d[i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.movQword2RDI)
-			elif re.match( r'^mov [er]*sp, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr \[[er]*s[i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movQword2RSP)
-			elif re.match( r'^mov [er]*bp, [qword|dword]+ ptr \[[er]*[abcdspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr \[[er]*b[i|p]*', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.movQword2RBP)
-			elif re.match( r'^mov r8, [qword|dword]+ ptr', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.movQword2R8)
-			elif re.match( r'^mov r9, [qword|dword]+ ptr', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.movQword2R9)
-			elif re.match( r'^mov r10, [qword|dword]+ ptr', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.movQword2R10)
-			elif re.match( r'^mov r11, [qword|dword]+ ptr', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.movQword2R11)
-			elif re.match( r'^mov r12, [qword|dword]+ ptr', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.movQword2R12)
-			elif re.match( r'^mov r13, [qword|dword]+ ptr', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]*ptr', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.movQword2R13)
-			elif re.match( r'^mov r14, [qword|dword]+ ptr', testVal, re.M|re.I):
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movQword2R14)
-			elif re.match( r'^mov r15, [qword|dword]+ ptr', testVal, re.M|re.I):
-				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movQword2R15)	
+			elif re.match( r'^mov [er]*[abcdrspb01234589x]+, [qword|dword]* ptr', testVal, re.M|re.I):
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movQword2R15)
+			#   mov eax, [qword|dword]+ ptr [eax]
+			# if re.match( r'^mov [er]*a[x|l]+, [qword|dword]+ ptr \[[er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rax", fg.movQword2RAX)
+			# elif re.match( r'^mov [er]*b[x|l]+, [qword|dword]+ ptr \[[er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbx", fg.movQword2RBX)
+			# elif re.match( r'^mov [er]*c[x|l]+, [qword|dword]+ ptr \[[er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rcx", fg.movQword2RCX)
+			# elif re.match( r'^mov [er]*d[x|l]+, [qword|dword]+ ptr \[[er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdx", fg.movQword2RDX)
+			# elif re.match( r'^mov [er]*si, [qword|dword]+ ptr \[[er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsi", fg.movQword2RSI)
+			# elif re.match( r'^mov [er]*di, [qword|dword]+ ptr \[[er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rdi", fg.movQword2RDI)
+			# elif re.match( r'^mov [er]*sp, [qword|dword]+ ptr \[[er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movQword2RSP)
+			# elif re.match( r'^mov [er]*bp, [qword|dword]+ ptr \[[er]*[abcdrspb01234589]+[x|l|h|i|p]*', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rbp", fg.movQword2RBP)
+			# elif re.match( r'^mov r8, [qword|dword]+ ptr', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r8", fg.movQword2R8)
+			# elif re.match( r'^mov r9, [qword|dword]+ ptr', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r9", fg.movQword2R9)
+			# elif re.match( r'^mov r10, [qword|dword]+ ptr', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r10", fg.movQword2R10)
+			# elif re.match( r'^mov r11, [qword|dword]+ ptr', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r11", fg.movQword2R11)
+			# elif re.match( r'^mov r12, [qword|dword]+ ptr', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r12", fg.movQword2R12)
+			# elif re.match( r'^mov r13, [qword|dword]+ ptr', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r13", fg.movQword2R13)
+			# elif re.match( r'^mov r14, [qword|dword]+ ptr', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movQword2R14)
+			# elif re.match( r'^mov r15, [qword|dword]+ ptr', testVal, re.M|re.I):
+			# 	addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movQword2R15)	
 		elif re.match( r'^mov [er]*[abcds]+[xlspbi]+, [0-9]*[0x]*[0-9a-f]+', testVal, re.M|re.I):
 			# if not re.match( r'^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]*|^mov [er]*b[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*b[x|l|h]+|^mov [er]*c[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*c[x|l|h]*|^mov [er]*d[x|l|h]+, [dword|qword|byte|word]+ [ptr]* \[[er]*d[x|l|h]+|^mov [er]*di, [dword|qword|byte|word]+ [ptr]* \[[er]*di|^mov [er]*si, [dword|qword|byte|word]+ [ptr]* \[[er]*si|^mov [er]*sp, [dword|qword|byte|word]+ [ptr]* \[[er]*sp|^mov [er]*bp, [dword|qword|byte|word]+ [ptr]* \[[er]*bp|mov [er]*a[x|l]+, [er]*a[x|l|h]+|mov [er]*b[x|l]+, [er]*b[x|l|h]+|mov [er]*c[x|l|h]+, [er]*c[x|l|h]+|mov [er]*d[x|l]+, [er]*d[x|l|h]+|mov [er]*di, [er]*di|mov [er]*si, [er]*si|mov [er]*bp, [er]*bp+|mov [er]*sp, [er]*sp|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h] [+|-]+|^mov [dword|qword|byte|word]+ ptr \[[er]*[abcdspb]+[x|l|h|i|p]+ [+|-]+ |^mov [er]*[abcdspb]+[x|l|i|p]+, [dword|qword|byte|word]+ ptr \[0x|^mov [er]*a[x|l]+, [dword|qword|byte|word]+ [ptr]* \[[er]*a[x|l|h]+ [+|-]+|^mov [er]*[abcdspb]+[x|l|i|p]+, es', testVal, re.M|re.I):
 			#add
@@ -3232,21 +3279,15 @@ class doGadgets:
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r14", fg.movR14)
 			elif re.match( r'^mov [qword|dword]+ ptr \[r15.*\], [er]*[abcdsb01234589]+|^mov [qword|dword]+ ptr \[r15.*\], [dword|qword|word|byte]* ptr \[[er]*[abcdsb01234589]+', testVal, re.M|re.I):
 				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "r15", fg.movR15)	
-		if "gs:[e" in testVal or "gs:[0xc0]" in testVal:
+		if "gs:[r" in testVal or "gs:[0xc0]" in testVal:
 			if re.match( r'^mov [er]*[abcdsibpbx]+, [qword|dword]+ ptr gs', testVal, re.M|re.I):
-				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, "rsp", fg.movGSSpecial)
+				addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.movGSSpecial)
 
 
-	def do64_popal(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.popal64)
-	def do64_popad(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		self.do64_popal(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
-	
-	def do64_pushal(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.pushad64)
-	def do64_pushad(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
-		self.do64_pushal(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
-	
+	def do64_rdgsbase(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
+		if re.match( r'rdgsbase', testVal, re.M|re.I):
+			addGadget64(saveq, pe,n,offL[lGoBack],op_str, raw, n, c2, None, fg.rdgsbase64)
+
 	def do64_sal(self,testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL, op_strL, c2=False):
 		self.do64_shl(testVal,saveq, offL,op_str,lGoBack, n, raw,mnemonicL,  op_strL, c2)
 
@@ -4503,76 +4544,81 @@ def startFunc(args):
 def generateArgsParallel():
 	dp ("generateArgsParallel", hex(opt["bytesMax"]))
 	# incrementAmount=8000
-	myArgs=[]
-	totalSize= totalIncrementAmount= totalNumIncrements=0
-	for d in pe:
-		dp (d)
-		if not pe[d].skipDll:
-			dp ("not")
-			size=len(pe[d].data)
-			totalSize+=size
-			dp (totalSize)
+	try:
+		myArgs=[]
+		totalSize= totalIncrementAmount= totalNumIncrements=0
+		for d in pe:
+			dp (d)
+			if not pe[d].skipDll:
+				dp ("not")
+				size=len(pe[d].data)
+				totalSize+=size
+				dp (totalSize)
 
-	num = totalSize/(cpu_count-1)
-	totalIncrementAmount=int(num)
-	# if len(pe) > 1 and totalIncrementAmount <2000:
-	# 	totalIncrementAmount=2000
-	totalNumIncrements=totalSize/totalIncrementAmount
-	totalNumIncrements=math.ceil(totalNumIncrements)
+		num = totalSize/(cpu_count-1)
+		totalIncrementAmount=int(num)
+		# if len(pe) > 1 and totalIncrementAmount <2000:
+		# 	totalIncrementAmount=2000
+		# print ("totalSize, totalIncrementAmount",totalSize,totalIncrementAmount)
+		totalNumIncrements=totalSize/totalIncrementAmount
+		totalNumIncrements=math.ceil(totalNumIncrements)
 
-	if totalSize==0:
-		print(red+"No executable code extracted! Program exiting",res)
-		exit()
-	dp ("totalSize", totalSize,"totalIncrementAmount", totalIncrementAmount, "totalNumIncrements", totalNumIncrements)
-	for d in pe:
-		if not pe[d].skipDll:#not pe[d].systemWin:
-			size=len(pe[d].data)
-			# print (cya+"size", size, res)
-			if size ==0 or size==1:
-				# print ("doing continue")
-				continue
-			num = size/(cpu_count-1)
-			incrementAmount=int(num)
-			numIncrements=size/incrementAmount
-			numIncrements=math.ceil(numIncrements)
-			if numIncrements >= cpu_count-1:
-				numIncrements=cpu_count-1
+		if totalSize==0:
+			print(red+"No executable code extracted! Program exiting",res)
+			exit()
+		dp ("totalSize", totalSize,"totalIncrementAmount", totalIncrementAmount, "totalNumIncrements", totalNumIncrements)
+		for d in pe:
+			if not pe[d].skipDll:#not pe[d].systemWin:
+				size=len(pe[d].data)
+				# print (cya+"size", size, res)
+				if size ==0 or size==1:
+					# print ("doing continue")
+					continue
+				num = size/(cpu_count-1)
+				incrementAmount=int(num)
+				numIncrements=size/incrementAmount
+				numIncrements=math.ceil(numIncrements)
+				if numIncrements >= cpu_count-1:
+					numIncrements=cpu_count-1
 
-			dp (d,"?****** if size (.4)", size, round(size*(.4)), "totalIncrementAmount ", totalIncrementAmount)
-			# if size*(.4) > totalIncrementAmount:
-			if  totalIncrementAmount > size*(.4):
+				dp (d,"?****** if size (.4)", size, round(size*(.4)), "totalIncrementAmount ", totalIncrementAmount)
+				# if size*(.4) > totalIncrementAmount:
+				if  totalIncrementAmount > size*(.4):
 
-				if totalIncrementAmount > size*(.7):
-					dp (d, "****** if size (.7)", size, round(size*(.7)), "totalIncrementAmount ", totalIncrementAmount)
-					numIncrements=1
-					incrementAmount=size
-				else:
-					numIncrements=2
-					incrementAmount=math.ceil(size/2)
-			vStart=0
-			vEnd=incrementAmount+5
-			end=incrementAmount+5
-			nStart=0
-			nEnd=incrementAmount
-			dp ("system false",d, pe[d].systemWin, vStart, vEnd )
-			t=0
-			for x in range (numIncrements):
-				dp ("numIncrements", numIncrements, t)
-				dp ("\tadding", d, opt["bytesMax"], vStart,vEnd,pe[d],rop, "incrementAmount", incrementAmount, "totalIncrementAmount", totalIncrementAmount)
-				myArgs.append((opt["bytesMax"], vStart,vEnd,pe,rop,d))
-				nStart=nStart+incrementAmount
-				nEnd=nEnd+incrementAmount
-				# vStart=vStart+incrementAmount-5
-				# vEnd=vEnd+5+incrementAmount
-				vStart=nStart-5
-				vEnd=nEnd+5
-				if vEnd >= size:
-					vEnd=size-1
-				t+=1
+					if totalIncrementAmount > size*(.7):
+						dp (d, "****** if size (.7)", size, round(size*(.7)), "totalIncrementAmount ", totalIncrementAmount)
+						numIncrements=1
+						incrementAmount=size
+					else:
+						numIncrements=2
+						incrementAmount=math.ceil(size/2)
+				vStart=0
+				vEnd=incrementAmount+5
+				end=incrementAmount+5
+				nStart=0
+				nEnd=incrementAmount
+				dp ("system false",d, pe[d].systemWin, vStart, vEnd )
+				t=0
+				for x in range (numIncrements):
+					dp ("numIncrements", numIncrements, t)
+					dp ("\tadding", d, opt["bytesMax"], vStart,vEnd,pe[d],rop, "incrementAmount", incrementAmount, "totalIncrementAmount", totalIncrementAmount)
+					myArgs.append((opt["bytesMax"], vStart,vEnd,pe,rop,d))
+					nStart=nStart+incrementAmount
+					nEnd=nEnd+incrementAmount
+					# vStart=vStart+incrementAmount-5
+					# vEnd=vEnd+5+incrementAmount
+					vStart=nStart-5
+					vEnd=nEnd+5
+					if vEnd >= size:
+						vEnd=size-1
+					t+=1
 
-	dp ("myArgs", myArgs)
-	# input()
-	return myArgs
+		dp ("myArgs", myArgs)
+		# input()
+		return myArgs
+	except Exception as e:
+		print("ERROR2: %s" % e)
+		print(traceback.format_exc())
 cpu_count = multiprocessing.cpu_count()
 
 def startGet_Op_Ret_Parallel64():
@@ -4615,7 +4661,6 @@ def startGet_Op_Ret_Parallel():
 	
 	myArgs= generateArgsParallel()
 	# dp ("myArgs _startGet_Op_Ret_Parallel", myArgs)
-
 	pool = multiprocessing.Pool(cpu_count-1)
 	out=pool.map(get_OP_RET_parallel, myArgs)
 	# out=pool.map(get_OP_RET_parallel64, myArgs)
@@ -4629,7 +4674,6 @@ def startGet_Op_Ret_Parallel():
 	for foundG in out:
 		if type(foundG) != None:
 			KingFG.merge(foundG)
-
 	# dp ("king", KingFG)
 	kingAfter=len(KingFG.pops)
 	# dp ("\nAFTER MERGE pops", kingAfter)
@@ -5267,6 +5311,7 @@ def findGeneric(instruction,reg,bad,length1, excludeRegs,espDesiredMovement=0):
 		return False,0
 
 
+
 def findGenericC2AgnosticJmpCall(instruction,reg,bad,length1, excludeRegs,espDesiredMovement=0):
 	# print ("findGeneric", instruction, reg)
 	bExists, myDict=fg.getFg(instruction,reg)
@@ -5692,7 +5737,6 @@ def findXchg(op2, reg,bad,length1, excludeRegs,espDesiredMovement=0):
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and ((myDict[p].op2==op2 and myDict[p].op1==reg ) or (myDict[p].op1==op2 and myDict[p].op2==reg )):
 					dp ("found ",instruction, reg)
 					return True,p
-			dp ("findXchg returning False" )
 			return False,0
 		if not length1: # was else
 			for p in myDict:
@@ -5725,7 +5769,6 @@ def findGenericOp1Op2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredM
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op1==op1 and myDict[p].op2==op2:
 					dp ("found ",instruction, reg)
 					return True,p
-			dp ("findGeneric returning False" )
 			return False,0
 		if not length1: # was else
 			for p in myDict:
@@ -5745,26 +5788,30 @@ def findGenericOp1Op2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredM
 		# dp ("return false ", instruction)
 		return False,0
 
-def findGenericOp2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMovement=0,isVal=False):
-	dp ("instruction", instruction, "reg", reg)
-	dp ("findGeneric", instruction+reg)
+def findGenericOp2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMovement=0,isVal=False,gSetID=None,gTrackObj=None):
+	gTrackObj,gSetID =gCheck(gTrackObj,gSetID)
+
+	# print ("findGenericOp2", instruction+reg, gSetID,gTrackObj)
 	bExists, myDict=fg.getFg(instruction,reg)
+
+	# print ("checking", instruction, reg,  bExists)
+	# if bExists:
+	# 	print ("it exists")
 	if bExists:
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
-				# if op2=="edi" and reg=="esi" and myDict[p].length ==1:
-				# 	print (yel,disOffset(p), res,"\t", reg, op2, myDict[p].op1, myDict[p].op2, myDict[p].opcode)
+				# test=disOffset(p,64)
+				# if op2=="rbx" and reg=="r8":
+				# 	pass
+				# 	print (yel,disOffset(p,64), res,"\t", reg, op2, myDict[p].op1, myDict[p].op2, myDict[p].opcode)
 				tellWhy=False
-				# if instruction=="add":
-				# 	tellWhy=True
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal,tellWhy)
-				# out=disOffset(p)
-				# if instruction=="add" and myDict[p].length==1 and (reg in out) and op2 in out :
-				# 	print ("\t\t",disOffset(p), "freeBad", freeBad, "myDict[p].length",myDict[p].length, "myDict[p].op2",myDict[p].op2)
-				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
-					# print (cya,"found ",p, disOffset(p), instruction, reg, res)
+				# out=disOffset(p,64)
+				
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2 and myDict[p].op1==reg and not gTrackObj.hasBeenUsed(gSetID,p,5):
+					# print (cya,"found ",p, disOffset(p,64), instruction, reg, res,yel,myDict[p].op1, myDict[p].op2,res)
+					gTrackObj.setG(gSetID, [p])
 					return True,p
-			dp ("findGeneric2 returning False" )
 			return False,0
 		if not length1: # was else
 			for p in myDict:
@@ -5786,16 +5833,18 @@ def findGenericOp2(instruction, op2, reg,bad,length1, excludeRegs,espDesiredMove
 		return False,0
 
 def findGeneric64(instruction,fgReg,reg,bad,length1, excludeRegs,espDesiredMovement=0,isVal=False):
-	dp ("findGeneric64", instruction, reg)
+	# print (red,"findGeneric64", instruction, reg,res)
 	bExists, myDict=fg.getFg(instruction,fgReg)
 	if bExists:
+		# print ("It exists", instruction, fgReg, len(myDict))
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
-				# myTest=disMini(myDict[p].raw, myDict[p].offset,64)
-				# print (myTest, myDict[p].length, myDict[p].opcode, red, freeBad,res)
+				myTest=disMini(myDict[p].raw, myDict[p].offset,64)
+				# if "r10" in myTest:
+				# 	print (gre,myTest, myDict[p].length, myDict[p].opcode, red, freeBad,res)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
-					dp ("found ",instruction, reg) 
+					# print ("found ",instruction, reg) 
 					return True,p
 			return False,0
 		if not length1: # was else
@@ -5818,26 +5867,98 @@ def findGeneric64(instruction,fgReg,reg,bad,length1, excludeRegs,espDesiredMovem
 		return False,0
 
 
-def findAdd64(instruction,fgReg, op2List, bad,length1, excludeRegs,espDesiredMovement=0,isVal=False):
-	dp ("instruction", instruction, "fgReg", fgReg, "op2List", op2List)
+
+def transfer64(instruction,fgReg, op1List, op2List, bad,length1, excludeRegs,noGood,comment, notSame,espDesiredMovement=0,isVal=False):
+	# print("transfer64", fgReg, "op2List",op2List, "op1List",op1List)
 	bExists, myDict=fg.getFg(instruction,fgReg)
+	# if not bExists:
+	# 	print (mag,"It does not exist",res,fgReg)
 	if bExists:
-		# print ("It exists")
+		# print (gre,"It exists",res)
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 				myTest=disMini(myDict[p].raw, myDict[p].offset,64)
-				for op2 in op2List:
-					print (myTest, "-","fgReg", yel,fgReg,res,"myDict[p].op1", red,myDict[p].op1, res,"myDict[p].op2", red,myDict[p].op2, res,"desired op2:", yel,op2, res)
-					if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
-						print (gre,"found",res)
-						return True,p
-			dp ("findGeneric2 returning False" )
-			return False,0
-	return False,0
+				# if espDesiredMovement==22:
+				# 	print ("targets:", mag,op1List,cya,op2List,  gre,myTest, res,"-","fgReg", yel,fgReg,res,"myDict[p].op1", red,myDict[p].op1, res,"myDict[p].op2", red,myDict[p].op2, res,"desired op2:", cya,op2List, res, "\n")
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2 in op2List and myDict[p].op1 in op1List :
+					# print (gre,"found!\n\n",res)
+					# print (myDict[p].op1,myDict[p].op2, noGood, type(noGood))
+					accpetable=True
+					if notSame:
+						if regs64.to64(myDict[p].op1) == regs64.to64(myDict[p].op2):
+							accpetable=False
+					if (myDict[p].op1+myDict[p].op2 not in noGood and accpetable):
+						chP=chainObj(p, comment, [])
+						# print (gre, "returning true", res)
+						return True,p,chP,myDict[p].op1,myDict[p].op2
+			return False,0,0,0,0
+
+	return False,0,0,0,0
+
+def findAdd64(instruction,fgReg, op1List, op2List, bad,length1, excludeRegs,noGood,comment, notSame,espDesiredMovement=0,isVal=False):
+	# print("findAdd64", fgReg, "op2List",op2List, "op1List",op1List)
+	bExists, myDict=fg.getFg(instruction,fgReg)
+	# if not bExists:
+		# print (mag,"It does not exist",res,fgReg)
+	if bExists:
+		# print (gre,"It exists",res)
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
+			for p in myDict:
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				# myTest=disMini(myDict[p].raw, myDict[p].offset,64)
+				# if espDesiredMovement ==4:
+					# print ("targets:", mag,op1List,cya,op2List,  gre,myTest, res,"-","fgReg", yel,fgReg,res,"myDict[p].op1", red,myDict[p].op1, res,"myDict[p].op2", red,myDict[p].op2, res,"desired op2:", cya,op2List, res, "\n")
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2 in op2List and myDict[p].op1 in op1List :
+					# print (gre,"found!\n\n",res)
+					# print (myDict[p].op1,myDict[p].op2, noGood, type(noGood))
+					accpetable=True
+					if notSame:
+						if regs64.to64(myDict[p].op1) == regs64.to64(myDict[p].op2):
+							accpetable=False
+					if myDict[p].op1+myDict[p].op2 not in noGood and accpetable:
+						chP=chainObj(p, comment, [])
+						return True,p,chP,myDict[p].op1,myDict[p].op2
+			return False,0,0,0,0
+	return False,0,0,0,0
+
+def findmovQword2(instruction,fgReg, op1List,bad,length1, excludeRegs,comment,isVal=False):
+	# print (gre,"findmovQword2",res, instruction, "fgReg", fgReg, "op1List", op1List, "comment", comment, mag,isVal,res)
+	bExists, myDict=fg.getFg(instruction,fgReg)
+	if type(op1List)==str:
+		op1List=[op1List]
+		op1List=set(op1List)
+	# if not bExists:
+		# print (gre,"It does not exist", "length1",res, length1, instruction,fgReg)
+	if bExists:
+		# print ("It exists", "length1", length1)
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
+			for p in myDict:
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+				myTest=disMini(myDict[p].raw, myDict[p].offset,64)
+				# if " qword ptr [r9]" in myTest:
+				# 	print ("\t",hex(myDict[p].offset), myTest, red,"- myDict[p].op2",yel, myDict[p].op2, op1List, red,"fgReg",res, fgReg, "-", red,"freeBad", res,freeBad, gre,"length1",res,myDict[p].length, gre,"myDict[p].opcode",res,myDict[p].opcode  )
+					# pass
+				# print (mag,myTest, yel,"-",gre,"fgReg", yel,fgReg,res,"myDict[p].op1", red,myDict[p].op1, res,"myDict[p].op2", red,myDict[p].op2, res,"\ndesired op1:", yel,op1List, "desired fgReg:", yel,fgReg, red,red,hex(myDict[p].offset), res)
+				# print (op1List, cya,myDict[p].op1,res)
+				# if myDict[p].op1 in op1List:
+				# 	print (mag,"\tmatch!", hex(myDict[p].offset), res)
+				# dp ("here", myDict[p].length, myDict[p].op2)
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op1 in op1List and fgReg in myDict[p].op2:
+					# print (yel,"match!!!!!!",hex(myDict[p].offset),res)
+					chP=chainObj(p, comment, [])
+					# print ("returning true2")
+					return True,p,chP, myDict[p].op1,myDict[p].op2
+			# print ('return false1')		
+			return False,0,0,0,0
+	# print ('return false2')		
+
+	return False,0,0,0,0
+
 def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDesiredMovement=0,isVal=False):
 	dp ("instruction", instruction, "reg", reg, "op2", op2)
 	dp ("findGeneric", instruction+reg)
+	# print ("fgReg", fgReg, "op2", op2, "reg", reg)
 	bExists, myDict=fg.getFg(instruction,fgReg)
 	if bExists:
 		# print ("It exists")
@@ -5845,12 +5966,14 @@ def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDes
 			for p in myDict:
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 				# myTest=disMini(myDict[p].raw, myDict[p].offset,64)
-				# print (myTest, "-", myDict[p].op2, ":", op2, "fgReg", fgReg, "-", "eg", reg )
+				# print ("\t",hex(myDict[p].offset), myTest, red,"- myDict[p].op2",yel, myDict[p].op2, op2, red,"fgReg",res, fgReg, "-", red,"reg", res,reg, red,"freeBad", res,freeBad, gre,"length1",res,myDict[p].length, gre,"myDict[p].opcode",res,myDict[p].opcode  )
+				# if myDict[p].op2==op2:
+				# 	print (mag,"\tmatch!",res)
 				# dp ("here", myDict[p].length, myDict[p].op2)
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2==op2:
 					dp ("found ",instruction, reg)
+					# print (yel,"match!!!!!!",res)
 					return True,p
-			dp ("findGeneric2 returning False" )
 			return False,0
 		if not length1: # was else
 			for p in myDict:
@@ -5871,15 +5994,22 @@ def findGenericOp264(instruction,fgReg, op2, reg,bad,length1, excludeRegs,espDes
 		dp ("it does not exist")
 		dp ("return false ", instruction)
 		return False,0
-def findMovEsp(reg,bad,length1, excludeRegs,espDesiredMovement=0):
-	dp ("findMovEsp:", reg, length1)
+def findMovEsp(reg,bad,length1, excludeRegs,espDesiredMovement=0,arch=32):
+	# print (blu,"findMovEsp:", reg, length1, arch,res)
 	bExists, myDict=fg.getFg("mov",reg)
+	
+	stackPointer="esp"
+	if arch==64:
+		stackPointer="rsp"
+
 	if bExists:
+		# print ("it exists findMovEsp")
 		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
 			for p in myDict:
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
-
-				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="esp":
+				# test=disOffset(p,64)
+				# print (test,myDict[p].length,  myDict[p].opcode, fg.rop[p].op1, fg.rop[p].op2, stackPointer,freeBad, fg.rop[p].arch)
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2==stackPointer:
 					dp ("found findMovEsp", reg)
 					return True,p
 			return False,0
@@ -5888,7 +6018,7 @@ def findMovEsp(reg,bad,length1, excludeRegs,espDesiredMovement=0):
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				freeBad=False
-				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="esp":
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2==stackPointer:
 					dp ("found findMovEsp", reg)
 					return True,p, myDict
 				dp ("findMovEsp clob")
@@ -6024,14 +6154,14 @@ def findMovDerefLeftLoadReg2(reg1,reg2,val, bad,length1, excludeRegs,comment,esp
 
 		if bFind:
 			foundP2, p2, chP = loadReg(reg2,bad,length1,excludeRegs,val,comment,False,"test")
-			print (33,excludeRegsGlobal )
+			# print (33,excludeRegsGlobal )
 			
 			if foundP2:
 				pk=pkBuild([chP,pk])
 				return bFind,pk
 			return True, pk
 
-		print (4,excludeRegsGlobal )
+		# print (4,excludeRegsGlobal )
 
 		bFind2, pk=findMovDerefLeft(reg1,reg2,bad,length1, excludeRegs,comment,espDesiredMovement)
 		if bFind2:
@@ -6147,9 +6277,6 @@ def findMovDeref2(reg1,reg2,bad,length1, excludeRegs,espDesiredMovement=0):
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
 				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and fg.rop[p].op2=="dword ptr ["+reg2+"]":
-					# print (gre,"yes", fg.rop[p].op1, fg.rop[p].op2, res)
-				 # and fg.rop[p].op1==op2:
-					# print ("yes")
 					return True,p
 			return False,0
 	return False,0
@@ -6193,7 +6320,6 @@ def findRet(bad, mode64=False):
 		bExists, myDict=fg.getFg("ret")
 	else:
 		bExists, myDict=fg.getFg("ret64")
-	# dp ("dict size", reg, len(myDict))
 	if bExists:
 		for p in myDict:
 			freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],False)
@@ -6291,7 +6417,27 @@ def findPushad(bad,length1, excludeRegs,espDesiredMovement=4):
 		# dp ("return false findpop")
 		return False,0,0
 
-def findPop(reg,bad,length1, excludeRegs,espDesiredMovement=4,isVal=False):
+
+def findSyscall64(bad,length1, excludeRegs,espDesiredMovement=4):
+	bExists, myDict=fg.getFg("syscall64")
+	if bExists:
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget, pop eax / ret
+			for p in myDict:
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
+				if myDict[p].length ==1 and myDict[p].opcode=="c3":
+					dp ("found findPushad")
+					if freeBad:
+						return True,p
+					else:
+						return False, 0
+		if not length1: # was else
+			pass
+	return False,0
+
+def findPop(reg,bad,length1, excludeRegs,espDesiredMovement=4,isVal=False,gSetID=None,gTrackObj=None,popID=None ):
+	# print ("findPop isVal gSetID gTrackObj popID", isVal, gSetID, gTrackObj, popID)
+
+	gTrackObj,gSetID =gCheck(gTrackObj,gSetID)
 	dp ("findPop", reg)
 	bExists, myDict=fg.getFg("pop",reg)
 	# dp ("dict size", reg, len(myDict))
@@ -6300,8 +6446,9 @@ def findPop(reg,bad,length1, excludeRegs,espDesiredMovement=4,isVal=False):
 			for p in myDict:
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
 
-				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad:
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and not gTrackObj.hasBeenUsed(gSetID,p,6):
 					dp ("found findpop", reg)
+					gTrackObj.setG(gSetID, [p])
 					return True,p, myDict
 			return False,0,0
 		if not length1: # was else
@@ -6323,11 +6470,15 @@ def findPop(reg,bad,length1, excludeRegs,espDesiredMovement=4,isVal=False):
 		# dp ("return false findpop")
 		return False,0,0
 
-def findAddRegReg(reg,bad,availableRegs, excludeRegs, espDesiredMovement):
+def findAddRegReg(reg,bad,availableRegs, excludeRegs, espDesiredMovement, gSetID=None,gTrackObj=None):
 	dp ("findAddRegReg",reg, "excludeRegs", excludeRegs, "availableRegs", availableRegs, "espDesiredMovement",espDesiredMovement)
+	# print ("findAddRegReg", gSetID, gTrackObj)
+
 	if None in availableRegs:
 		availableRegs.remove(None)
 	bExists,myDict=fg.getFg("add",reg)
+	gTrackObj,gSetID =gCheck(gTrackObj,gSetID)
+
 	if bExists:
 		for p in myDict:
 			# dp ("\tpossible", myDict[p].op1, myDict[p].op2, "length", myDict[p].length, hex(p))
@@ -6335,9 +6486,10 @@ def findAddRegReg(reg,bad,availableRegs, excludeRegs, espDesiredMovement):
 			if myDict[p].length ==1 and myDict[p].opcode=="c3":
 				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"])
 
-				if any(item in myDict[p].op2 for item in availableRegs) and myDict[p].op2!=reg and freeBad:
+				if any(item in myDict[p].op2 for item in availableRegs) and myDict[p].op2!=reg and freeBad and not gTrackObj.hasBeenUsed(gSetID,p,7):
 					dp ("yes!", myDict[p].op2)
 					dp ("\tadd",disMini(myDict[p].raw, myDict[p].offset))
+					gTrackObj.setG(gSetID, [p])
 					return True,p,myDict, reg, myDict[p].op2,0
 		
 		#OTHER less desirable gadgets
@@ -6353,13 +6505,12 @@ def findAddRegReg(reg,bad,availableRegs, excludeRegs, espDesiredMovement):
 			print ("\t-->",disMini(myDict[p].raw, myDict[p].offset))
 			
 			if any(item in myDict[p].op2 for item in availableRegs) and myDict[p].op2!=reg:
-				print ("yes alt!", myDict[p].op2)
+				# print ("yes alt!", myDict[p].op2)
 				dp ("\tadd alt",disMini(myDict[p].raw, myDict[p].offset))
 				return True,p,myDict, reg, myDict[p].op2,0
 
 	#else#
 	#	freeOfClobbering=out.checkForBad(excludeRegs, [0-8])  #-4 esp desirved movement  = push -4
-	dp ("returning false!!!! WTF!!!")
 	return False,0, 3,0,0,0
 
 def findAddValtoESP(val,bad, excludeRegs):
@@ -6450,7 +6601,7 @@ def setFinalPivotGadget(pk):
 
 def showChain(myDict,printYes=False,GiveText=False, color=None, title=None, arch=32):
 	# print ("showChain", arch)
-
+	myDict=pkBuild([myDict])
 	t=0
 	if printYes:
 
@@ -6580,7 +6731,13 @@ def genGList(myDict,num):
 		cOut+="ch"+str(num)+"=genCh(gList_"+str(num)+")\n\n"
 	return out,cOut
 
-def genOutput(myDict, typePattern=None, myDict2=None, finalTypePattern=None):
+def genOutputASLR(myDict):
+	out,cOut=genGList(myDict,1)
+	# out=out0+out
+	return cOut,out
+
+def genOutput(myDict, typePattern=None, myDict2=None, finalTypePattern=None, chainNum=0):
+	# print (red,myDict, typePattern, myDict2, finalTypePattern, chainNum,  res)
 	# If do not need mydict2, put None
 	# print (cya,"**********genOutput", typePattern)
 	global curPat
@@ -6639,7 +6796,7 @@ def genOutput(myDict, typePattern=None, myDict2=None, finalTypePattern=None):
 		myParams.append(param)
 		dist=distanceDict["WinExec"]["distanceToPayload"]
 
-    # GPAWinExec
+	# GPAWinExec
 	# elif typePattern=="WE":
 	# 	s=distanceDict["WinExec"]["loc1"]["String"] 
 	# 	s+= "' + " +"'\\x00\\x00'\n"
@@ -7066,12 +7223,12 @@ def genOutput(myDict, typePattern=None, myDict2=None, finalTypePattern=None):
 
 	# cOut+=whi+outP
 	if typePattern != None:
-		out+="\n\n#Pattern: " +oldPat+ curPat
-		cOut+=gre+"\n\n#Pattern: "+ cya+oldPat+ curPat+res
+		out+="\n\n#Pattern: " +oldPat+ curPat + " Chain:" + str(chainNum)
+		cOut+=gre+"\n\n#Pattern: "+ cya+oldPat+ curPat  + gre+" Chain:" + cya+str(chainNum)+res
 	dp (out)
 	return cOut,out
 
-def genOutput64(myDict, typePattern=None):
+def genOutput64(myDict, typePattern=None, pattern2=None, pattern3=None,apiCode=None):
 	dp ("genOutput", typePattern)
 	global curPat
 	global oldPat
@@ -7137,7 +7294,16 @@ def genOutput64(myDict, typePattern=None):
 	outP+=genClose()
 	out+=outP
 	cOut+=outP
-	if typePattern != None:
+	if typePattern=="ASLR Bypass" and apiCode==None:
+		out+="\n\n#Pattern: " + typePattern + " - " +  pattern2 + " -> " + pattern3
+		cOut+=gre+"\n\n#Pattern: " +cya+ typePattern + " - " +  pattern2 + " -> " + pattern3 + res
+	elif typePattern=="ASLR Bypass" and apiCode!=None:
+		# print(typePattern, pattern2 ,pattern3,apiCode)
+
+		out+="\n\n#Pattern: " + typePattern + " - " +  pattern2 + " -> " + pattern3 + " via " + apiCode
+		cOut+=gre+"\n\n#Pattern: " +cya+ typePattern + " - " +  pattern2 + " -> " + pattern3 +  " via " + apiCode + res
+
+	elif typePattern != None:
 		out+="\n\n#Pattern: " +oldPat+ curPat
 		cOut+=gre+"\n\n#Pattern: " +cya+oldPat+ curPat+res
 
@@ -7160,17 +7326,28 @@ def regListToFront(test_list, r):
 	test_list.insert(0,r)
 	return test_list
 
-def buildIntOverflowPR(excludeRegs,bad,goal,tThis, bb, withPR=True, regFirst=None, comment=None, isVal=False):
+def buildIntOverflowPR(excludeRegs,bad,goal,tThis, bb, withPR=True, regFirst=None, comment=None, isVal=False,gSetID=None,gTrackObj=None):
+	# print ("buildIntOverflowPR", gSetID, gTrackObj)
 	# print(red + "buildIntOverflowPR", regFirst, "target val", goal,res)
 	# print (yel,"bi1", excludeRegs,bad,goal,tThis, bb, withPR, regFirst, res)
 	if regFirst!=None:
-		intSuccess, package =buildIntOverflowPRTargetReg(excludeRegs,bad,goal,tThis, bb, withPR, regFirst,comment,isVal)
+		intSuccess, package =buildIntOverflowPRTargetReg(excludeRegs,bad,goal,tThis, bb, withPR, regFirst,comment,isVal,32,gSetID,gTrackObj	)
+	else:
+		intSuccess, package =buildIntOverflowPR2(excludeRegs,bad,goal,tThis, bb, withPR	)
+	return intSuccess, package
+
+def buildIntOverflowPR64(excludeRegs,bad,goal,tThis, bb, withPR=True, regFirst=None, comment=None, isVal=False):
+	# print(red + "buildIntOverflowPR", regFirst, "target val", goal,res)
+	# print (yel,"bi1", excludeRegs,bad,goal,tThis, bb, withPR, regFirst, res)
+	if regFirst!=None:
+		intSuccess, package =buildIntOverflowPRTargetReg(excludeRegs,bad,goal,tThis, bb, withPR, regFirst,comment,isVal,64)
 	else:
 		intSuccess, package =buildIntOverflowPR2(excludeRegs,bad,goal,tThis, bb, withPR)
 	return intSuccess, package
 
-def buildIntOverflowPRTargetReg(excludeRegs,bad,goal,tThis, bb, withPR=True, regFirst=None, comment=None,isVal=False):
+def buildIntOverflowPRTargetReg(excludeRegs,bad,goal,tThis, bb, withPR=True, regFirst=None, comment=None,isVal=False,arch=32,gSetID=None,gTrackObj=None):
 	# print (yel,"bi2", excludeRegs,bad,goal,tThis, bb, withPR, regFirst, res)
+	# print ("buildIntOverflowPRTargetReg  ", gSetID, gTrackObj)
 
 	dp("buildIntOverflowPR")
 	# print(red + "buildIntOverflowPR", regFirst, "target val", goal,res)
@@ -7182,7 +7359,14 @@ def buildIntOverflowPRTargetReg(excludeRegs,bad,goal,tThis, bb, withPR=True, reg
 	intDict={}
 	buildSucces=False
 	foundPu1=True
-	success, obf1,obf2=buildObfValuesIntOverflow(goal,bad,bb)
+	success=False
+	obf1=0
+	obf2=0
+	if arch==32:
+		success, obf1,obf2=buildObfValuesIntOverflow(goal,bad,bb)
+	else:
+		success, obf1,obf2=buildObfValuesIntOverflow64(goal,bad,bb)
+
 	if not success:
 		dp ("Cannot find desired integer overflow")
 		return False,1
@@ -7196,17 +7380,21 @@ def buildIntOverflowPRTargetReg(excludeRegs,bad,goal,tThis, bb, withPR=True, reg
 			pass
 	espDesiredMovement=4
 	addEspMove=0
-	foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(regFirst,bad,availableRegs,excludeRegs, addEspMove)
+	
+
+	foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(regFirst,bad,availableRegs,excludeRegs, addEspMove, gSetID,gTrackObj)
 	if not foundAdd:
 		# print ("hit the continue")
 		return False,1
-	foundP1, p1, popD1 = findPop(regFirst,bad,True,excludeRegs)
+	
+	
+	foundP1, p1, popD1 = findPop(regFirst,bad,True,excludeRegs,gSetID,gTrackObj,1)
 	if not foundP1:
 		# print ("hit the continue")
 		return False,1
 	
 	for r in availableRegs:
-		foundP2, p2, popD2 = findPop(reg2,bad,True,excludeRegs)
+		foundP2, p2, popD2 = findPop(reg2,bad,True,excludeRegs,gSetID,gTrackObj,2)
 		if withPR:
 			foundPu1, pu1, pushD1 = findPush(regFirst,bad,True,excludeRegs)
 		if foundAdd and foundP1 and foundP2 and foundPu1:
@@ -7217,17 +7405,17 @@ def buildIntOverflowPRTargetReg(excludeRegs,bad,goal,tThis, bb, withPR=True, reg
 	if not buildSucces:
 		# print ("IN ALTERNATE buildIntOverflowPR template")
 		# print ("availableRegs", availableRegs)
-		foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(regFirst,bad,availableRegs,excludeRegs, addEspMove)
+		foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(regFirst,bad,availableRegs,excludeRegs, addEspMove,gSetID,gTrackObj)
 		if not foundAdd:
 			return False,1
-		foundP1, p1, popD1 = findPop(regFirst,bad,True,excludeRegs)
+		foundP1, p1, popD1 = findPop(regFirst,bad,True,excludeRegs,gSetID,gTrackObj,3)
 		for r in availableRegs:
-			foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(regFirst,bad,availableRegs, excludeRegs, addEspMove)
+			foundAdd,aP1,addD1,reg,reg2,addStackMov = findAddRegReg(regFirst,bad,availableRegs, excludeRegs, addEspMove,gSetID,gTrackObj)
 			if not foundAdd:
 				return False,1
 			### need add desired movement
 			#### create loop for desireved move - incrementing by 4 - will check already emulateds
-			foundP2, p2, popD2 = findPop(reg2,bad,False,excludeRegs,4)
+			foundP2, p2, popD2 = findPop(reg2,bad,False,excludeRegs,4,gSetID,gTrackObj,4)
 			foundPu1=True
 			if withPR:
 				foundPu1, pu1, pushD1 = findPush(firstReg,bad,False,excludeRegs,-4)
@@ -7746,7 +7934,10 @@ def findSubTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 					try:
 						keyVal = int(myDict[p].op2,16)
 					except:
-						keyVal = int(myDict[p].op2)
+						try:
+							keyVal = int(myDict[p].op2)
+						except:
+							continueFlag=True
 					freeBad2=checkFreeBadBytes(opt,fg,keyVal,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True)
 					if freeBad2:
 						continueFlag=False
@@ -7862,7 +8053,10 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 					try:
 						keyVal = int(myDict[p].op2,16)
 					except:
-						keyVal = int(myDict[p].op2)
+						try:
+							keyVal = int(myDict[p].op2)
+						except:
+							continueFlag=True
 					freeBad2=checkFreeBadBytes(opt,fg,keyVal,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True)
 					if freeBad2:
 						continueFlag=False
@@ -7971,6 +8165,79 @@ def findXorTransfer(reg1,reg2, bad,length1,excludeRegs,espDesiredMovement,commen
 				return True, package
 
 	return False,0
+
+
+def findUniTransfer64(caller,reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment="", excludeXor=False,excludeXchg=False, excludeSub=False,excludePushPop=False, excludeDeeper=False,ID=None):
+	# print (red,"findTransfer", caller, reg, op2,res, yel,"excludeXor", gre,excludeXor, yel,"excludeSub", gre,excludeSub,yel,"excludePushPop", gre,excludePushPop, yel,"excludeDeeper", gre,excludeDeeper, yel,"ID",gre,ID,res)
+	
+	#need to implement oplist
+	global prevCaller
+	global deeperLimit
+
+	if prevCaller != caller:
+		deeperLimit=0
+	prevCaller=caller
+
+	try:
+		if comment==None:
+			comment=""
+		# if 2==3 or excludeXor or excludeXchg or excludeSub or excludePushPop:
+		foundM1, m1 = findGenericOp2("mov",op2,reg,bad,length1, excludeRegs,espDesiredMovement)
+		if foundM1:
+			gM=chainObj(m1, comment, [])
+			package=[gM]
+			# showChain(package)
+			return True, 0,package,reg,op2
+
+		if not excludeXchg:
+			foundT, x1 = xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement)
+			if foundT:
+				gM=chainObj(x1, comment, [])
+				package=[gM]
+				# showChain(package)
+				return True,0, package,reg,op2
+
+		foundAT, gAT= findAddTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+		if foundAT:
+			return True, 0,gAT,reg,op2
+			pass
+
+		if not excludeXor:   ### need to test
+			foundXT, gXT= findXorTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment)
+			if foundXT:
+				return True, 0,gXT,reg,op2
+
+		if not excludeSub:			### need to test
+			foundST, gST= findSubTransfer(reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment,excludeXor,excludeXchg, True,excludePushPop, excludeDeeper)
+			if foundST:
+				return True, 0,gST,reg,op2
+			
+		if not excludePushPop:	### need to test
+			foundMEsp, mEsp, newReg,stackPivotAmount,c3Status,c2Adjust = getPushPopReg(op2, reg,excludeRegs,espDesiredMovement)	
+			# foundMEsp=False
+			if foundMEsp:
+				if stackPivotAmount ==0:
+					cPuPo=chainObj(mEsp,  "Transfer "+op2 + " to " + reg, [])
+				else:
+					filler=genFiller(stackPivotAmount)
+					cPuPo=chainObj(mEsp,  "Transfer(2) "+op2 + " to " + reg, filler)
+				cPuPo=pkBuild([cPuPo])
+				return True, 0,cPuPo,reg,op2
+		if not excludeDeeper and checkDeeperLimit():   ### need to test
+
+			#let's do this for now
+			if 2==3:
+				foundMEsp, pk = deeperGetPushPopReg(op2, reg,excludeRegs,espDesiredMovement,bad,True,	False,False)
+				if foundMEsp:
+					return True, 0,pk,reg,op2
+		return False, 0,0,reg,op2
+	except Exception as e:
+		print ("exception - findUniTransfer")
+		print(e)
+		print(traceback.format_exc())
+	return False,0,0,reg,op2
+
+
 def findUniTransfer(caller,reg,op2, bad,length1,excludeRegs,espDesiredMovement,comment="", excludeXor=False,excludeXchg=False, excludeSub=False,excludePushPop=False, excludeDeeper=False,ID=None):
 	# print (red,"findTransfer", caller, reg, op2,res, yel,"excludeXor", gre,excludeXor, yel,"excludeSub", gre,excludeSub,yel,"excludePushPop", gre,excludePushPop, yel,"excludeDeeper", gre,excludeDeeper, yel,"ID",gre,ID,res)
 	global prevCaller
@@ -8087,7 +8354,8 @@ def xchgMovReg(reg,op2, bad,length1,excludeRegs,espDesiredMovement):
 	else:
 		return False, 0
 
-def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement,isVal=False):
+def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement,isVal=False,gSetID=None,gTrackObj=None):
+	# print ("lXorAdd", isVal,gSetID,gTrackObj)
 	availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
 	try:
 		excludeRegs.remove("esp")
@@ -8104,7 +8372,8 @@ def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement,isVal=False):
 		foundXor, x1 = findGenericOp2("xorZero", reg,reg,bad,length1, excludeRegs,espDesiredMovement,isVal)
 		
 		foundAdd, a1 = findGenericOp2("add", r,reg,bad,length1, excludeRegs,espDesiredMovement,isVal)
-		foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs,isVal)
+
+		foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs,0,isVal,gSetID,gTrackObj,11)
 		if foundXor and foundP1 and foundAdd:
 				chP=chainObj(p1, "Indirectly loading " +reg, [val])
 				pk=pkBuild([x1,chP,a1])
@@ -8113,6 +8382,36 @@ def lXorAdd(reg,val,bad,length1,excludeRegs,espDesiredMovement,isVal=False):
 				return True, pk
 	return False,0x666
 
+def lXorAdd64(reg,val,bad,length1,excludeRegs,espDesiredMovement,isVal=False):
+	availableRegs=copy.deepcopy(regs64.availableRegs)
+
+	try:
+		excludeRegs.remove("rsp")
+	except:
+		pass
+	for d in excludeRegs:
+		try:
+			availableRegs.remove(d)
+		except:
+			pass
+
+	for r in availableRegs:
+		foundXor, x1 = findGenericOp264("xor",reg,reg,reg, bad,length1, excludeRegs,0)
+		if not foundXor:
+			continue
+		
+		foundAdd, a1 = findGenericOp2("add", r,reg,bad,length1, excludeRegs,espDesiredMovement,isVal)
+		if not foundAdd:
+			continue
+		foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs,isVal)
+		if not foundP1:
+			continue
+
+		if foundXor and foundP1 and foundAdd:
+				chP=chainObj(p1, "Indirectly loading " +reg, [val])
+				pk=pkBuild([x1,chP,a1])
+				return True, pk
+	return False,0x666
 
 def findDoubleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, comment=""):
 	# print (blu,"findDoubleTransfer", findDoubleTransfer, reg1, reg2,res)
@@ -8198,7 +8497,7 @@ def findTripleTransfer(reg1, reg2,bad,length1,excludeRegs,espDesiredMovement, co
 	return False,0
 
 
-def findTryObfMethTransfer(excludeRegs,bad,val,tThis, bb, withPR,reg,comment, isVal=False):
+def findTryObfMethTransfer(excludeRegs,bad,val,tThis, bb, withPR,reg,comment, isVal=False,gSetID=None,gTrackObj=None):
 	availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
 	try:
 		excludeRegs.remove("esp")
@@ -8215,14 +8514,16 @@ def findTryObfMethTransfer(excludeRegs,bad,val,tThis, bb, withPR,reg,comment, is
 		foundT, gT = findUniTransfer("10",reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
 		if not foundT:
 			continue
-		success, tryPackage = tryObfMethods(excludeRegs,bad,val,tThis, bb, False,r,comment, isVal)
+		success, tryPackage = tryObfMethods(excludeRegs,bad,val,tThis, bb, False,r,comment, isVal, gSetID, gTrackObj)
 		if success:
 			pkg=pkBuild([tryPackage,gT])
 			return success, pkg
 	return False, 0
 
-def findPopTransfer(reg,val, bad,length1,excludeRegs, espDesiredMovement, comment, isVal):
+def findPopTransfer(reg,val, bad,length1,excludeRegs, espDesiredMovement, comment, isVal,gSetID=None,gTrackObj=None):
 	availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
+	gTrackObj,gSetID =gCheck(gTrackObj,gSetID)
+
 	try:
 		excludeRegs.remove("esp")
 	except:
@@ -8234,7 +8535,7 @@ def findPopTransfer(reg,val, bad,length1,excludeRegs, espDesiredMovement, commen
 			pass
 	# print ("findPopTransfer reg", reg, "val", val,"availableRegs", availableRegs,"excludeRegs", excludeRegs,res)
 	for r in availableRegs:
-		foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs,isVal)
+		foundP1, p1,pDict=findPop(r,bad,length1,excludeRegs,0,isVal, gSetID, gTrackObj)
 		# print (red,"reg3 _ pop transfer",reg,res)
 		foundT, gT = findUniTransfer("11",reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to " + reg)
 		if foundP1 and foundT:
@@ -8246,7 +8547,24 @@ def findPopTransfer(reg,val, bad,length1,excludeRegs, espDesiredMovement, commen
 			return foundP1, 0x99,pkg
 	return False,0,0
 
-def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None):
+def gCheck(gTrackObj, gSetID ):
+	if gTrackObj==None:
+		gTrackObj=gTrackEmpty
+		gTrackObj.reset()
+	if gSetID==None:
+		 gSetID=gTrackObj.newGadgetSet()
+		
+	return gTrackObj,gSetID	
+def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None,gSetID=None, gTrackObj=None, arch=32):
+	# print("loadReg", reg, arch)
+	if arch==64:
+		foundP0,chP0 = loadReg64(reg,bad,length1,excludeRegs,val,comment)
+		return foundP0, 0, chP0
+	# print ("loadReg", gSetID, gTrackObj)
+	gTrackObj,gSetID=gCheck(gTrackObj,gSetID)
+	# print ("loadReg after addGadgetNoCheck", gSetID, gTrackObj)
+	# return False, 0,0
+
 	hexVal=""
 	espDesiredMovement=0
 	checkAll=False
@@ -8264,9 +8582,9 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None):
 	# else:
 	# 	print ("\t",hex(val),val, "has badbytes")
 
-
+	delelteMe=False
 	if freeBadGoalVal:
-		foundP1, p1,pDict=findPop(reg,bad,length1,excludeRegs,isVal)
+		foundP1, p1,pDict=findPop(reg,bad,length1,excludeRegs,espDesiredMovement, isVal, gSetID,gTrackObj)
 		if foundP1:
 			comment2="load " + reg
 			if comment!=None:
@@ -8274,7 +8592,7 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None):
 			chP=chainObj(p1, comment2, [val])
 			return foundP1, p1, chP
 	if freeBadGoalVal:
-		foundPT1, p3, ptPkg= findPopTransfer(reg,val, bad,length1,excludeRegs,espDesiredMovement, comment, isVal)
+		foundPT1, p3, ptPkg= findPopTransfer(reg,val, bad,length1,excludeRegs,espDesiredMovement, comment, isVal,gSetID,gTrackObj)
 		if foundPT1:
 			# print ("got loadreg", reg)
 			return foundPT1, p3, ptPkg
@@ -8284,31 +8602,30 @@ def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None):
 		tThis=""
 		# bb=""
 		# print ("tryObfMethods", reg, "comment", comment)
-		success, tryPackage = tryObfMethods(excludeRegs,bad,val,tThis, bb, False,reg,comment, isVal)
+		success, tryPackage = tryObfMethods(excludeRegs,bad,val,tThis, bb, False,reg,comment, isVal,gSetID,gTrackObj)
+		# if success:
+		# 	showChain(tryPackage,True,True,cya)
 		if success:
 			# print ("found tryObfMethods")
 			tryPackage=pkBuild([tryPackage])
-
 			# showChain(tryPackage, True)
 			return success, 0x99, tryPackage
-		success, tryPackage2 =findTryObfMethTransfer(excludeRegs,bad,val,tThis, bb, False,reg,comment, isVal)
+
+		success, tryPackage2 =findTryObfMethTransfer(excludeRegs,bad,val,tThis, bb, False,reg,comment, isVal,gSetID,gTrackObj)
 		if success:
 			# print ("found tryObfMethodsSpecial")
 			# print (tryPackage2)
 			tryPackage2=pkBuild([tryPackage2])
-
 			# showChain(tryPackage2, True)
 			return success, 0x99, tryPackage2
 
-	if freeBadGoalVal or checkAll:
-		foundX, chX=lXorAdd(reg,val,bad,length1,excludeRegs,0,isVal)
+	if freeBadGoalVal or checkAll:		
+		foundX, chX=lXorAdd(reg,val,bad,length1,excludeRegs,0,isVal,gSetID,gTrackObj)
 		if foundX:
 			return True, 0,chX
 		# if foundP1:
 		# 	return foundP1, p1, chP
-		
 	return False, 0,0
-
 
 
 def loadRegOld(reg,bad,length1,excludeRegs,val,comment=None):
@@ -8828,10 +9145,16 @@ def buildPointerMovD(excludeRegs,rValStr,pk,lReg,movReg2,length1,loc,comLoad,com
 	
 	return False, 0,0
 
-def getDistanceGadget(funcID,excludeRegs,rValStr,pk,reg,loc,patType=None,finalTypePattern=None,addFillerQty=False,comment=None):
+def getDistanceGadget(funcID,excludeRegs,rValStr,pk,reg,loc,patType=None,finalTypePattern=None,addFillerQty=False,comment=None,arch=32):
+	# print ("getDistanceGadget", funcID, reg, arch)
 	# print  (red,"getDistanceGadget", mag, funcID, res, "rvalstr", rValStr, "patType",patType, "reg", reg, "excludeRegs",excludeRegs, "pk size", len(pk))
+	# print ("getDistanceGadget loc target", loc, "comment",comment)
 	# showChain(pk,True,True,gre,"getDistanceGadget "+ str(funcID))
 	availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
+	if arch==64:
+		availableRegs= copy.deepcopy(regs64.availableRegs)
+		availableRegs.remove("rsp")
+
 	try:
 		excludeRegs.remove("esp")
 	except:
@@ -8841,10 +9164,10 @@ def getDistanceGadget(funcID,excludeRegs,rValStr,pk,reg,loc,patType=None,finalTy
 			availableRegs.remove(d)
 		except:
 			pass
-	distParam, apiReached=getDistanceParamReg(pe,n,pk,0x4000,"dec",2,loc, "esp", True,0x9ba00,0,rValStr,True,patType,finalTypePattern)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter
+	distParam, apiReached=getDistanceParamReg(pe,n,pk,0x4000,"dec",2,loc, "esp", True,0x9ba00,0,rValStr,True,patType,finalTypePattern,arch)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter
 	compensate=0
 	noCompensate=True # - if start earlier
-
+	# print (red, hex(distParam), res, arch)
 	if not sParams.startAtZero:
 		noCompensate=False # - if start earlier
 	else:
@@ -8856,6 +9179,7 @@ def getDistanceGadget(funcID,excludeRegs,rValStr,pk,reg,loc,patType=None,finalTy
 	# print ("pk",)
 	# showChain(pk,True,True,gre)
 	distParam=distParam-compensate
+	
 	if patType=="lpProcName" or rValStr=="Command":
 		# distParam=distParam-4 # acccount for ret in pushad"
 		pass
@@ -8864,6 +9188,7 @@ def getDistanceGadget(funcID,excludeRegs,rValStr,pk,reg,loc,patType=None,finalTy
 	espDesiredMovement=0
 	package=[]
 	foundStart=False
+	# print ("availableRegs",availableRegs)
 	for r in availableRegs:
 		regsNotUsed= copy.deepcopy(availableRegs)
 		regsNotUsed.remove(r)
@@ -8877,15 +9202,15 @@ def getDistanceGadget(funcID,excludeRegs,rValStr,pk,reg,loc,patType=None,finalTy
 		else:
 			distParam2=distParam
 		if comment:
-			foundStart, pkStart=findMovDerefGetStack(r,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distParam2,"Getting pointer to " + comment)
+			foundStart, pkStart=findMovDerefGetStack(r,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distParam2,"Getting pointer to " + comment,arch)
 		else:
-			foundStart, pkStart=findMovDerefGetStack(r,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distParam2)
-			# showChain(pkStart,True,True,blu,"findMovDerefGetStack res")
+			foundStart, pkStart=findMovDerefGetStack(r,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distParam2,arch)
+		# showChain(pkStart,True,True,blu,"findMovDerefGetStack res")
 		if foundStart:
+			# print (red,"foundStart",res)
 			break
 	if foundStart:
-		# showChain(pkStart, True, True, yel)
-		foundT=True # set to True - not found, it will be changed.
+		foundT=False # set to True - not found, it will be changed.
 		gT=[]
 		if r != reg:
 			foundT, gT = findUniTransfer("12",reg,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to4 " + reg)
@@ -8893,10 +9218,25 @@ def getDistanceGadget(funcID,excludeRegs,rValStr,pk,reg,loc,patType=None,finalTy
 				foundT=False  # was commented out?
 				# print ("reg", reg, "r",r)
 				# showChain(gT,True,True,cya)
+			if not foundT:
+				#herehere
+				for r3 in availableRegs:
+					if r3==r:
+						continue
+					foundT2, gT1 = findUniTransfer("12",r3,r, bad,length1,excludeRegs,espDesiredMovement, "Transfer to5 " + reg)
+					if foundT2:
+						# showChain([pkStart,gT1], True, True, yel,"foundStart",64)
+
+						foundT3, gT2 = findUniTransfer("12",reg,r3, bad,length1,excludeRegs,espDesiredMovement, "Transfer to6 " + reg)
+						if foundT3:
+							# showChain(pkBuild([pkStart, gT1,gT2]), True,True,blu,"",64)
+							gT=pkBuild([gT1,gT2])
 		if foundT:
 			pk2=pkBuild([pkStart,gT])
 			pk3=pkBuild([pk,pk2])
-			# showChain(pk2,True,True,cya)
+			# showChain(pkBuild([gT ]),True,True,gre,"",64)
+			# showChain(pk2,True,True,mag,"",64)
+			# print ("returning true")
 			dp ("checking on the transfer")
 			# distParam, apiReached=getDistanceParamReg(pe,n,pk3,distParam,"dec",2,"loc1", "esp", True,0x9ba00,0,rValStr,True,patType)  # pe,n,gadgets, IncDec,numP,targetP,targetR, destAfter
 			# print("redundant distance check")  #todo
@@ -8906,6 +9246,7 @@ def getDistanceGadget(funcID,excludeRegs,rValStr,pk,reg,loc,patType=None,finalTy
 			# distParam=distParam-sParams.fillerQty
 			# print (gre,"\n\n\ndistParam - sParams.fillerQty", res,hex(distParam))
 			return True, 0, pk2,reg
+	# print ("returning false")
 	return False, 0,0,reg
 
 def loadMovD1Starter(r1,val2,z,i, bad, length1,excludeRegs,pk,apiCode, finalTypePattern,pM=None, pI=None,mReg=None):
@@ -9076,7 +9417,7 @@ def loadMovD2(z,i, bad, length1,excludeRegs,pk,apiCode,finalTypePattern,pM=None,
 			# print (red,"appending r1 FROM 9", r1,res, "this is r2", r2)
 			excludeRegs2= copy.deepcopy(excludeRegs)
 			if r1 not in excludeRegs2:
-					excludeRegs2.append(r1)
+				excludeRegs2.append(r1)
 			foundDistG, v, pk2,reg=getDistanceGadget(6,excludeRegs2,valStr,pk,r2,ourLoc,apiCode,finalTypePattern,True)
 			# showChain(pk2, True,True, cya,"hasString movDword2")
 			if foundDistG:
@@ -9099,9 +9440,13 @@ def getPointerVal():
 	pointerCLoc=pointerCLoc-0x10
 	return pointerCLoc
 
-def loadRegP(z,i, bad, length1,excludeRegs,pk,apiCode,finalTypePattern,multiApi, distEsp=0):
+def loadRegP(z,i, bad, length1,excludeRegs,pk,apiCode,finalTypePattern,multiApi, gSetID=None,gTrackObj=None):
+	# print ("loadRegP", gSetID, gTrackObj)
+
 	# print ("loadRegP",apiCode )
+	distEsp=0
 	global curPat
+	# print ("output", curPat,z,i, multiApi)
 	reg, rValStr,rExclude,r1b,com1,specialHandling, hasString, paramStr,hasPointer, structPointer, structType, structSize, ourLoc=giveRegValsFromDict(curPat,z,i, multiApi)
 	# print ("loadRegP",apiCode, "rValStr",rValStr )
 	excludeRegs.extend(rExclude)
@@ -9115,7 +9460,8 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,apiCode,finalTypePattern,multiApi,
 		return False, 0,0,0
 	dp ("loadRegP__", z,i, curPat,rValStr)
 	# print (yel+"loadRegP__", reg, z,i, curPat,"rValStr", rValStr,res, val)
-	print ("\t\t", red,rValStr,res, apiCode,finalTypePattern,res)
+	if not opt["researcherMode"]:
+		print ("\t\t", red,rValStr,res, apiCode,finalTypePattern,res)
 	if rValStr=="targetDllString":
 		foundDistG, v, pk2,reg=getDistanceGadget(7,excludeRegs,rValStr,pk,reg,"loc1",apiCode,finalTypePattern,True)
 	elif rValStr=="JmpESP":
@@ -9264,7 +9610,8 @@ def loadRegP(z,i, bad, length1,excludeRegs,pk,apiCode,finalTypePattern,multiApi,
 		return True, 0, pkTransfer,reg		
 	if rValStr=="x":
 		return True, 0, [], None
-	foundP1, p1, chP = loadReg(reg,bad,length1,excludeRegs,val,comment2,False,"test")
+	#loadregG
+	foundP1, p1, chP = loadReg(reg,bad,length1,excludeRegs,val,comment2,False,"test", gSetID,gTrackObj)
 	if foundP1:
 		return foundP1, p1, chP,reg
 	else:
@@ -9572,7 +9919,6 @@ def findXchgMovRegSpecial(reg1, bad,length1,excludeRegs,espDesiredMovement):
 					else:
 						return True,p, myDict[p].op2
 
-			dp ("findXchg returning False" )
 			return False,0
 		if not length1: # was else
 			for p in myDict:
@@ -9594,12 +9940,15 @@ def findXchgMovRegSpecial(reg1, bad,length1,excludeRegs,espDesiredMovement):
 	else:
 		# dp ("return false ", instruction)
 		return False,0,0
-def getPushPopESP(reg,excludeRegs,espDesiredMovement,regMatch, c3Only, comment=True):
+def getPushPopESP(reg,excludeRegs,espDesiredMovement,regMatch, c3Only, comment=True,arch=32):
 	# print(gre,"getPushPopESP",reg,res)
 	global rC
-	instruction="push"
+	instruction="push"	
+	stackPointer="esp"
+	if arch==64:
+		stackPointer="rsp"
 	excludeRegsSet=set(excludeRegs)
-	bExists, myDict=fg.getFg(instruction,"esp")
+	bExists, myDict=fg.getFg(instruction,stackPointer)
 	stackPivotAmount=0
 	newReg=None
 	if bExists:
@@ -9811,7 +10160,6 @@ def findMovRegSpecial(reg1, bad,length1,excludeRegs,espDesiredMovement):
 					else:
 						return True,p, myDict[p].op2
 
-			dp ("findXchg returning False" )
 			return False,0,0
 		if not length1: # was else
 			for p in myDict:
@@ -10009,9 +10357,10 @@ def findMovDerefGetStackOld(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredM
 		print(traceback.format_exc())
 
 
-def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distEsp,comment=None):
-	# print ("findMovDerefGetStack distEsp", distEsp)
+def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMovement,distEsp,comment=None,arch=32):
+	# print ("findMovDerefGetStack distEsp", hex(distEsp), reg,arch)
 	# print ("excludeRegs",excludeRegs, "regsNotUsed", regsNotUsed)
+	# print (yel,"findMovDerefGetStack",reg, "excludeRegs", excludeRegs, "regsNotUsed", regsNotUsed, "distEsp",hex(distEsp), "arch",arch,res)
 	dp ("***regsNotUsed", regsNotUsed)
 
 	try:
@@ -10019,29 +10368,33 @@ def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMove
 			cMEsp=0
 			excludeRegs2= copy.deepcopy(excludeRegs)
 			excludeRegs2.append(op2)
-			foundL1, p2, chP = loadReg(op2,bad,length1,excludeRegs2,distEsp)
+			# print ("loadreg2", arch)
+# def loadReg(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None,gSetID=None, gTrackObj=None, arch=32):
+
+			foundL1, p2, chP = loadReg(op2,bad,length1,excludeRegs2,distEsp, "loading for " + comment, False, 34343, None, None,arch)
 			if not foundL1:
-				dp ("continue p2")
+				# print (red,"continue p2",res)
 				continue
-			foundMEsp, mEsp = findMovEsp(reg,bad,length1, excludeRegs2,espDesiredMovement)
+			foundMEsp, mEsp = findMovEsp(reg,bad,length1, excludeRegs2,espDesiredMovement,arch)
 			if foundMEsp:
-				# print ("reg",reg)
+				# print ("reg---",reg)
 				cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
+				# print (cya, "got it 1", res)
 			if not foundMEsp:
-				foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs2,espDesiredMovement,True,True)
+				foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs2,espDesiredMovement,True,True,arch)
 				if foundMEsp:
 					if stackPivotAmount ==0:
 						cMEsp=chainObj(mEsp,  "Save esp to "+reg, [])
 					else:
 						filler=genFiller(stackPivotAmount)
 						cMEsp=chainObj(mEsp,  "Save esp to "+reg, filler)
+					# print (cya, "got it 2", res)
 				if not foundMEsp:
-					foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs2,espDesiredMovement,False,False)
+					foundMEsp, mEsp,newReg, stackPivotAmount,c3Status,c2Adjust = getPushPopESP(reg,excludeRegs2,espDesiredMovement,False,False,arch)
 					if foundMEsp:
-						# print ("yes")
 						# cMEsp=chainObj(0x56ee7f,  "Save esp to "+reg, [0xdeadc0de,0xdeadc0de])
 						foundT4, gT4 = findUniTransfer("15",reg,newReg, bad,length1,excludeRegs2,0, "Transfer to " + reg)
-
+						# print (cya, "got it 3", res)
 						if foundT4:
 							filler2=[]
 							if stackPivotAmount ==0:
@@ -10061,13 +10414,13 @@ def findMovDerefGetStack(reg,bad,length1, excludeRegs,regsNotUsed,espDesiredMove
 						else:
 							foundMEsp=False
 			if not foundMEsp:
-				# print ("continue foundMEsp2")
+				# print (red,"continue foundMEsp2",res)
 				continue
 			cMEsp=pkBuild([cMEsp])
 			# showChain(cMEsp,True, True)
 			foundAdd, a1 = findGenericOp2("add", op2,reg,bad,length1, excludeRegs2,espDesiredMovement)
 			if not foundAdd:
-				# print ("continue a1")
+				# print (red,"continue a1",res)
 				continue
 			if foundL1 and foundAdd and foundMEsp:
 				# cMEsp=chainObj(mEsp, "Save esp to "+reg, [])
@@ -10121,6 +10474,68 @@ def findMovDerefGetStack2(reg, bad,length1, excludeRegs,regsNotUsed,espDesiredMo
 			return True, package
 	return False, -0x666
 
+
+
+def makePointer64(reg, bad,length1, excludeRegs,espDesiredMovement,distParam,tVal=None,comment=""):
+	print ("makepointer64 reg",reg)
+	regsNotUsed=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	for r in excludeRegs:
+		regsNotUsed.remove(r)
+
+
+
+	availableRegs= copy.deepcopy(regs64.availableRegs)
+	availableRegs.remove("rsp")
+	regsNotUsed= copy.deepcopy(availableRegs)
+
+	finishedLoop=False
+	for r1 in availableRegs:
+
+		for r2 in regsNotUsed:
+			regsNotUsed2= copy.deepcopy(regsNotUsed)
+			regsNotUsed2.append(r2)
+			if finishedLoop:
+				break
+			pk=[]
+			if r1==r2:
+				continue
+			# print (cya,"r1",r1,res)
+			foundStart, pkStart=findMovDerefGetStack(r1,bad,length1, excludeRegs,regsNotUsed,0,distParam,"Trying to reach " + comment)
+			# showChain(pkStart,True,True,gre)
+			if not foundStart:
+				# print (gre,"continue",res)
+				continue
+			# print (red, "r1",r1)
+			# foundT, gT = findMovDeref(r1,r2,bad,length1, excludeRegs,False)
+			# if not foundT:
+				# continue
+			# gT=chainObj(gT, "Writing  " + hex(tVal) + " to pointer for " + comment, [])
+			# foundL1, p2, chP = loadReg(r2,bad,length1,excludeRegs,tVal)
+			# if not foundL1:
+			# 	continue
+			if r1!=reg and 2==4:
+				for r3 in regsNotUsed2:
+					excludeRegs2= copy.deepcopy(excludeRegs)
+					excludeRegs2.append(r1)
+					excludeRegs2.append(r2)
+
+					foundT4, gT2 = findUniTransfer("17",reg,r3, bad,length1,excludeRegs2,0, "Transfer to " + reg + " - Creating a pointer for " + hex(tVal) +" - " + comment)
+					gT=pkBuild([gT,gT2])
+					if not foundT4:
+						# print ("continue a1", op2, op3, "reg")
+						continue
+					else:
+						finishedLoop=True
+						break
+			else:
+				finishedLoop=True
+	if finishedLoop:
+		package=pkBuild([pkStart])
+		if tVal!=None:
+			package=pkBuild([pkStart])
+		# showChain(package, True,True,red)
+		return True, package
+	return False, -0x666
 
 def makePointer(reg, bad,length1, excludeRegs,espDesiredMovement,distParam,tVal=None,comment=""):
 	
@@ -10905,7 +11320,6 @@ def findFSPushword(reg, op2,availableRegs,excludeRegs,bad,espDesiredMovement, cu
 					foundL1, p1, chP = loadReg(op2,bad,True,excludeRegs3,img(sysTarget)," Ptr to way of invoking syscall, "+tryThis + " # " + newRegFS +" = value from dword ptr fs:[" + fsReg +"]")
 				if foundPu1 and foundL1:
 					sysStyle=""
-					# print ("i am here")
 					pkLoadSys=pkBuild([cS1,chP])
 					finishedSys=True
 				else:
@@ -11678,7 +12092,6 @@ def findFSSubDword(reg, op2,availableRegs,excludeRegs,bad,espDesiredMovement, cu
 			# print(res)
 			# print ("infoDump: ",fsReg, "availableRegs", availableRegs )
 			if foundS and (fsReg=="eax" or fsReg in availableRegs):
-				# print ("yes")
 				availableRegs2= copy.deepcopy(availableRegs)
 			else:
 				# print ("continue - problems with FS founds sub")
@@ -11854,14 +12267,25 @@ def helperMovDerefNoLoad(reg,op2,bad,length1, regsNotUsed,espDesiredMovement,val
 		return False,0
 
 
-def rg(val):
+def rg64(val):
+	if val < 0:
+		val &= 0xFFFFFFFFFFFFFFFF
+	return struct.pack("<Q", val)
+
+def rg(val, arch=32):
+	# print (red,val,res)
 	# dp ("val", val, type(val))
 	# print (val)
 	# print("hex",hex(val))
 	try:
-		rg=struct.pack("<I", val)
+		rg=b''
+		if arch==32:
+			rg=struct.pack("<I", val)
+		elif arch==64:
+			rg=struct.pack("<Q", val)
 		return rg
 	except:
+		print ("in except", hex(val), len(hex(val)))
 		if val <0:
 			val2=twos_complement_hex(val)
 			rg=struct.pack("<I", val2)
@@ -11967,18 +12391,23 @@ def genBasesForEmNew():
 
 	# for img in pe:
 		# print(yel,img, res,hex(pe[img].emBase),hex(pe[img].emBase+imgSize) )
-
-def genStackForRopChain(gList):
+	 
+def genStackForRopChain(gList, arch=32):
 	# print ("genStackForRopChain len", len(gList))
 	# print (gList, type(gList))
 	# for each in gList:
 	# 	if type(each)==int:
 	# 		print (hex(each))
-
-	ch=b""
-	for g in gList:
-		ch+=rg(g)
-	return ch
+	if arch==32:
+		ch=b""
+		for g in gList:
+			ch+=rg(g)
+		return ch
+	elif arch==64:
+		buf = b''
+		for addr in gList:
+			buf += struct.pack('<Q', addr)
+		return buf	
 def buildRopChainTemp(gadgets,offsets=None):
 	dp("buildRopChainTemp")
 	rc=b''
@@ -12134,7 +12563,7 @@ def genPayload(val, patType=None):
 
 	return payload
 
-def buildRopChainTempMore(gadgets,rValStr,patType=None):
+def buildRopChainTempMore(gadgets,rValStr,patType=None, arch=32):
 	# print ("buildRopChainTempMore", rValStr, patType)
 	# showChain(gadgets,True,True, red)
 	
@@ -12150,19 +12579,21 @@ def buildRopChainTempMore(gadgets,rValStr,patType=None):
 	rc3=b''
 	gadgets=pkBuild([gadgets])
 	prevStackC2=b''
+
 	for obj in gadgets:
 		# dp ("gadget i", obj)
 		# dp("offset:", hex(obj.g.offset),"emBase:",hex(pe[obj.g.mod].emBase))
-		leStack=genStackForRopChain(obj.stack)
-		rc += rg(obj.g.offset) # without base
-		rc3 += rg(obj.g.offset + pe[obj.g.mod].emBase) +prevStackC2+ genStackForRopChain(obj.stack) # with base
+		leStack=genStackForRopChain(obj.stack,arch)
+		rc += rg(obj.g.offset,arch) # without base
+
+		rc3 += rg(obj.g.offset + pe[obj.g.mod].emBase,arch) +prevStackC2+ genStackForRopChain(obj.stack,arch) # with base
 		# rc3+=
 		# print (yel,binaryToStr(rg(obj.g.offset + pe[obj.g.mod].emBase) +prevStackC2+ genStackForRopChain(obj.stack)),res)
 		try:
 			test=len(obj.g.stC2)   # this is just in case it is not there - backwards compatibility for earlier users
 		except:
 			obj.g.stC2=[]
-		prevStackC2=genStackForRopChain(obj.g.stC2)
+		prevStackC2=genStackForRopChain(obj.g.stC2,arch)
 	# dp(binaryToStr(rc))
 	dp("\n\n\nfinal rc3",binaryToStr(rc3))
 	filler=b"\x41"
@@ -12197,7 +12628,7 @@ def buildRopChainTempMore(gadgets,rValStr,patType=None):
 def genNull(excludeRegs,bad):
 	return 0
 
-rL={"eax":"rax","ebx":"rbx","ecx":"rcx","edx":"rdx","esi":"rsi","edi":"rdi","esp":"rsp","ebp":"rbp","r8":"r8 ","r9":"r9 ","r10":"r10","r11":"r11","r12":"r12","r13":"r13","r14":"r14","r15":"r15"}
+rL={"eax":"rax","ebx":"rbx","ecx":"rcx","edx":"rdx","esi":"rsi","edi":"rdi","esp":"rsp","ebp":"rbp","r8":"r8","r9":"r9","r10":"r10","r11":"r11","r12":"r12","r13":"r13","r14":"r14","r15":"r15"}
 
 def findSPivot64(bad,excludeRegs, reg):
 	length1=True
@@ -12219,12 +12650,830 @@ def findSPivot64(bad,excludeRegs, reg):
 		return False,-0x6
 
 
- 
+
+def addToReg(reg,excludeRegs, length1,bad,noGoodSet,val,comment):
+	# print (red,"addToReg",reg)
+	availRegs3=regs64.genWorkingSet(3,3)
+	availRegs3.remove("rsp")
+	availRegs3.remove("esp")
+	zeroCounter0=0
+	zeroCounter2=0
+
+	if len(noGoodSet)==0:
+		noGood0=[]
+		noGood0=set(noGood0)
+	else:
+		noGood0=noGoodSet
+	foundAdd0=foundP0=foundM0=False
+	while len(availRegs3)!=0:
+		if zeroCounter0>4 or zeroCounter2>4:
+			# print (gre,"break1",res, zeroCounter0)
+			break
+		foundAdd0, a0,chA0,a2op1,a2op2  = findAdd64("add","64", regs64.give32to8(reg),availRegs3, bad,length1, excludeRegs,noGood0,"Adding offset 0x60 to get PEB address",True,2)
+		#todo add transfer option and INC x 60 option
+		regs64.rem2(a2op1,availRegs3)
+		noGood0.add(a2op1+a2op2)
+
+		if a2op1==0:
+			zeroCounter0=zeroCounter0+1
+		if not foundAdd0:
+			continue
+		foundP0,chP0 = loadReg64(a2op2,bad,True,excludeRegs,val,comment)
+		if not foundP0:
+			continue
+		# if foundAdd0 and foundP0:
+			# showChain(pkBuild([chP0,chA0]),True,True,gre, "initial start", 64)
+		
+		if foundAdd0 and foundP0:
+			# print (gre,"break1",res, zeroCounter0)
+			break
+	
+	if foundAdd0 and foundP0:
+		return True,[chP0,chA0],a2op1,a2op2
+		
+	availRegs4=regs64.genWorkingSet(3,4)
+	availRegs5=regs64.genWorkingSet(0,5)
+	regs64.rem2("rsp",availRegs5)
+
+	foundTransfer=False
+	foundAddLDR2=False
+	zeroCounterTr=0
+	noGoodPeb2=[]
+	noGoodPeb2=set(noGoodPeb2)
+	while not (foundTransfer and foundAddLDR2):
+		if zeroCounterTr>10:
+			continueFlag=True
+			break
+		foundTransfer, t2, cht2,t2op1, t2op2  = transfer64("mov","64",availRegs4,regs64.to64(reg),  bad,length1, excludeRegs,noGoodPeb2,"Transfer reg3",True,0)
+		noGoodPeb2.add(t2op1+t2op2)
+		if t2op1==0:
+			zeroCounterTr=zeroCounterTr+1
+		if not foundTransfer:
+			continueFlag=True
+			continue
+		
+		foundAdd0, a0,chA0,a2op1,a2op2  = findAdd64("add","64", regs64.give32to8(t2op1),availRegs5, bad,length1, excludeRegs,noGood0,"Adding offset 0x60 to get PEB address",True,2)
+		regs64.rem2(a2op1,availRegs3)
+		foundP0,chP0 = loadReg64(a2op2,bad,True,excludeRegs,val,comment)
+		if not foundP0:
+			continue
+		if foundAdd0:
+			ourPk=pkBuild([cht2,chP0,chA0])
+			# showChain(ourPk,True,True,mag, "addToReg transfer  " , 64)
+			return True,ourPk,a2op1,a2op2
+	# let's try increments
+	foundInc2, i1 = findGeneric("inc",reg,bad,length1, excludeRegs,0)
+	if foundInc2:
+		incs60=pkBuild([i1],60)
+		# showChain(incs60,True,True,mag, "addToReg transfer  " , 64)
+		return True,incs60,reg,reg
+	
+	return False, 0,0,0
+	
+def startASLR(excludeRegs, length1,bad,noGoodSet,useSyscall=False,apiCode=None, rdgsbaseModeOnly=False):
+	# print ("startASLR useSyscall", useSyscall, "apiCode", apiCode, "rdgsbaseModeOnly",  rdgsbaseModeOnly)
+	availRegs3=regs64.genWorkingSet(3,3)
+	zeroCounter0=0
+	zeroCounter2=0
+	startReg="rax"
+	if len(noGoodSet)==0:
+		noGood0=[]
+		noGood0=set(noGood0)
+	else:
+		noGood0=noGoodSet
+	foundAdd0=foundP0=foundM0=False
+	if rdgsbaseModeOnly:
+		foundRdgs1, chRdgs1,rd1, sysGSReg = findRdgsbase64(regs64.availableRegs,bad,length1, [])
+		if foundRdgs1:
+			return True,pkBuild([chRdgs1]),sysGSReg, noGood0, "rdgsbase"
+		else:
+			return False, 0,0, noGood0,""
+	if not useSyscall:
+		# while len(availRegs3)!=0:
+		# 	print (1)
+		# if zeroCounter0>4 or zeroCounter2>4:
+		# 	break
+		foundAslrSys, s1, sysGSReg, sysR2=aslr_syscallLeakGS()
+		# foundAslrSys=False
+		# if not foundAslrSys:
+		# 	continue		
+		foundP0,chP0 = loadReg64(sysR2,bad,True,excludeRegs,0x60,"Loading " + hex(0x60) +" for GS segment reg")
+		# if not foundP0:
+		if foundP0 and foundAslrSys:
+			s1=pkBuild([s1])
+			return True,pkBuild([chP0,s1]),sysGSReg, noGood0, "GS register"	
+	if apiCode==None:
+		foundAslrSys, s1,sysReg=  aslr_syscall("NtQueryInformationProcess")
+		if foundAslrSys:
+			return True,pkBuild([s1]),sysReg, noGood0,"NtQueryInformationProcess"
+		elif not foundAslrSys:
+			foundAslrSys, s1,sysReg=  aslr_syscall("NtQueryInformationThread")
+			if foundAslrSys:
+				return True,pkBuild([s1]),sysReg, noGood0,"NtQueryInformationThread"
+	elif apiCode!=None:
+		foundAslrSys, s1,sysReg=  aslr_syscall(apiCode)
+		# foundAslrSys=False
+		if foundAslrSys:
+			return True,pkBuild([s1]),sysReg, noGood0, apiCode
+	return False, 0,0,[],""
+	
+
+
+
+	foundRdgs1, chRdgs1,rd1, sysGSReg = findRdgsbase64(regs64.availableRegs,bad,length1, [])
+	if foundRdgs1:
+		return True,pkBuild([chRdgs1]),sysGSReg, noGood0,"rdgsbase"
+	print ("returning False")
+	return False, 0,0,[],""
+	
+def getPEBASLR(startReg,entry,excludeRegs, length1,bad):
+	availRegs1=regs64.genWorkingSet(3,1)
+	zeroCounter=0
+	zeroCounterPEB=0
+	noGood=[]
+	noGood=set(noGood)
+	movLoop=afbR1=False
+	alreadyFoundBoth=False
+	PebLdrPk=[]
+	t=0
+	mQPEBop1=0
+	pebLDROffset =entry["pebLDROffset"]
+	while len(availRegs1)!=0:
+		t=t+1
+		foundAddPEB, aPEB,chAPEB,aPEBop1,aPEBop2  = findAdd64("add",startReg, regs64.give32to8(startReg), availRegs1, bad,length1, excludeRegs,noGood,"Add to get PEB_LDR ",True,2)
+		if not foundAddPEB:
+			zeroCounterPEB+=1
+			if zeroCounterPEB>16:
+				return False, 0,0
+		# showChain( pkBuild([chAPEB])  ,True,True,yel,"chAPEB",64)
+
+		# if foundAddPEB:
+		# 	print (cya,"has foundAddPEB", res, )
+		# print (gre,"rem2",yel,a2op1,mag,availRegs1, res,"mQReg", cya,mQReg,res,zeroCounter)
+		regs64.rem2(aPEBop1,availRegs1)
+		if aPEBop1==0:
+			zeroCounter=zeroCounter+1
+		if not foundAddPEB:
+			# print (red,"cont 1", res)
+			continue
+		foundPPEB,chPPEB = loadReg64(regs64.to64(aPEBop2),bad,True,excludeRegs,pebLDROffset,"Loading " + hex(pebLDROffset) +", offset to reach PEB_LDR")
+		if not foundAddPEB or not foundPPEB:
+			# print (red,"cont 2", res,aPEBop2)
+			continue
+		# print (gre,"get peb_ldr",res, aPEBop1)
+		foundMPEB, mPEB, chmPEB, mQPEBop1, mQPEBop2 = findmovQword2("movQword2",regs64.to64(aPEBop1), regs64.availableRegs, bad,length1, excludeRegs, "Dereferencing the PEB_LDR" )
+		if not foundMPEB:
+			# print (red,"cont 3", res,mQPEBop1)
+			continue
+		# print("foundMPEB", foundMPEB)
+		# showChain( pkBuild([chmPEB])  ,True,True,gre,"dereferencing " + aPEBop1,64)
+		if foundAddPEB or foundPPEB or foundMPEB:
+			noGood.add(str(aPEBop1) + str(aPEBop2))
+			# print (yel,"no good",cya, aPEBop1, aPEBop2, noGood, res)
+		# print (red,"checking", res,foundAddPEB, foundPPEB,foundMPEB, "\n")
+		if foundAddPEB and foundPPEB and foundMPEB:
+			# print (gre,"break1",res, zeroCounter, "noGood",noGood)
+			PebLdrPk=[chPPEB,chAPEB,chmPEB]
+			return True, PebLdrPk, mQPEBop1
+		if zeroCounter>8:
+			# print (gre,"break1",res, zeroCounter, "noGood",noGood)
+			break
+	return False, 0,0
+
+def getModuleList(pebReg,entry,excludeRegs, length1,bad,availableRegs):
+	getModList =entry["reachModList"]
+	curModList =entry["targetModList"]
+	
+	ldrPk=0
+	pebReg=regs64.to64(pebReg)
+
+	oldPebReg=pebReg
+	# for r1 in availableRegs:
+	for r2 in availableRegs:
+		pebReg=oldPebReg
+		# print (red,"r2",res,r2)
+		noGoodLDR=[]
+		noGoodLDR=set(noGoodLDR)
+		if r2==pebReg:
+			continue
+		foundPLDR,chPLDR = loadReg64(r2,bad,True,excludeRegs,getModList,"Loading " + hex(getModList) +" - value to reach LDR."+curModList)
+		if not foundPLDR:
+			continue
+		# print (pebReg,r2)
+		foundAddLDR, aLDR, chaLDR,a1op1, a1op2  = findAdd64("add",pebReg, regs64.give32to8(pebReg), regs64.give32to8(r2), bad,length1, excludeRegs,[],"Adding value to reach " +curModList,True,0)
+		if foundAddLDR and foundPLDR:
+			ldrPk=pkBuild([chPLDR,chaLDR])
+		# foundAddLDR=False
+		continueFlag=False
+		if not foundAddLDR:
+			availRegs4=regs64.genWorkingSet(3,4)
+			foundTransfer=False
+			foundAddLDR2=False
+			zeroCounterTr=0
+			noGoodPeb2=[]
+			noGoodPeb2=set(noGoodPeb2)
+			while not (foundTransfer and foundAddLDR2):
+				if zeroCounterTr>10:
+					continueFlag=True
+					break
+				foundTransfer, t2, cht2,t2op1, t2op2  = transfer64("mov","64",availRegs4,regs64.to64(pebReg),  bad,length1, excludeRegs,noGoodPeb2,"Transfer reg2",True,0)
+				noGoodPeb2.add(t2op1+t2op2)
+				if t2op1==0:
+					zeroCounterTr=zeroCounterTr+1
+				if not foundTransfer:
+					continueFlag=True
+					continue
+				foundAddLDR2, aLDR2, chaLDR2,a1op1, a1op2  = findAdd64("add",t2op1, regs64.give32to8(t2op1), regs64.give32to8(r2), bad,length1, excludeRegs,[],"Adding value to reach2 " +curModList,True,4)
+				if foundAddLDR2:
+					pebReg=regs64.to64(a1op1)
+					ldrPk=pkBuild([cht2,chPLDR,chaLDR2])
+					# showChain(ldrPk,True,True,mag, "LdrPk alt  " , 64)
+					break
+		if continueFlag:
+			continue
+		if foundAddLDR:
+			# showChain(pkBuild([chPLDR,chaLDR]),True,True,yel, "We found the add 1   " , 64)
+			pass
+		if not foundAddLDR and not foundAddLDR2:
+			print (red, "continue 2!!!!!\n\n",res)
+			continue
+		noGoodPebMq=[]
+		# pebLdrTransfer=0
+		noGoodPebMq=set(noGoodPebMq)
+		zeroCounterMq2=0
+		foundTransfer4=False
+		foundM2=False
+
+
+		foundM2, m2,chM2, mQReg1, mQReg2 = findmovQword2("movQword2",pebReg, regs64.availableRegs, bad,length1, excludeRegs,"1Dereference LDR."+ curModList + " 1-- " + str(pebReg ) )
+		while not foundM2:
+			if not foundM2:
+				foundTransfer4, t4, cht4,t4op1, t4op2  = transfer64("mov","64",regs64.availableRegs,regs64.to64(pebReg),  bad,length1, excludeRegs,noGoodPebMq,"Transfer reg4",True,0)
+				# print (red,"pebReg",pebReg,"t4op1", t4op1,"t4op2",t4op2,res)
+				foundM2, m2,chM2, mQReg1, mQReg2 = findmovQword2("movQword2",t4op1, regs64.availableRegs, bad,length1, excludeRegs,"2Dereference LDR."+ curModList + " 2-- " + str(pebReg ) )
+			noGoodPebMq.add(t4op1+t4op2)
+			if t4op1==0:
+				foundPebAslr=False
+				zeroCounterMq2=zeroCounterMq2+1
+			if foundTransfer4 and foundM2:
+				# print (yel, "set pebReg", pebReg, t4op1, res)
+				pebLdrTransfer=pkBuild([cht4,chM2])
+				chM2=pkBuild([cht4,chM2])
+				pebReg=t4op1
+				break
+			if zeroCounterMq2 > 8:
+				break
+		ldrPk=pkBuild([ldrPk, chM2])
+		# showChain(pkBuild([pebLdrTransfer]),True,True,gre, "Peb transfer  " , 64)
+		if not foundM2:
+			# print (red,"continue foundM2", foundM2,"pebReg",pebReg,res)
+			continue
+		if foundM2 and foundAddLDR and foundPLDR:
+			# showChain(pkBuild([temp, ldrPk ]),True,True,gre, "final stretch2  " , 64)
+			return True, ldrPk, pebReg
+	return False,0,0
+
+def finalMovDerefASLR(pebReg,entry,excludeRegs, length1,bad):
+	mPk=[]
+	foundM3=False
+	foundAdd2=False
+	t=0
+	foundMDerefPeb=False
+	mQReg1=pebReg
+	numDereferences =entry["numDereferences"]
+	curModList =entry["targetModList"]
+	curDLL =entry["targetDLL"]
+	getBaseAddress =entry["getBaseAddress"]
+	skipMov=False
+
+	numIterations=numDereferences-1
+	if numIterations==0:
+		skipMov=True
+		numIterations=1
+		mQReg1=pebReg
+	for x in range (numIterations):
+		t=t+1
+		if len(mPk)==numIterations:
+			break
+		if foundM3 and mQReg2==mQReg1:
+			chM3b=chainObj(m2, "Take flink to reach next DLL entry", [])
+			mPk.append(chM3b)
+			# print ("cont2")
+			continue
+		# print (cya,"here we go again", t, res)
+		foundM3=False
+		# if not foundMDerefPeb:
+		# 	derefCom = "3Dereference LDR."+ curModList
+		# else:
+		derefCom ="Take flink to reach next DLL entry"
+		if not skipMov:
+			foundM3, m3, chM3, mQReg1, mQReg2 = findmovQword2("movQword2",regs64.to64(mQReg1), regs64.availableRegs, bad,length1, excludeRegs,derefCom +" --" + str(t))
+		if foundM3 and not foundMDerefPeb:
+			foundMDerefPeb=True
+		movLoop=False
+		# foundM3=False
+		if not foundM3:				  
+			availRegs1=regs64.genWorkingSet(3,1)
+			zeroCounter=0
+			noGood=[]
+			noGood=set(noGood)
+			movLoop=afbR1=False
+			alreadyFoundBoth=False
+			# foundM3=False
+			a2op1=0
+			a2op2=0
+			while len(availRegs1)!=0:
+				movLoop=True
+				# print (mag,"Test:", cya, regs64.to64(mQReg1), mQReg1)
+				if not skipMov:
+					foundM3, m3, chM3, mQReg1, mQReg2 = findmovQword2("movQword2",regs64.to64(mQReg1), regs64.availableRegs, bad,length1, excludeRegs, "mov deref 2 --" + str(t) + " ----")
+				if not foundM3 and not skipMov:
+					break
+				if not alreadyFoundBoth and afbR1!=mQReg1:
+					foundAdd2, a2,chA2,a2op1,a2op2  = findAdd64("add",mQReg1, regs64.give32to8(mQReg1), availRegs1, bad,length1, excludeRegs,noGood,"Add to get ptr to base of " + curDLL,True,2)
+				# if foundAdd2:
+					# print (cya,"has foundAdd2", a2op1,a2op2,res)
+				# print (gre,"rem2",yel,a2op1,mag,availRegs1, res,"mQReg", cya,mQReg,res,zeroCounter)
+				regs64.rem2(a2op1,availRegs1)
+				if a2op1==0:
+					zeroCounter=zeroCounter+1
+				if not alreadyFoundBoth and afbR1!=mQReg1:
+					foundP2,chP2 = loadReg64(regs64.to64(a2op2),bad,True,excludeRegs,getBaseAddress,"Loading " + hex(getBaseAddress) +", offset to reach base of " + curDLL)
+				if foundAdd2 and foundP2:
+					alreadyFoundBoth=True
+					afbR1=mQReg1
+				if not foundAdd2:
+					# print ("cont 4")
+					continue
+				if not foundP2:
+					# print ("cont 5")
+					continue
+				foundMFinal, mFinal, chmFinal, mQReg1b, mQReg2b = findmovQword2("movQword2",regs64.to64(a2op1), regs64.availableRegs, bad,length1, excludeRegs, "Obtained base address of " + curDLL )
+				if foundAdd2 or foundP2 or foundMFinal:
+					noGood.add(str(a2op1) + str(a2op2))
+				if foundAdd2 and foundP2 and foundMFinal:
+					alreadyFoundBoth=True
+					afbR1=mQReg1
+				if not foundAdd2 or not foundP2 or not foundMFinal:
+					alreadyFoundBoth=False
+				if foundAdd2 and foundP2 and foundMFinal:
+					# print (gre,"break1",res, zeroCounter, "noGood",noGood)
+					break
+				if zeroCounter>8:
+					# print (gre,"break1",res, zeroCounter, "noGood",noGood)
+					break
+		if not foundM3 and not skipMov:
+			continue
+		if not skipMov:
+			mPk.append(chM3)
+		if not movLoop:
+			availRegs2=regs64.genWorkingSet(3,2)
+			zeroCounter=0
+			noGood2=[]
+			noGood2=set(noGood2)
+			# movLoop=False
+			while len(availRegs2)!=0:				
+				foundAdd2, a2,chA2,a2op1,a2op2  = findAdd64("add",mQReg1, regs64.give32to8(mQReg1), availRegs2, bad,length1, excludeRegs,noGood2,"Add to get ptr to base of " + curDLL,True)
+				regs64.rem2(a2op1,availRegs2)
+				if a2op1==0:
+					zeroCounter=zeroCounter+1
+				foundP2,chP2 = loadReg64(a2op2,bad,True,excludeRegs,getBaseAddress,"Loading " + hex(getBaseAddress) +", offset to reach base of " + curDLL)
+				foundMFinal, mFinal, chmFinal, mQReg1b, mQReg2b = findmovQword2("movQword2",regs64.to64(a2op1), regs64.availableRegs, bad,length1, excludeRegs, "Obtained base address of " + curDLL)
+				if foundAdd2 or foundP2:
+					noGood2.add(str(a2op1) + str(a2op2))
+				if foundAdd2 and foundP2:
+					# print (gre,"break1",res, zeroCounter, "noGood2",noGood2)
+					break
+				if zeroCounter>8:
+					# print (gre,"break1",res, zeroCounter, "noGood2",noGood2)
+					break
+		if not foundAdd2:
+			# continue
+			pass
+		###3 need handling for false
+		mPk=pkBuild(mPk)
+	if foundMFinal:
+		# showChain(pkBuild([mPk,chP2,chA2, chmFinal]),True,True,cya, "mov qword " + str(numDereferences),  64)
+		return True, [mPk,chP2,chA2, chmFinal]
+	return False,0
+		
+def aslrLogo():
+	text=red+"""
+
+              _               _                                     
+  __ _   ___ | |  _ _   ___  | |__   _  _   _ __   __ _   ___  ___  
+ / _` | (_-< | | | '_| |___| | '_ \ | || | | '_ \ / _` | (_-< (_-<  
+ \__,_| /__/ |_| |_|         |_.__/  \_, | | .__/ \__,_| /__/ /__/  
+                                     |__/  |_|                      
+
+	"""+res
+	return text
+
+def buildSyscall64(apiCode	):
+	if not opt["bx64Extracted"]:
+		print (red,"  x64 gadgets must be extracted first!",res)
+		return False,[]
+	# apiCode="NtQueryInformationProcess"
+	# apiCode="NtQueryInformationThread"
+	# apiCodes=["NtQueryInformationProcess","NtQueryInformationThread"]
+	# foundAslrSys, s1, sysGSReg, sysR2=aslr_syscallLeakGS()
+	length1=True
+	
+
+	foundAslrSys, s1,sysReg=  aslr_syscall(apiCode)
+	# if foundAslrSys:
+	# 	showChain(s1,True,True,gre, "Res",64)
+	return foundAslrSys, s1
+	# exit()		
+	
+
 def buildASLR_Bypass64(	):
-	pass
+	print (aslrLogo())
+	
+	apiCode="NtQueryInformationProcess"
+	apiCode="NtQueryInformationThread"
+	apiCodes=["NtQueryInformationProcess","NtQueryInformationThread"]
+	# foundAslrSys, s1, sysGSReg, sysR2=aslr_syscallLeakGS()
+	length1=True
+	foundAslrSys, s1,sysReg=  aslr_syscall(apiCode)
+	if foundAslrSys:
+		showChain(s1,True,True,gre, "Res",64)
+	# exit()		
+	
+	regsNotUsed= copy.deepcopy(regs64.availableRegs)
+
+	regsNotUsed.remove("rsp")
+
+	
+	entry = aslrMod[inMem]
+	# entry = aslrMod["InInitalizationModuleListNTDLL"]
+	finalOutputs=[]
+
+	
+	# print (gre,"  ROP gadgets:",res, len(fg.rop))
+	# aslr bypass via peb disclosure from GS
+	for entry in aslrMod:
+		# break
+		foundASLR, outputsTxt,outputsTxtC = buildASLR_Bypass64Inner(aslrMod[entry], False)
+		if foundASLR:
+			finalOutputs.extend(outputsTxt)
+			# break
+		# aslr bypass via peb disclosure from Windows syscalls  - just goes with the first syscall that works=
+	if 2==3:
+
+		for entry in aslrMod:
+			foundASLR, outputsTxt,outputsTxtC = buildASLR_Bypass64Inner(aslrMod[entry], True)
+			if foundASLR:
+				finalOutputs.extend(outputsTxt)
+				# break
+	
+	
+	# Can do win syscalls by Apicode
+	for apiCode in apiCodes:
+		for entry in aslrMod:
+			foundASLR, outputsTxt,outputsTxtC = buildASLR_Bypass64Inner(aslrMod[entry], True, apiCode)
+			if foundASLR:
+				finalOutputs.extend(outputsTxt)
+				# break
 	# exit()
 
-def loadReg64(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None):
+	#can do it via rdgsbase
+	for entry in aslrMod:
+		foundASLR, outputsTxt,outputsTxtC = buildASLR_Bypass64Inner(aslrMod[entry], False, "", True)
+		if foundASLR:
+			finalOutputs.extend(outputsTxt)
+			# break
+	if foundASLR:
+		printGadgetChain(finalOutputs, "ASLR Bypass")
+
+MAX_START_RETRIES = 16
+MAX_TRANSFER_RETRIES = 8
+
+
+def findRdgsbase64(r1Set,bad,length1, excludeRegs,isVal=False):
+	print ("findRdgsbase64",  "r1", r1Set,length1)
+	espDesiredMovement=0
+	bExists, myDict=fg.getFg("rdgsbase64","")
+	if bExists:
+		print ("it exists")
+	if bExists:
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
+			for p in myDict:
+				# print (yel,disOffset(p,64), res,"\t", mag,r1Set,blu, r2Set,whi," |  ", cya, myDict[p].op1, red,myDict[p].op2, yel,myDict[p].opcode,res)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal,False)
+				# out=disOffset(p,64)
+				# print (out)
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op1 in r1Set :
+					t=chainObj(p," Leak TEB64 address, storing it at " + myDict[p].op1, [])
+					noGoodSet=set()
+					foundAddFinal, finalAdd, newReg, newNoGood  = addToReg(myDict[p].op1,[], length1,bad,noGoodSet,0x60,"distance to reach PEB pointer")
+					if foundAddFinal:
+						foundM3, m3, chM3, mQReg1, mQReg2 = findmovQword2("movQword2",regs64.to64(newReg), regs64.availableRegs, bad,length1, {},"Dereferencing to obtain PEB")
+						if foundM3:
+							pkCur=pkBuild([t, finalAdd,chM3])
+							# showChain(pkCur, True,True,cya,"addToReg " +mQReg1,64)
+						return True,pkCur,p,mQReg1
+			return False,0,0,0
+	print ("return false")
+	return False,0,0,0
+
+
+def findSysGS(instruction, r2Set, r1Set,bad,length1, excludeRegs,isVal=False):
+	# print ("findSysGS", instruction, "r1", r1Set, "r2", r2Set)
+	espDesiredMovement=0
+	bExists, myDict=fg.getFg(instruction,"")
+	# if bExists:
+	# 	print ("it exists")
+	if bExists:
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
+			for p in myDict:
+				# print (yel,disOffset(p,64), res,"\t", mag,r1Set,blu, r2Set,whi," |  ", cya, myDict[p].op1, red,myDict[p].op2, yel,myDict[p].opcode,res)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal,False)
+				# out=disOffset(p)
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op1 in r1Set :
+					if any(s in myDict[p].op2 for s in r2Set):
+						reg2 = next((r for r in r2Set if r in myDict[p].op2), None)
+						# print ("reg1", myDict[p].op1,"reg2",reg2)
+						return True,p,myDict[p].op1,reg2,myDict[p].op1
+			return False,0,0,0,0
+	return False,0,0,0,0
+
+
+def findSysGSXchg(instruction, r2Set, r1Set,bad,length1, excludeRegs,isVal=False):
+	# print ("findSysGSXchg", instruction, "r1", r1Set, "r2", r2Set)
+	espDesiredMovement=0
+
+	bExists, myDict=fg.getFg(instruction,"")
+	# if bExists:
+	# 	print ("it exists")
+	if bExists:
+		if length1:  # was if length1  - this way it will always try length1 first - ideal, perfect gadget
+			for p in myDict:
+				# print (yel,disOffset(p,64), res,"\t", mag,r1Set,blu, r2Set,whi," |  ", cya, myDict[p].op1, red,myDict[p].op2, yel,myDict[p].opcode,res)
+				freeBad=checkFreeBadBytes(opt,fg,p,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal,False)
+				# out=disOffset(p)
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op1 in r1Set :
+					if any(s in myDict[p].op2 for s in r2Set):
+						reg2 = next((r for r in r2Set if r in myDict[p].op2), None)
+						# print ("reg1", myDict[p].op1,"reg2",reg2)
+						return True,p,myDict[p].op1,reg2,myDict[p].op1
+				if myDict[p].length ==1 and myDict[p].opcode=="c3" and freeBad and myDict[p].op2 in r2Set :
+					if any(s in myDict[p].op1 for s in r1Set):
+						reg1 = next((r for r in r1Set if r in myDict[p].op1), None)
+						reg2 = myDict[p].op2
+						# print ("reg1", myDict[p].op1,"reg2",reg2)
+						return True,p,reg1,reg2,reg2
+			return False,0,0,0,0
+	return False,0,0,0,0
+
+
+
+def aslr_syscallLeakGS():
+	length1=True
+	excludeRegs=set()
+	comment=""
+	isVal=False
+	regsNotUsed= copy.deepcopy(regs64.availableRegs)
+	if "rsp" in regsNotUsed:
+		regsNotUsed.remove("rsp")
+	regsNotUsed2= copy.deepcopy(regsNotUsed)
+	pkCur=[]
+	t=1
+
+	while True:
+		print ("******")
+		foundM1, s1,sysR1,sysR2,sysGSReg = findSysGS("movGSSpecial",regsNotUsed2,regsNotUsed2,bad,length1, [])
+		if foundM1:
+			# showChain(s1,True,True,yel,"sysTarget 2 " + sysR1,64)
+			return True, s1, sysGSReg,sysR2
+		foundM1, s1,sysR1,sysR2,sysGSReg = findSysGS("addGS",regsNotUsed2,regsNotUsed2,bad,length1, [])
+		if foundM1:
+			foundP0,chP0 = loadReg64(sysR1,bad,True,list(excludeRegs),0x00,"Zeroing out " + sysR2)
+			if foundP0:
+				return True, pkBuild([chP0, s1]), sysGSReg,sysR2
+			# showChain(s1,True,True,yel,"sysTarget addGS " + sysR1,64)
+			# break
+		foundM1, s1,sysR1,sysR2,sysGSReg = findSysGS("subGS",regsNotUsed2,regsNotUsed2,bad,length1, [])
+		if foundM1:
+			foundP0,chP0 = loadReg64(sysR1,bad,True,list(excludeRegs),0x00,"Set to zero")
+			if foundP0:
+				foundNeg, n1 = findGeneric("neg",sysR1,bad,length1, [],0)
+				if foundNeg:
+					n1=chainObj(n1," recover leaked PEB address!", [])
+					# showChain(pkBuild([chP0,s1,n1]) ,True,True,yel,"sysTarget subGS " + sysR1,64)
+					return True, pkBuild([chP0,s1,n1]), sysGSReg,sysR2
+				if not foundNeg:
+					foundNot, n1 = findGeneric("not",sysR1,bad,length1, [],0)
+					foundInc, i1 = findGeneric("inc",sysR1,bad,length1, [],0)
+					if foundNot and foundInc:
+						n1=chainObj(n1," recover leaked PEB address!", [])
+						i1=chainObj(i1," need to add 1 to finish restoring", [])
+						# showChain(pkBuild([chP0,s1,n1,i1]) ,True,True,yel,"sysTarget subGS " + sysR1,64)
+						return True, pkBuild([chP0,s1,n1,i1]), sysGSReg,sysR2
+		if 2==3:  #todo implement more fully
+			foundM1, s1,sysR1,sysR2,sysGSReg = findSysGSXchg("xchgGS",regsNotUsed2,regsNotUsed2,bad,length1, [])
+			if foundM1:
+				showChain(s1,True,True,yel,"sysTarget xchgGS " + sysR1,64)
+				print ("sys gs reg",sysGSReg)
+				break
+			foundM1, s1,sysR1,sysR2,sysGSReg = findSysGS("xorGS",regsNotUsed2,regsNotUsed2,bad,length1, [])
+			if foundM1:
+				showChain(s1,True,True,yel,"sysTarget xchgGS " + sysR1,64)
+				break
+
+		if foundM1:
+			return True, s1, sysGSReg,sysR2
+		else:
+			return False, 0,0,0
+
+def aslr_syscall(apiCode):
+	length1=True
+	finalTypePattern=apiCode
+	excludeRegs=set()
+	withPR=False
+	comment=""
+	isVal=False
+	regsNotUsed= copy.deepcopy(regs64.availableRegs)
+	regsNotUsed.remove("rsp")
+	regsNotUsed2= copy.deepcopy(regsNotUsed)
+	foundAddFinal=True
+	sizAPI=len(patSys64[apiCode])-1
+	retrieveVal=sizAPI+1
+	pkCur=[]
+	t=1
+	
+
+	fRet, rn,rDict=findRet(bad,64)
+	for x in range (sizAPI):
+		r, rValStr,com1, hasString, hasPointer, structPointer, structType, structSize, ourLoc= giveRegValsFromDict64(patSys64,t,apiCode)
+		# print (cya,t,res,r, rValStr,com1, hasString, hasPointer, structPointer, structType, structSize, ourLoc)
+		if ourLoc==None:
+			foundP0,chP1 = loadReg64(r,bad,True,list(excludeRegs),rValStr,com1)
+			# print (gre,r, foundP0,res)
+			if not foundP0:
+				chP1=chainObj(rn, "placeholder - could not find gadget to load " + hex(rValStr) + " in " + r + " for " + com1, [])
+				# print (cya,"continue",r, res)
+				# continue
+			if foundP0 or fRet:
+				# showChain(pkBuild([chP1]),True,True,yel,"",64)
+				pkCur=pkBuild([pkCur,chP1])
+		else:
+			# print ("calculating distance...")
+			comment = "calculate distance to " + com1
+			foundDistG, v, pk2,reg=getDistanceGadget(942,list(excludeRegs),rValStr,pkCur,r,ourLoc,apiCode,finalTypePattern, True,comment,64)
+			if foundDistG:
+				# showChain(pk2, True,True,gre,"getDistanceGadget",64)
+				pkCur=pkBuild([pkCur,pk2])
+			if not foundDistG:
+				# print ("nof foundDistG")
+				pass
+		excludeRegs.add(r)
+		# print ("\texcludeRegs",excludeRegs)
+		t=t+1
+	# print ("end loop")
+	foundSyscall,sysP = findSyscall64(bad,length1, excludeRegs)
+	if not foundSyscall:
+		chP1=chainObj(rn, "placeholder - could not find syscall gadget", [])
+		pkCur=pkBuild([pkCur,chP1])
+	if foundSyscall:
+		# showChain(pkBuild([sysP]), True,True,cya,"syscall",64)
+		pkCur=pkBuild([pkCur,sysP])
+
+	# retrieve PEb/TEB
+	r, rValStr,com1, hasString, hasPointer, structPointer, structType, structSize, ourLoc= giveRegValsFromDict64(patSys64,"retrieve",apiCode)
+	for r2 in regsNotUsed2:
+		foundDistG, v, pk3,rOut=getDistanceGadget(239,[],rValStr,pkCur,r2,ourLoc,apiCode,finalTypePattern, True,com1,64)
+		if foundDistG:
+			# showChain(pk3, True,True,gre,"getDistanceGadget " +rOut,64)
+			pkCur=pkBuild([pkCur,pk3])
+			break
+	if not foundDistG:
+		chP1=chainObj(rn, "placeholder - gadgets to retrive " + com1 + " were not found", [])
+		pkCur=pkBuild([pkCur,chP1])
+	#deref.
+	foundM3, m3, chM3, mQReg1, mQReg2 = findmovQword2("movQword2",regs64.to64(rOut), regs64.availableRegs, bad,length1, {},"Dereferencing to obtain " + com1)
+	if foundM3:
+		# showChain(chM3, True,True,cya,"findmovQword2 " +rOut,64)
+		pkCur=pkBuild([pkCur,chM3])
+
+	zeroCounterMq2=0
+	noGoodPebMq=set()
+	while not foundM3:
+		if not foundM3:
+			foundTransfer4, t4, cht4,t4op1, t4op2  = transfer64("mov","64",regs64.availableRegs,regs64.to64(rOut),  bad,length1, excludeRegs,noGoodPebMq,"Transfer reg4",True,0)
+			# print (red,"pebReg",pebReg,"t4op1", t4op1,"t4op2",t4op2,res)
+			foundM3, m2,chM2, mQReg1, mQReg2 = findmovQword2("movQword2",t4op1, regs64.availableRegs, bad,length1, excludeRegs,"Dereferencing to obtain " + com1) 
+		noGoodPebMq.add(t4op1+t4op2)
+		if t4op1==0:
+			zeroCounterMq2=zeroCounterMq2+1
+		if foundTransfer4 and foundM3:
+			# print (yel, "set pebReg", pebReg, t4op1, res)
+			chM3=pkBuild([cht4,chM2])
+			break
+		if zeroCounterMq2 > 8:
+			break
+			
+	noGoodSet = set() 
+	if apiCode=="NtQueryInformationThread":
+		foundAddFinal, finalAdd, newReg, newNoGood  = addToReg(mQReg1,[], length1,bad,noGoodSet,0x60,"Reaching the PEB")
+		if foundAddFinal:
+			# showChain(finalAdd, True,True,cya,"addToReg " +rOut,64)
+			pkCur=pkBuild([pkCur,finalAdd])
+		if not foundAddFinal:
+			# print ("**********not found addToReg" )
+			return False, 0,0
+
+	# showChain(pkCur, True,True,gre,"final",64)
+	# print ("\n\n\n\n\n")
+	if foundM3 and foundAddFinal:
+		return True,pkCur,mQReg1	
+	return False, 0,0
+
+
+# return True, s1, sysGSReg,sysR2
+def findPebChain(excludeRegs, length1, bad, entry, useSyscall,apiCode=None,rdgsbaseModeOnly=False):
+	noGoodStart = set()   # regs/chains that failed startASLR
+	start_attempts = 0
+
+	while start_attempts < MAX_START_RETRIES:
+		#todo fix - hast startreg rax - make more generic
+		foundStart, startPk, startReg, newNoGood, pebDiscloseMethod = startASLR(excludeRegs, length1, bad, noGoodStart,useSyscall,apiCode, rdgsbaseModeOnly)
+		# print ("startASLR", startReg)
+		noGoodStart |= set(newNoGood)
+		start_attempts += 1
+		# if start_attempts <10:
+		# 	if foundStart:
+		# 		showChain(startPk, True, True, blu, f"startPk (attempt {start_attempts})", 64)
+		if not foundStart:
+			continue
+		# showChain(startPk, True, True, blu, f"startPk (attempt {start_attempts})", 64)
+		noGoodPeb = set()
+		peb_attempts = 0
+		while peb_attempts < MAX_TRANSFER_RETRIES:
+			peb_attempts += 1
+			foundPeb, PebLdrPk, pebReg = getPEBASLR(startReg, entry, excludeRegs, length1, bad)
+			foundPeb=False
+			if foundPeb:
+				# showChain(pkBuild([startPk, PebLdrPk]), True, True, yel, f"startPk (attempt {start_attempts})", 64)
+				return True, pkBuild([startPk, PebLdrPk]), pebReg,pebDiscloseMethod
+			foundXfer, tPk, xferChain, tReg1, tReg2 = transfer64("mov", "64", regs64.availableRegs, regs64.to64(startReg),bad, length1, excludeRegs, noGoodPeb,	"Transfer reg", True, 0)
+			noGoodPeb.add((tReg1, tReg2))
+			if foundXfer:
+				# showChain( pkBuild([xferChain]), True, True, blu, f"xfer (attempt {peb_attempts})", 64)
+				foundPeb, PebLdrPk, pebReg = getPEBASLR(tReg1, entry, excludeRegs, length1, bad)
+				if foundPeb:
+					full = pkBuild([startPk, xferChain, PebLdrPk])
+					# showChain( full, True, True, blu, f"xfer (attempt {peb_attempts})", 64)
+					return True, full, pebReg,pebDiscloseMethod
+
+	return False, 0,0,0
+
+def buildASLR_Bypass64Inner(entry,useSyscall=False,apiCode=None,rdgsbaseModeOnly=False):
+	length1=True
+	outputsTxt = []
+	outputsTxtC = []
+	excludeRegs=[]
+	availableRegs=["rbx","rax","rcx","rdx","rsi","rdi","rbp","r8","r9","r10","r11","r12","r13","r14","r15"]
+	availableRegs=["rax","rbx","rcx","rdx"]
+	# entry = aslrMod[inMem]
+	
+
+	baseOffset = entry["getBaseAddress"]
+	numDereferences =entry["numDereferences"]
+	pebLDROffset =entry["pebLDROffset"]
+	getModList =entry["reachModList"]
+	getBaseAddress =entry["getBaseAddress"]
+	curModList =entry["targetModList"]
+	curDLL =entry["targetDLL"]
+
+	
+	foundPebStart, pebStart, pebReg,pebDiscloseMethod= findPebChain(excludeRegs, length1, bad, entry,useSyscall,apiCode, rdgsbaseModeOnly)
+	# showChain(pebStart,True,True,yel, "startPk", 64)
+	if not foundPebStart:
+		return False, 0,0
+	foundModuleList,ldrPk, pebReg = getModuleList(pebReg,entry,excludeRegs, length1,bad,availableRegs)  # has built-in transfer logic
+	# showChain(pkBuild([startPk,PebLdrPk,ldrPk ]),True,True,gre, "up to ldrPk  " , 64)
+	if not foundModuleList:
+		return False, 0,0
+	foundFinalMov,finalMovPK = finalMovDerefASLR(pebReg,entry,excludeRegs, length1,bad)
+	if not foundFinalMov:
+		return False, 0,0
+	# showChain(pkBuild([finalMovPK]),True,True,red, "finalMovPK " + str(numDereferences),  64)
+	if foundFinalMov:
+		cOut,out = genOutput64(pkBuild([pebStart, ldrPk, finalMovPK]), "ASLR Bypass", curModList, curDLL,pebDiscloseMethod)
+		print (cOut)
+		outputsTxt.append(out)
+		outputsTxtC.append(cOut)
+		return True, outputsTxt,outputsTxtC
+	return False, 0,0
+	# foundXor, Xor1 = findGenericOp264("xor",reg,reg,reg, bad,length1, excludeRegs,0)
+		# if foundXor:
+		# 	showChain(pkBuild([Xor1]),True,True,gre, "We found the xorf " +reg, 64)
+
+def directLoad64(reg, bad, length1, excludeRegs, val,comment=None, isVal=False, ID=None):
+	if comment=="test":
+		return False,0
+
 	espDesiredMovement=0
 	checkAll=False
 	
@@ -12234,9 +13483,9 @@ def loadReg64(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None)
 
 	if val==0:
 		foundXor, Xor1 = findGenericOp264("xor",reg,reg,reg, bad,length1, excludeRegs,0)
-
 		if foundXor:
-			showChain(pkBuild([Xor1]),True,True,gre, "We found the xorf " +reg, 64)
+			# showChain(pkBuild([Xor1]),True,True,gre, "We found the xorf " +reg, 64)
+			Xor1=chainObj(Xor1,comment, [])
 			return foundXor, Xor1
 	if freeBadGoalVal:
 		# foundP1, p1,pDict=findPop(reg,bad,length1,excludeRegs,isVal)
@@ -12247,7 +13496,95 @@ def loadReg64(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None)
 			if comment!=None:
 				comment2+= ", " + comment
 			chP=chainObj(p1, comment2, [val])
-			print ("returning true")
+			# print ("returning true2")
+			return foundP1, chP
+
+		xorSuccess,xorPk=buildXor64(val,excludeRegs,bad,bb,False,reg,comment,isVal)
+		if xorSuccess:
+			# showChain(pkBuild([xorPk]),True,True,mag,"",64)
+			return True, xorPk
+
+		intSuccess, intOvPk =buildIntOverflowPR64(excludeRegs,bad,val,False,bb,False,reg,comment,isVal)
+		if intSuccess:
+			return True, intOvPk
+
+		foundInt2,foundIntPk = buildFoundIntOv(val,excludeRegs,bad,False,reg, comment,isVal,64)
+		if foundInt2:
+			return True, foundIntPk
+
+		foundXorSuccess,foundXor=buildFoundXor(val,excludeRegs,bad,bb,False, reg,comment,isVal,64)
+		if foundXorSuccess:
+			return True, foundXor
+
+		foundX, chX=lXorAdd64(reg,val,bad,length1,excludeRegs,0,isVal)
+		if foundX:
+			return True, chX
+
+	return False, 0
+
+
+def loadReg64(reg, bad, length1, excludeRegs, val,  comment="", isVal=False, ID=None):
+	# PHASE 1: try direct load into reg
+	foundDL, chDir = directLoad64(reg, bad, length1, excludeRegs, val,comment,isVal,ID )
+	if foundDL:
+		return True, chDir
+	# print (red,"reg",reg,res)
+	noGoodTrans = set()	 
+	for alt in regs64.availableRegs:
+		if alt == reg or alt in excludeRegs:
+			# print (red,"continue same", alt, reg,res)
+			continue
+		foundDirect2, altChain = directLoad64(alt, bad, length1, excludeRegs, val,comment,isVal,ID )
+		if not foundDirect2:
+			# print (yel,"no direct 2", alt, res)
+			continue
+		foundT, p0, gT, left,right = findUniTransfer64("aslr_bfoundXfer",regs64.to64(reg), regs64.to64(alt), bad,length1,excludeRegs,0, "Transfer to " + reg)
+		if foundT:
+			# showChain(pkBuild([altChain, gT]),True,True,yel,"foundT 22",64)
+			full_chain = pkBuild([altChain, gT])
+			return True, full_chain
+		# double transfer via an intermediate register
+		for mid in regs64.availableRegs:
+			if mid == reg or mid == alt or mid in excludeRegs or alt == "rsp" or mid =="rsp":
+				continue
+			# first transfer alt → mid
+			fX1, p1, c1, r1a, r1b = findUniTransfer64("aslr_bfoundXfer",regs64.to64(mid), regs64.to64(alt), bad,length1,excludeRegs,0, "Transfer to444444 " + reg)
+			if not fX1:
+				# print (yel, "cont 1",mid,alt, reg, res)
+				continue
+			# second transfer mid → reg
+			fX2, p2, c2, r2a, r2b= findUniTransfer64("aslr_bfoundXfer",regs64.to64(reg), regs64.to64(mid), bad,length1,excludeRegs,0, "Transfer to444444 " + reg)			
+			if not fX2:
+				# print (cya, "cont 2", reg, mid, res, reg,res)
+				continue
+			# showChain(pkBuild([altChain, c1, c2]), True, True, gre, "double transfer to "+reg, 64)
+			full_chain = pkBuild([altChain, c1, c2])
+			return True, full_chain
+	return False, 0
+
+def loadReg64Old(reg,bad,length1,excludeRegs,val,comment=None, isVal=False,ID=None):
+	espDesiredMovement=0
+	checkAll=False
+	
+	freeBadGoalVal=checkFreeBadBytes(opt,fg,val,bad,fg.rop,pe,n,opt["bad_bytes_imgbase"],isVal)
+	if freeBadGoalVal:
+		checkAll=True
+
+	if val==0:
+		foundXor, Xor1 = findGenericOp264("xor",reg,reg,reg, bad,length1, excludeRegs,0)
+		if foundXor:
+			# showChain(pkBuild([Xor1]),True,True,gre, "We found the xorf " +reg, 64)
+			return foundXor, Xor1
+	if freeBadGoalVal:
+		# foundP1, p1,pDict=findPop(reg,bad,length1,excludeRegs,isVal)
+		foundP1, p1 = findGeneric64("pop",reg,reg,bad,length1, excludeRegs,0)
+
+		if foundP1:
+			comment2="load " + reg
+			if comment!=None:
+				comment2+= ", " + comment
+			chP=chainObj(p1, comment2, [val])
+			# print ("returning true2")
 			return foundP1, chP
 
 	return False, 0
@@ -12262,10 +13599,10 @@ def buildHG(bad,excludeRegs):
 	IncDec="dec"
 	# availableRegs=["eax","ebx","ecx","edx", "esi","edi","ebp"]
 
-	# availableRegs=["rax","rbx","rcx","rdx","rsi","rdi","rsp","rbp","r8 ","r9 ","r10","r11","r12","r13","r14","r15"]
-	# availableRegs=[("rax", "eax"),("rbx", "ebx"),("rcx", "ecx"),("rdx", "edx"),("rsi","esi"),("rdi", "edi"),("rsp", "esp"),("rbp", "ebp"),("r8 ", "r8"),("r9 ", "r9"),("r10", "r10"),("r11", "r11"),("r12", "r12"),("r13", "r13"),("r14","r14"),("r15", "r15")]
+	# availableRegs=["rax","rbx","rcx","rdx","rsi","rdi","rsp","rbp","r8","r9","r10","r11","r12","r13","r14","r15"]
+	# availableRegs=[("rax", "eax"),("rbx", "ebx"),("rcx", "ecx"),("rdx", "edx"),("rsi","esi"),("rdi", "edi"),("rsp", "esp"),("rbp", "ebp"),("r8", "r8"),("r9", "r9"),("r10", "r10"),("r11", "r11"),("r12", "r12"),("r13", "r13"),("r14","r14"),("r15", "r15")]
 	availableRegs=[	 "eax", "ebx", "ecx", "edx","esi", "edi", "esp", "ebp", "r8", "r9", "r10", "r11", "r12", "r13","r14", "r15","rax"]
-	# availableRegsB=["rbx","rcx","rdx","rsi","rdi","rsp","rbp","r8 ","r9 ","r10","r11","r12","r13","r14","r15"]
+	# availableRegsB=["rbx","rcx","rdx","rsi","rdi","rsp","rbp","r8","r9","r10","r11","r12","r13","r14","r15"]
 	
 
 	for reg in excludeRegs:
@@ -12528,6 +13865,7 @@ def buildMovDerefSyscall(excludeRegs,bad, myArgs ,numArgs):
 				# print(pkStart,pkZBA,gT,pkVRSforPtr,pkP6, pkP5,gT2,pkP4,pkP3,gT2,pkInc,pkP2, pkP1,pkRA1,pkRA2)
 				curPk=pkBuild([pkStart,pkZBA,gT,pkVRSforPtr,pkP6, pkP5,gT2,pkP4,pkP3,gT2,pkInc,pkP2, pkP1,pkRA1,pkRA2])#,pkDW,pkLP,pkRA,pkVP,pkEnd]) #pkFn,pkDW
 				foundSys, pkSysSetup=getSyscallSetup(reg,op2,bad,length1, regsNotUsed2,espDesiredMovement,curPk,syscallSSN,distEsp,IncDec,numP,destAfter,distFinalESP,SyscallName,excludeRegs2,m1)
+				# showChain(pkSysSetup,True,True,cya)
 				if not foundSys:
 					dp("not foundSys")
 
@@ -13343,7 +14681,6 @@ class getParamVals:
 		# dp(rC2p, hex(rC2p))
 		if foundRC2:
 			return True, rC2p,comment, ""
-		# dp ("returning false")
 		return False,0,"Ret C2 not found", ""
 
 	def get_addESP(self,name,excludeRegs,r,r2,bad,pk):
@@ -14216,6 +15553,7 @@ def giveMovDValsFromDict(curPat, t,i):
 	return valStr, val, specialHandling, hasString, paramStr,hasPointer, structPointer, structType, structSize, ourLoc, com
 
 def giveRegValsFromDict(dict,t,i, multiApi):
+
 	r=pat[i][str(t)]["r"]
 	rV=pat[i][str(t)]["val"]
 	ourLoc=pat[i][str(t)]["loc"]
@@ -14242,12 +15580,397 @@ def giveRegValsFromDict(dict,t,i, multiApi):
 	return r, rV,rExclude,r2,com,specialHandling, hasString, paramStr,hasPointer, structPointer, structType, structSize, ourLoc
 
 
+def giveRegValsFromDict64(curPat,t,i):
+
+	ourLoc=curPat[i][str(t)]["loc"]
+	com=curPat[i][str(t)]["com"]
+
+	if t=="retrieve":
+		return 0,0,com,0,0,0,0,0,ourLoc
+
+	r=curPat[i][str(t)]["r"]
+	rV=curPat[i][str(t)]["val"]
+	hasString=curPat[i][str(t)]["hasStr"]
+	hasPointer=curPat[i][str(t)]["hasPtr"]
+	structPointer=curPat[i][str(t)]["hasStru"]
+	structType=curPat[i][str(t)]["strucT"]
+	structSize =curPat[i][str(t)]["struSize"]
+	# retrieve=curPat[i]["retrieve"]["loc"]
+	return r, rV,com, hasString, hasPointer, structPointer, structType, structSize, ourLoc
+
+
+
 def addExRegs(excludeRegs, r):
 	if r != "esp":
 		excludeRegs.append(r)
 	return excludeRegs
 
 def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stopCode, finalTypePattern=None, multiApi=False):
+	global timeStopBP
+	global timeStartBP
+	# print (red,"buildPushadInner",res)
+	gTrackerFull.show("start gTrackerFull", cya)
+	
+	gTrack= gTrackerFull.clone()
+	# gTrack.show("right after starting gTrack", yel)
+
+	gTrack.setG(1, [666])
+	gTrack.setG(1, [666,22,444,222,334,33,244,33,22])
+	# gTrack.show("added some - top of buildPushadInner",gre)
+
+	global specialPKGList2
+	checkFillerQty(stopCode)
+	specialPKGList2=[]
+	j=0
+	outputsTxt=[]
+	outputsPk=[]
+	outputsTxtC=[]
+	# tellWhy=True
+	tellWhy=False
+	size=8
+	endFlag=False
+	pkM_D1=[]
+	# apiNum=1  # change to 1 to view one at a time.
+
+	if opt["researcherMode"]:
+		dontShow=True
+		dontShowFinal=True
+		maxTries=opt["maxChainAttempts"]
+	else:
+		dontShow=False
+		dontShowFinal=False
+		maxTries=1
+	
+	chainNum=0
+	i,j, apiCode, apiNum, size= giveApiNum(winApi,0)
+	numNotCompletedChains=0
+	maxNumNotCompletedChains=size+2
+	for attempt in range(maxTries):
+		j=0
+		if numNotCompletedChains>maxNumNotCompletedChains:
+			break
+
+		if timeit.default_timer() - timeStartBP > opt["timeout"]:
+ 			print (red,"   breaking early - timed out!",res)
+ 			break
+
+		for x in range(apiNum):
+			if timeit.default_timer() - timeStartBP >  opt["timeout"]:
+ 				break
+			numNotCompletedChains+=1
+			
+			chainNum+=1
+			# print ("chainNum",chainNum)
+			
+			i,j, apiCode, apiNum, size= giveApiNum(winApi,j)
+			# print (red,"i,j, apiCode, apiNum,size", res,i,j, apiCode, apiNum,size)
+			if not dontShow:
+				print (yel,"	Attempting apiCode",res,apiCode, j, "of ", apiNum)
+			excludeRegs2= copy.deepcopy(excludeRegs)
+			length1=True
+			pk=[]
+			pkMD1=0
+			tempPkMD=0
+			if len(pk1)>0:
+				pk=pk1
+			if size > 8:
+				### this part pertains to creating mov dereferences for mov. deref + pushad
+				num=9
+				pkMD=[]
+				tempPkMD=[]
+				while num <= size:
+					if num==9:  #this part initializes the first part, getting memory to write to.
+						foundT, pkM, pkMD1,pkStart, r1, r2,pM, pI= loadMovD1(num,i, bad,True,excludeRegs2,pkMD,apiCode, finalTypePattern)
+						r1Save=r1
+						# print ("foundT", foundT)
+						# showChain(pkM,True,True,red)
+
+					if num>9:  # this part is for all mov. derf.'s  after the first one
+						# print (blu,"loadmovd2 starts",res, i,j, "r1", r1, "r2", r2,"\n")
+						
+						foundT, pkM, r1, r2,pM, pI= loadMovD2(num,i, bad,True,excludeRegs2,pkMD,apiCode, finalTypePattern, pM,pI,r1,r2)
+						# print (red,"loadmovd2 ends",res, i,j, "r1", r1, "r2", r2,"foundT",foundT,"\n")
+					if foundT:
+						pkMD=pkBuild([pkMD,pkM])
+						if num==9:
+							pass
+						if num >9:
+							tempPkMD=pkBuild([tempPkMD,pkM])
+						# print (gre,"size", size, cya,"num",num,res)
+						# print (yel,"loadMovD")
+						# showChain(pkMD, True, True)
+						# print (res)
+					else:
+						if tellWhy:
+							print (red,"continue MD",res)
+						# continue
+						endFlag=True
+						break
+					if size==num:
+						sizSame=False
+						while not sizSame:   
+							gadgetBytes=buildRopChainTemp(pkMD)  # need to determine size of mov. defef. payload
+							sizGadBytes=len(gadgetBytes)
+							# print (yel,"temp loadMovD")
+							# showChain(tempPkMD, True, True)
+							# print (gre,"pkmd loadMovD")
+							# showChain(pkMD, True, True)
+							# print (res)
+							foundMD1Start, pkStart2 = loadMovD1Starter(r1Save,sizGadBytes,9,i, bad,True,excludeRegs2,pk,apiCode,finalTypePattern)
+							if foundMD1Start:
+								newPkMD=pkBuild([pkStart2, pkMD1,tempPkMD])
+								gadgetBytes2=buildRopChainTemp(newPkMD)
+								# showChain(newPkMD[:14],True,True,cya)
+								sizGadBytes2=len(gadgetBytes)
+								# print (yel,"sizGadBytes2",cya, hex(sizGadBytes2), res,"sizGadBytes",cya, hex(sizGadBytes),)
+
+								if sizGadBytes2==sizGadBytes:
+									sizSame=True
+									excludeRegs2Save= copy.deepcopy(excludeRegs2)
+
+								# print (gre,"new loadMovD", yel, sizGadBytes, sizGadBytes2,res)
+								# showChain(pkStart2, True, True)
+								# print (res)
+								pkMD=newPkMD
+							if not foundMD1Start:
+								endFlag=True
+								break
+					num+=1
+
+			### this part pertains to loading registers
+
+			if endFlag:
+				continue
+			if size > 8 :
+				pk=pkBuild([pkMD])
+			if size > 8 and len(pk1) ==0:
+				pass
+
+			foundL1, pl1, lr1,r1 = loadRegP(1,i, bad,True,excludeRegs2,pk,apiCode,finalTypePattern,multiApi,1,gTrack)
+			if foundL1:
+				excludeRegs2=addExRegs(excludeRegs2, r1)
+				# print (cya+"adding to excludeRegs2 1", excludeRegs2,res)
+				if size==8:
+					pk=pkBuild([pk1,lr1])
+				if size > 8:
+					pk=pkBuild([pk,lr1])
+			else:
+				if tellWhy:
+					print(red,"buildps continue 1",res, i, j)
+				continue
+
+			foundL2, pl2, lr2,r2 = loadRegP(2,i, bad,True,excludeRegs2,pk,apiCode,finalTypePattern,multiApi,2,gTrack)
+			if foundL2:
+				excludeRegs2=addExRegs(excludeRegs2, r2)
+				# print (cya+"adding to excludeRegs2 2", excludeRegs2,res)
+				pk=pkBuild([pk,lr2])
+			else:
+				if tellWhy:
+					print(red,"buildps continue 2",res)
+				continue
+
+			foundL3, pl3, lr3,r3 = loadRegP(3,i, bad,True,excludeRegs2,pk,apiCode,finalTypePattern,multiApi,3,gTrack)
+			if foundL3:
+				excludeRegs2=addExRegs(excludeRegs2, r3)
+				# print (cya+"adding to excludeRegs2 3", excludeRegs2,res)
+				pk=pkBuild([pk,lr3])
+			else:
+				if tellWhy:
+					print(red,"buildps continue 3",res)
+				continue
+
+			foundL4, pl4, lr4,r4 = loadRegP(4,i, bad,True,excludeRegs2,pk,apiCode,finalTypePattern,multiApi,4,gTrack)
+			if foundL4:
+				excludeRegs2=addExRegs(excludeRegs2, r4)
+				# print (cya+"adding to excludeRegs2 4", excludeRegs2,res)
+				pk=pkBuild([pk,lr4])
+			else:
+				if tellWhy:
+					print(red,"buildps continue 4",res)
+				continue
+
+			foundL5, pl5, lr5,r5 = loadRegP(5,i, bad,True,excludeRegs2,pk,apiCode,finalTypePattern,multiApi,5,gTrack)
+			if foundL5:
+				excludeRegs2=addExRegs(excludeRegs2, r5)
+				# print (cya+"adding to excludeRegs2 5", excludeRegs2,res)
+				pk=pkBuild([pk,lr5])
+			else:
+				if tellWhy:
+					print(red,"buildps continue 5",res)
+				continue
+
+			foundL6, pl6, lr6,r6 = loadRegP(6,i, bad,True,excludeRegs2,pk,apiCode,finalTypePattern,multiApi,6,gTrack)
+			if foundL6:
+				excludeRegs2=addExRegs(excludeRegs2, r6)
+				# print (cya+"adding to excludeRegs2 6", excludeRegs2,res)
+				pk=pkBuild([pk,lr6])
+			else:
+				if tellWhy:
+					print (red,"continue 6",res)
+				continue
+
+			foundL7, pl7, lr7,r7 = loadRegP(7,i, bad,True,excludeRegs2,pk,apiCode,finalTypePattern,multiApi,7,gTrack)
+			if foundL7:
+				excludeRegs2=addExRegs(excludeRegs2, r7)
+				# print (cya+"adding to excludeRegs2 7", excludeRegs2,res)
+				pk=pkBuild([pk,lr7])
+			else:
+				if tellWhy:
+					print (red,"continue 7",res)
+				continue
+
+			foundL8, pl8, lr8,r8 = loadRegP(8,i, bad,True,excludeRegs2,pk,apiCode,finalTypePattern,multiApi,8,gTrack)
+			
+			if foundL8:
+				excludeRegs2=addExRegs(excludeRegs2, r8)
+				pk=pkBuild([pk,lr8])
+			else:
+				if tellWhy:
+					print (red,"continue 8 - last",res)
+				continue
+
+			fRet, pR,rDict=findRet(bad)
+			foundPushad, puA,pDict=findPushad(bad,length1,excludeRegs)
+
+			specialPKGList2=[]
+			specialPK=[]
+
+			if apiCode=="RSKV":
+
+				availableRegs3=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+				for r3 in availableRegs3:
+					foundP1, p1,pDict=findPop(r3,bad,length1,[])
+					if foundP1:
+						break
+				if foundP1:
+					tTP1=tryThisFunc(p1)
+					p1=chainObj(p1, "Needed pop gadget: " + tTP1 , [])
+					specialPKGList2 =pkBuild([p1])
+				else:
+					fRet, pR2,rDict=findRet(bad)
+					p1=chainObj(pR2, "Replace with pop reg" , [])	
+					specialPKGList2 =pkBuild([p1])
+
+			if foundPushad:
+				pkPA=pkBuild([pk,puA])
+				# showChain(pkPA, True,True)
+				if not dontShow:
+					print (cya,"	Completed apiCode",res,apiCode, j, cya, "Chain #", whi, chainNum, res)
+
+				# showChain(pkPA,True,True,yel)
+			else:
+				cOut,out= genOutput(pk,winApi,specialPK, finalTypePattern,chainNum)
+				if not dontShowFinal:
+					print (cOut)
+					print (red,"  Valid pushad not found - all else found - chain generation TERMINATED!!!",res)
+				if puA!=0x99:
+					if not dontShowFinal:
+						print (red,"  A pushad with bad bytes does exist:",res)
+						offset1=fg.rop[puA].offset + pe[n].VirtualAdd
+						print(gre+"\t0x"+hx(img(puA)),res, "\toffset:",cya, hex(offset1), yel,disOffset(puA),res)
+						print ("  Some patterns may allow this to be substituted for a ROP nop and done via Push/Ret -> Pushad.\n   e.g. integer overflow, XOR, etc.")
+					
+					# str(hx (img(t,myDict), 8))+ whi+", # " + yel+ disMini(myDict[t].g.raw, myDict[t].g.offset) 
+				return False, [],[],[]
+				### too unreliable to automate - will disrupt any other register
+				# if puA==0x99:
+				# 	continue
+				# else:
+				# 	success, tryPackage = tryObfMethods(excludeRegs,bad,img(puA),"", bb, False,reg,comment)
+
+			if foundL1 and foundL2 and foundL3 and foundL4 and foundL5 and foundL6 and foundL7 and foundL8 and foundPushad and not endFlag:
+				if i!="VP1" and i!="VA2":
+					numNotCompletedChains=0
+					
+					pkFinal=pkBuild([lr1,lr2,lr3,lr4,lr5,lr6,lr7,lr8, pR])
+					pkFinalPA=pkBuild([lr1,lr2,lr3,lr4,lr5,lr6,lr7,lr8,puA])
+					if size > 8:
+						pkFinalPre=pkBuild([pkMD,  pkFinal])	
+						pkFinalPAPre=pkBuild([pkMD,  pkFinalPA])
+						gadgetBytes2=buildRopChainTemp(pkFinalPAPre)  # need to determine size of mov. defef. payload
+						sizGadBytes2=len(gadgetBytes2)
+						# print (yel,"sizGadBytes2", hex(sizGadBytes2), res)
+						foundMD1Start, pkStart2 = loadMovD1Starter(r1Save,sizGadBytes2-4,9,i, bad,True,excludeRegs2Save,pk,apiCode,finalTypePattern)
+						if foundMD1Start:
+							pkMD=pkBuild([pkStart2, pkMD1,tempPkMD])
+						if not foundMD1Start:
+							pass #todo
+						pkFinal=pkBuild([pkMD,  pkFinal])
+						pkFinalPA=pkBuild([pkMD,  pkFinalPA])
+					# showChain(pkFinal,True)
+				else:
+					numNotCompletedChains=0
+
+					jFound22, jESP,com2,extra=pv.get_JmpESP("JmpESP",excludeRegs, esp,"", bad,[])
+					if jFound22:
+						chJ=chainObj(jESP, "Jmp to shellcode",[])
+					else:
+						fRet, rn,rDict=findRet(bad)
+						chJ=chainObj(rn, "JMP ESP needed here to reach shellcode",[])
+
+					pkFinal=pkBuild([lr1,lr2,lr3,lr4,lr5,lr6,lr7,lr8, pR,chJ])
+					pkFinalPA=pkBuild([lr1,lr2,lr3,lr4,lr5,lr6,lr7,lr8,puA,chJ])
+					if size > 8:
+						pkFinalPre=pkBuild([pkMD,  pkFinal])
+						pkFinalPAPre=pkBuild([pkMD,  pkFinalPA])
+						gadgetBytes2=buildRopChainTemp(pkFinalPAPre)  # need to determine size of mov. defef. payload
+						sizGadBytes2=len(gadgetBytes2)
+						# print (yel,"sizGadBytes2", hex(sizGadBytes2), res)
+						foundMD1Start, pkStart2 = loadMovD1Starter(r1Save,sizGadBytes2-4,9,i, bad,True,excludeRegs2Save,pk,apiCode,finalTypePattern)
+						if foundMD1Start:
+							pkMD=pkBuild([pkStart2, pkMD1,tempPkMD])
+						if not foundMD1Start:
+							pass #todo
+						pkFinal=pkBuild([pkMD,  pkFinal])
+						pkFinalPA=pkBuild([pkMD,  pkFinalPA])
+
+				if not stopCode in apiCode:
+					return True,apiCode+str(j), pkFinal,pkFinalPA
+				else:
+					pkAll=pkBuild([completePKs,pkFinalPA])
+
+			else:
+				print (" No chains found.")
+				return False,apiCode+str(j), [],[]
+			# j+=1
+			excludeRegs2.clear()
+			# showChain(pkAll)	
+			cOut,out= genOutput(pkAll,winApi,specialPK,finalTypePattern,chainNum)
+			outputsTxt.append(out)
+			# print ("999", cOut)
+			outputsTxtC.append(cOut)
+			outputsPk.append(pkAll)
+			dp(len(outputsTxt))
+			gTrackerFull.mergeFrom(gTrack)
+			# gTrackerFull.show("after merge",mag)
+
+	timeStopBP = timeit.default_timer()
+
+	finalTiming="\n # Time: "+ str(timeStopBP - timeStartBP)
+	outputsTxt.append(finalTiming)
+	
+	print (mag,"	   NumNotCompletedChains: ",res,numNotCompletedChains,res)
+	if len(outputsTxtC)>0:
+		if not dontShowFinal:
+			print ("\n")
+			for o in outputsTxtC:
+				print(o)
+		return True, outputsTxt,outputsTxtC, outputsPk
+	else:
+		print (" No chains found!")
+		return False, [],[],[]
+
+def buildPushadInnerOLD(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stopCode, finalTypePattern=None, multiApi=False):
+	print (red,"buildPushadInner",res)
+	gTrackerFull.show("start gTrackerFull", cya)
+	
+	gTrack= gTrackerFull.clone()
+	# gTrack.show("right after starting gTrack", yel)
+
+	gTrack.setG(1, [666])
+	gTrack.setG(1, [666,22,444,222,334,33,244,33,22])
+	# gTrack.show("added some - top of buildPushadInner",gre)
+
 	global specialPKGList2
 	checkFillerQty(stopCode)
 	specialPKGList2=[]
@@ -14265,7 +15988,8 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 	for x in range(apiNum):
 		i,j, apiCode, apiNum, size= giveApiNum(winApi,j)
 		# print (red,"i,j, apiCode, apiNum,size", res,i,j, apiCode, apiNum,size)
-		print (yel,"	Attempting apiCode",res,apiCode, j, "of ", apiNum)
+		if not dontShow:
+			print (yel,"	Attempting apiCode",res,apiCode, j, "of ", apiNum)
 		excludeRegs2= copy.deepcopy(excludeRegs)
 		length1=True
 		pk=[]
@@ -14452,7 +16176,8 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 		if foundPushad:
 			pkPA=pkBuild([pk,puA])
 			# showChain(pkPA, True,True)
-			print (cya,"	Completed apiCode",res,apiCode, j)
+			if not dontShow:
+				print (cya,"	Completed apiCode",res,apiCode, j, cya, "Chain #", whi, chainNum, res)
 			# showChain(pkPA,True,True,yel)
 		else:
 			cOut,out= genOutput(pk,winApi,specialPK, finalTypePattern)
@@ -14531,6 +16256,9 @@ def buildPushadInner(bad,excludeRegs,winApi,apiNum,apiCode,pk1, completePKs,stop
 		outputsTxtC.append(cOut)
 		outputsPk.append(pkAll)
 		dp(len(outputsTxt))
+		gTrackerFull.mergeFrom(gTrack)
+		# gTrackerFull.show("after merge",mag)
+
 	
 	if len(outputsTxtC)>0:
 		print ("\n")
@@ -14640,10 +16368,386 @@ def giveApiNum(winApi,j):
 	curPat=i
 	return i,j, apiCode, apiNum,size
 
-def buildPushad(bad, patType):
+gTrackerFull = gadgetTracker()
+gTrack = gadgetTracker()
+
+timeStopBP = 0
+timeStartBP = 0
+
+# def buildPushadEverything(bad, patType):
+def buildPushadEverything(bad):
+	global timeStopBP
+	global timeStartBP
+
+	timeStartBP = timeit.default_timer()
+
+	
 	excludeRegs=[]
 	global opt
 	bad=opt["badBytes"]
+
+	gTrackerFull.reset()
+
+	# gTrackerFull = gadgetTracker()
+	# gTrackerFull.show()
+
+	global curPat
+	global oldPat
+	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	for reg in excludeRegs:
+		availableRegs.remove(reg)
+	length1=True
+	espDesiredMovement=0
+	regs=["eax","ebx","ecx","edx","edi","esi","ebp","esp"]
+	excludeRegs2= copy.deepcopy(excludeRegs)
+	outputs=[]
+	pk=[]
+	oldPat=""
+
+	try:
+		stopCode="GPA"
+		foundInner1, oldApiCode,pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode,"targetDllString",True)
+		if foundInner1:
+			oldPat+=oldApiCode + " "
+			foundInnerGPA,outputsTxtGPA, outputsTxtCGPA,outputsPkGPA=buildPushadInner(bad,excludeRegs2,"GetProcAddress",11,"apiCode",pk1,pkBuild([pkPA1]),stopCode,"targetDllString",True)
+			if foundInnerGPA:
+				fgc.addsrGetProcAddress(fChainObj(outputsPkGPA,outputsTxtGPA,outputsTxtCGPA))
+				printGadgetChain(outputsTxtGPA, "sr_GetProcAddress",True)
+		
+		
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+		stopCode="SYS"
+		foundInner1,oldApiCode, pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode, "System",True)
+		if foundInner1:
+			oldPat+=oldApiCode + " "
+			foundInner2, oldApiCode,pk2,pkPA2=buildPushadInner(bad,excludeRegs2,"GetProcAddress",11,"apiCode",pk1,pkBuild([pkPA1]),stopCode, "System",True)
+			if foundInner2:
+				oldPat+=oldApiCode + " "
+				pkTemp=pkBuild([pk1,pk2])
+				pk=pkBuild([pkPA1,pkPA2])
+				foundInnerSys,outputsTxtSys,outputsTxtCSys, outputsPkSys=buildPushadInner(bad,excludeRegs2,"System",9,"apiCode",pkTemp,pkBuild([pkPA1,pkPA2]),stopCode, "System",True)
+				if foundInnerSys:
+					fgc.addsrSystem(fChainObj(outputsPkSys,outputsTxtSys,outputsTxtCSys))
+					printGadgetChain(outputsTxtSys, "System",True)
+
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+		timeStartBP = timeit.default_timer()
+
+		stopCode="WE"
+		foundInnerWE,outputsTxtWE, outputsTxtCWE,outputsPkWE=buildPushadInner(bad,excludeRegs2,"WE",10,"apiCode",pk,pk,stopCode)
+		if foundInnerWE:
+			printGadgetChain(outputsTxtWE, "WinExec,True")
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+		timeStartBP = timeit.default_timer()
+
+
+		stopCode="DF"
+		foundInnerWE,outputsTxtWE, outputsTxtCWE,outputsPkWE=buildPushadInner(bad,excludeRegs2,"DF",17,"apiCode",pk,pk,stopCode)
+		if foundInnerWE:
+			printGadgetChain(outputsTxtWE, "DeleteFileA",True)
+
+
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+
+		stopCode="HC"
+		foundInnerHC,outputsTxtHC, outputsTxtCHC,outputsPkHC=buildPushadInner(bad,excludeRegs2,"HeapCreate",1,"apiCode",pk,pk,stopCode)
+		if foundInnerHC:
+			printGadgetChain(outputsTxtHC, "HeapCreate",True)
+
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+
+		stopCode="HA"
+		foundInnerHA,outputsTxtHA, outputsTxtCHA,outputsPkHA=buildPushadInner(bad,excludeRegs2,"HeapAlloc",1,"apiCode",pk,pk,stopCode)
+		if foundInnerHA:
+			printGadgetChain(outputsTxtHA, "HeapAlloc",True)
+
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+
+		gTrackerFull.reset()
+
+		stopCode="WPM"
+		foundInnerWPM,outputsTxtWPM, outputsTxtCWPM,outputsPkWPM=buildPushadInner(bad,excludeRegs2,"WriteProcessMemory",1,"apiCode",pk,pk,stopCode)
+		if foundInnerWPM:
+			printGadgetChain(outputsTxtWPM, "WriteProcessMemory",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+
+		stopCode="OSCM"
+		foundInnerOSCM,outputsTxtOSCM, outputsTxtCOSCM,outputsPkOSCM=buildPushadInner(bad,excludeRegs2,"OpenSCManagerA",1,"apiCode",pk,pk,stopCode)
+		if foundInnerOSCM:
+			printGadgetChain(outputsTxtOSCM, "OpenSCManagerA",True)
+	
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+
+		stopCode="CSA"
+		foundInnerCSA,outputsTxtCSA, outputsTxtCCSA,outputsPkCSA=buildPushadInner(bad,excludeRegs2,"CreateServiceA",1,"apiCode",pk,pk,stopCode)
+		if foundInnerCSA:
+			printGadgetChain(outputsTxtCSA, "CreateServiceA",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+	
+		gTrackerFull.reset()
+
+		stopCode="SEA"
+		foundInnerSEA,outputsTxtSEA, outputsTxtCSEA,outputsPkSEA=buildPushadInner(bad,excludeRegs2,"ShellExecuteA",1,"apiCode",pk,pk,stopCode)
+		if foundInnerSEA:
+			printGadgetChain(outputsTxtSEA, "ShellExecuteA",True)
+
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+
+		stopCode="HG32"
+		foundInnerHG,outputsTxtHG, outputsTxtCHG,outputsPkHG=buildPushadInner(bad,excludeRegs2,"HG",11,"apiCode",pk,pk,stopCode)
+		if foundInnerHG:
+			fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
+			printGadgetChain(outputsTxtHG, "Heavens_Gate_32_to_64",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+
+		stopCode="VP"
+		foundInnerVP,outputsTxtVP, outputsTxtCVP,outputsPkVP=buildPushadInner(bad,excludeRegs2,"VP",2,"apiCode",pk,pk,stopCode)
+		if foundInnerVP:
+			# fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
+			#todo
+			printGadgetChain(outputsTxtVP, "VirtualProtect",True)
+		
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+
+		stopCode="VA"
+		foundInnerVP,outputsTxtVP, outputsTxtCVP,outputsPkVP=buildPushadInner(bad,excludeRegs2,"VA",2,"apiCode",pk,pk,stopCode)
+		if foundInnerVP:
+			# fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
+			#todo
+			printGadgetChain(outputsTxtVP, "VirtualAlloc",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+		
+		stopCode="CT32S"
+		foundInnerCT,outputsTxtCT, outputsTxtCCT,outputsPkCT=buildPushadInner(bad,excludeRegs2,"CT32S",11,"apiCode",pk,pk,stopCode)
+		if foundInnerCT:
+			printGadgetChain(outputsTxtCT, "CreateToolhelp32Snapshot")
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+		
+		stopCode="UDTF"
+		foundInnerUFA,outputsTxtUFA, outputsTxtCUFA,outputsPkUFA=buildPushadInner(bad,excludeRegs2,"UDTF",2,"apiCode",pk,pk,stopCode)
+		if foundInnerUFA:
+			printGadgetChain(outputsTxtUFA, "URLDownloadToFile",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+		
+		stopCode="OP"
+		foundInnerOP,outputsTxtOP, outputsTxtCOP,outputsPkOP=buildPushadInner(bad,excludeRegs2,"OpenProcess",5,"apiCode",pk,pk,stopCode)
+		if foundInnerOP:
+			printGadgetChain(outputsTxtOP, "OpenProcess",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+		
+		stopCode="P32F"
+		foundInnerPF,outputsTxtPF, outputsTxtCPF,outputsPkPF=buildPushadInner(bad,excludeRegs2,"P32F",10,"apiCode",pk,pk,stopCode)
+		if foundInnerPF:
+			printGadgetChain(outputsTxtPF, "Process32First",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+		
+		stopCode="P32N"
+		foundInnerPN,outputsTxtPN, outputsTxtCPN,outputsPkPN=buildPushadInner(bad,excludeRegs2,"P32N",10,"apiCode",pk,pk,stopCode)
+		if foundInnerPN:
+			printGadgetChain(outputsTxtPN, "Process32Next",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+		
+		stopCode="RSKV"
+		foundInnerRV,outputsTxtRV, outputsTxtCRV,outputsPkRV=buildPushadInner(bad,excludeRegs2,"RSKV",1,"apiCode",pk,pk,stopCode)
+		if foundInnerRV:
+			printGadgetChain(outputsTxtRV, "RegSetKeyValueA",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+		
+		stopCode="RCKV"
+		foundInnerRC,outputsTxtRC, outputsTxtCRC,outputsPkRC=buildPushadInner(bad,excludeRegs2,"RCKV",1,"apiCode",pk,pk,stopCode)
+		if foundInnerRC:
+			printGadgetChain(outputsTxtRC, "RegCreateKeyA",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+
+		stopCode="CRT"
+		foundInnerCRT,outputsTxtCRT, outputsTxtCCRT,outputsPkCRT=buildPushadInner(bad,excludeRegs2,"CreateRemoteThread",1,"apiCode",pk,pk,stopCode)
+		if foundInnerCRT:
+			printGadgetChain(outputsTxtCRT, "CreateRemoteThread",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+
+		stopCode="VAE"
+		foundInnerVPE,outputsTxtVPE, outputsTxtCVPE,outputsPkVPE=buildPushadInner(bad,excludeRegs2,"VirtualAllocEx",1,"apiCode",pk,pk,stopCode)
+		if foundInnerVPE:
+			printGadgetChain(outputsTxtVPE, "VirtualAllocEx",True)
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		gTrackerFull.reset()
+
+		stopCode="TP"
+		foundInnerTP,outputsTxtTP, outputsTxtCTP,outputsPkTP=buildPushadInner(bad,excludeRegs2,"TerminateProcess",1,"apiCode",pk,pk,stopCode)
+		if foundInnerTP:
+			printGadgetChain(outputsTxtTP, "TerminateProcess",True)
+
+		gTrackerFull.reset()
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		stopCode="CPA"
+		foundInnerCPA,outputsTxtCPA, outputsTxtCCPA,outputsPkCPA=buildPushadInner(bad,excludeRegs2,"CreateProcessA",1,"apiCode",pk,pk,stopCode)
+		if foundInnerCPA:
+			printGadgetChain(outputsTxtCPA, "CreateProcessA",True)
+		gTrackerFull.reset()
+	except:
+		pass
+
+	try:
+		timeStartBP = timeit.default_timer()
+
+		stopCode="OPT"
+		foundInnerOPT,outputsTxtOPT, outputsTxtCOPT,outputsPkOPT=buildPushadInner(bad,excludeRegs2,"OpenProcessToken",1,"apiCode",pk,pk,stopCode)
+		if foundInnerOPT:
+			printGadgetChain(outputsTxtOPT, "OpenProcessToken",True)
+		gTrackerFull.reset()
+	except:
+		pass
+
+
+def buildPushad(bad, patType):
+	global timeStopBP
+	global timeStartBP
+
+	timeStartBP = timeit.default_timer()
+
+	
+	excludeRegs=[]
+	global opt
+	bad=opt["badBytes"]
+
+	gTrackerFull.reset()
+
+	# gTrackerFull = gadgetTracker()
+	# gTrackerFull.show()
 
 	global curPat
 	global oldPat
@@ -14665,7 +16769,7 @@ def buildPushad(bad, patType):
 			foundInnerGPA,outputsTxtGPA, outputsTxtCGPA,outputsPkGPA=buildPushadInner(bad,excludeRegs2,"GetProcAddress",11,"apiCode",pk1,pkBuild([pkPA1]),stopCode,"targetDllString",True)
 			if foundInnerGPA:
 				fgc.addsrGetProcAddress(fChainObj(outputsPkGPA,outputsTxtGPA,outputsTxtCGPA))
-				printGadgetChain(outputsTxtGPA, "sr_GetProcAddress")
+				printGadgetChain(outputsTxtGPA, "sr_GetProcAddress",True)
 	elif patType=="System":
 		stopCode="SYS"
 		foundInner1,oldApiCode, pk1,pkPA1=buildPushadInner(bad,excludeRegs2,"LoadLibrary",9,"apiCode",pk,pk,stopCode, "System",True)
@@ -14679,13 +16783,13 @@ def buildPushad(bad, patType):
 				foundInnerSys,outputsTxtSys,outputsTxtCSys, outputsPkSys=buildPushadInner(bad,excludeRegs2,"System",9,"apiCode",pkTemp,pkBuild([pkPA1,pkPA2]),stopCode, "System",True)
 				if foundInnerSys:
 					fgc.addsrSystem(fChainObj(outputsPkSys,outputsTxtSys,outputsTxtCSys))
-					printGadgetChain(outputsTxtSys, "System")
+					printGadgetChain(outputsTxtSys, "System",True)
 
 	elif patType=="WE": # WinExec
 		stopCode="WE"
 		foundInnerWE,outputsTxtWE, outputsTxtCWE,outputsPkWE=buildPushadInner(bad,excludeRegs2,"WE",10,"apiCode",pk,pk,stopCode)
 		if foundInnerWE:
-			printGadgetChain(outputsTxtWE, "WinExec")
+			printGadgetChain(outputsTxtWE, "WinExec,True")
 
 	# GPAWinExec
 	# elif patType=="WE": # WinExec
@@ -14706,7 +16810,7 @@ def buildPushad(bad, patType):
 		stopCode="DF"
 		foundInnerWE,outputsTxtWE, outputsTxtCWE,outputsPkWE=buildPushadInner(bad,excludeRegs2,"DF",17,"apiCode",pk,pk,stopCode)
 		if foundInnerWE:
-			printGadgetChain(outputsTxtWE, "DeleteFileA")
+			printGadgetChain(outputsTxtWE, "DeleteFileA",True)
 
 	# GPADeleteFileA
 	# elif patType=="DF": # DeleteFileA
@@ -14727,7 +16831,7 @@ def buildPushad(bad, patType):
 		stopCode="HC"
 		foundInnerHC,outputsTxtHC, outputsTxtCHC,outputsPkHC=buildPushadInner(bad,excludeRegs2,"HeapCreate",1,"apiCode",pk,pk,stopCode)
 		if foundInnerHC:
-			printGadgetChain(outputsTxtHC, "HeapCreate")
+			printGadgetChain(outputsTxtHC, "HeapCreate",True)
 
 	# GPAHeapCreate
 	# elif patType=="HeapCreate":
@@ -14748,7 +16852,7 @@ def buildPushad(bad, patType):
 		stopCode="HA"
 		foundInnerHA,outputsTxtHA, outputsTxtCHA,outputsPkHA=buildPushadInner(bad,excludeRegs2,"HeapAlloc",1,"apiCode",pk,pk,stopCode)
 		if foundInnerHA:
-			printGadgetChain(outputsTxtHA, "HeapAlloc")
+			printGadgetChain(outputsTxtHA, "HeapAlloc",True)
 
 	elif patType=="ExHeapAlloc":
 		stopCode="HA"
@@ -14766,7 +16870,7 @@ def buildPushad(bad, patType):
 					pkTemp2 = pkBuild([pk1, pk2, pk3])
 					foundInnerExHA, outputsTxtExHA, outputsTxtCExHA, outputsPkExHA = buildPushadInner(bad, excludeRegs2, "HeapAlloc", 1, "apiCode", pkTemp2, pkBuild([pkPA1, pkPA2, pkPA3]), stopCode, "ExHeapAlloc")
 					if foundInnerExHA:
-						printGadgetChain(outputsTxtExHA, "ExHeapAlloc")
+						printGadgetChain(outputsTxtExHA, "ExHeapAlloc",True)
 
 	elif patType=="WriteProcessMemoryHeapCreate":
 		stopCode="WPM"
@@ -14790,13 +16894,13 @@ def buildPushad(bad, patType):
 						if foundInner5:
 							foundInnerExWPM, outputsTxtExWPM, outputsTxtCExWPM, outputsPkExWPM = buildPushadInner(bad, excludeRegs2, "WriteProcessMemory", 1, "apiCode", pkTemp2, pkBuild([pkPA1, pkPA2, pkPA3, pkPA4, pkPA5]), stopCode,"WriteProcessMemoryHeapCreate", True)
 							if foundInnerExWPM:
-								printGadgetChain(outputsTxtExWPM, "WriteProcessMemoryHeapCreate")
+								printGadgetChain(outputsTxtExWPM, "WriteProcessMemoryHeapCreate",True)
 
 	elif patType == "WriteProcessMemory":
 		stopCode="WPM"
 		foundInnerWPM,outputsTxtWPM, outputsTxtCWPM,outputsPkWPM=buildPushadInner(bad,excludeRegs2,"WriteProcessMemory",1,"apiCode",pk,pk,stopCode)
 		if foundInnerWPM:
-			printGadgetChain(outputsTxtWPM, "WriteProcessMemory")
+			printGadgetChain(outputsTxtWPM, "WriteProcessMemory",True)
 
 	# GPAWriteProcessMemory
 	# elif patType=="WriteProcessMemory":
@@ -14817,7 +16921,7 @@ def buildPushad(bad, patType):
 		stopCode="OSCM"
 		foundInnerOSCM,outputsTxtOSCM, outputsTxtCOSCM,outputsPkOSCM=buildPushadInner(bad,excludeRegs2,"OpenSCManagerA",1,"apiCode",pk,pk,stopCode)
 		if foundInnerOSCM:
-			printGadgetChain(outputsTxtOSCM, "OpenSCManagerA")
+			printGadgetChain(outputsTxtOSCM, "OpenSCManagerA",True)
 
 	# GPAOpenSCManagerA
 	# elif patType=="OpenSCManagerA":
@@ -14838,7 +16942,7 @@ def buildPushad(bad, patType):
 		stopCode="CSA"
 		foundInnerCSA,outputsTxtCSA, outputsTxtCCSA,outputsPkCSA=buildPushadInner(bad,excludeRegs2,"CreateServiceA",1,"apiCode",pk,pk,stopCode)
 		if foundInnerCSA:
-			printGadgetChain(outputsTxtCSA, "CreateServiceA")
+			printGadgetChain(outputsTxtCSA, "CreateServiceA",True)
 
 	elif patType=="ExCreateServiceA":
 		stopCode="CSA"
@@ -14862,13 +16966,13 @@ def buildPushad(bad, patType):
 						if foundInner5:
 							foundInnerExCSA, outputsTxtExCSA, outputsTxtCExCSA, outputsPkExCSA = buildPushadInner(bad, excludeRegs2, "CreateServiceA", 1, "apiCode", pkTemp2, pkBuild([pkPA1, pkPA2, pkPA3, pkPA4, pkPA5]), stopCode,"ExCreateServiceA", True)
 							if foundInnerExCSA:
-								printGadgetChain(outputsTxtExCSA, "ExCreateServiceA")
+								printGadgetChain(outputsTxtExCSA, "ExCreateServiceA",True)
 
 	elif patType == "ShellExecuteA":
 		stopCode="SEA"
 		foundInnerSEA,outputsTxtSEA, outputsTxtCSEA,outputsPkSEA=buildPushadInner(bad,excludeRegs2,"ShellExecuteA",1,"apiCode",pk,pk,stopCode)
 		if foundInnerSEA:
-			printGadgetChain(outputsTxtSEA, "ShellExecuteA")
+			printGadgetChain(outputsTxtSEA, "ShellExecuteA",True)
 
 	# GPAShellExecuteA
 	# elif patType=="ShellExecuteA":
@@ -14890,21 +16994,21 @@ def buildPushad(bad, patType):
 		foundInnerHG,outputsTxtHG, outputsTxtCHG,outputsPkHG=buildPushadInner(bad,excludeRegs2,"HG",11,"apiCode",pk,pk,stopCode)
 		if foundInnerHG:
 			fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
-			printGadgetChain(outputsTxtHG, "Heavens_Gate_32_to_64")
+			printGadgetChain(outputsTxtHG, "Heavens_Gate_32_to_64",True)
 	elif patType=="VP":
 		stopCode="VP"
 		foundInnerVP,outputsTxtVP, outputsTxtCVP,outputsPkVP=buildPushadInner(bad,excludeRegs2,"VP",2,"apiCode",pk,pk,stopCode)
 		if foundInnerVP:
 			# fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
 			#todo
-			printGadgetChain(outputsTxtVP, "VirtualProtect")
+			printGadgetChain(outputsTxtVP, "VirtualProtect",True)
 	elif patType=="VA":
 		stopCode="VA"
 		foundInnerVP,outputsTxtVP, outputsTxtCVP,outputsPkVP=buildPushadInner(bad,excludeRegs2,"VA",2,"apiCode",pk,pk,stopCode)
 		if foundInnerVP:
 			# fgc.addHg32to64(fChainObj(outputsPkHG,outputsTxtHG,outputsTxtCHG))
 			#todo
-			printGadgetChain(outputsTxtVP, "VirtualAlloc")
+			printGadgetChain(outputsTxtVP, "VirtualAlloc",True)
 
 	elif patType == "CT32S":
 		stopCode="CT32S"
@@ -14916,37 +17020,37 @@ def buildPushad(bad, patType):
 		stopCode="UDTF"
 		foundInnerUFA,outputsTxtUFA, outputsTxtCUFA,outputsPkUFA=buildPushadInner(bad,excludeRegs2,"UDTF",2,"apiCode",pk,pk,stopCode)
 		if foundInnerUFA:
-			printGadgetChain(outputsTxtUFA, "URLDownloadToFile")
+			printGadgetChain(outputsTxtUFA, "URLDownloadToFile",True)
 
 	elif patType == "OpenProcess":
 		stopCode="OP"
 		foundInnerOP,outputsTxtOP, outputsTxtCOP,outputsPkOP=buildPushadInner(bad,excludeRegs2,"OpenProcess",5,"apiCode",pk,pk,stopCode)
 		if foundInnerOP:
-			printGadgetChain(outputsTxtOP, "OpenProcess")
+			printGadgetChain(outputsTxtOP, "OpenProcess",True)
 
 	elif patType == "P32F":
 		stopCode="P32F"
 		foundInnerPF,outputsTxtPF, outputsTxtCPF,outputsPkPF=buildPushadInner(bad,excludeRegs2,"P32F",10,"apiCode",pk,pk,stopCode)
 		if foundInnerPF:
-			printGadgetChain(outputsTxtPF, "Process32First")
+			printGadgetChain(outputsTxtPF, "Process32First",True)
 
 	elif patType == "P32N":
 		stopCode="P32N"
 		foundInnerPN,outputsTxtPN, outputsTxtCPN,outputsPkPN=buildPushadInner(bad,excludeRegs2,"P32N",10,"apiCode",pk,pk,stopCode)
 		if foundInnerPN:
-			printGadgetChain(outputsTxtPN, "Process32Next")
+			printGadgetChain(outputsTxtPN, "Process32Next",True)
 
 	elif patType == "RegSetKeyValueA":
 		stopCode="RSKV"
 		foundInnerRV,outputsTxtRV, outputsTxtCRV,outputsPkRV=buildPushadInner(bad,excludeRegs2,"RSKV",1,"apiCode",pk,pk,stopCode)
 		if foundInnerRV:
-			printGadgetChain(outputsTxtRV, "RegSetKeyValueA")
+			printGadgetChain(outputsTxtRV, "RegSetKeyValueA",True)
 
 	elif patType == "RegCreateKeyA":
 		stopCode="RCKV"
 		foundInnerRC,outputsTxtRC, outputsTxtCRC,outputsPkRC=buildPushadInner(bad,excludeRegs2,"RCKV",1,"apiCode",pk,pk,stopCode)
 		if foundInnerRC:
-			printGadgetChain(outputsTxtRC, "RegCreateKeyA")
+			printGadgetChain(outputsTxtRC, "RegCreateKeyA",True)
 
 	elif patType=="ExRegSetKeyValueA":
 		stopCode="RSKV"
@@ -14970,31 +17074,31 @@ def buildPushad(bad, patType):
 						if foundInner5:
 							foundInnerExRSKV, outputsTxtExRSKV, outputsTxtCExRSKV, outputsPkExRSKV = buildPushadInner(bad, excludeRegs2, "RSKV", 1, "apiCode", pkTemp2, pkBuild([pkPA1, pkPA2, pkPA3, pkPA4, pkPA5]), stopCode, "ExRegSetKeyValueA", True)
 							if foundInnerExRSKV:
-								printGadgetChain(outputsTxtExRSKV, "ExRegSetKeyValueA")
+								printGadgetChain(outputsTxtExRSKV, "ExRegSetKeyValueA",True)
 
 	elif patType == "CreateRemoteThread":
 		stopCode="CRT"
 		foundInnerCRT,outputsTxtCRT, outputsTxtCCRT,outputsPkCRT=buildPushadInner(bad,excludeRegs2,"CreateRemoteThread",1,"apiCode",pk,pk,stopCode)
 		if foundInnerCRT:
-			printGadgetChain(outputsTxtCRT, "CreateRemoteThread")
+			printGadgetChain(outputsTxtCRT, "CreateRemoteThread",True)
 
 	elif patType=="VirtualAllocEx":
 		stopCode="VAE"
 		foundInnerVPE,outputsTxtVPE, outputsTxtCVPE,outputsPkVPE=buildPushadInner(bad,excludeRegs2,"VirtualAllocEx",1,"apiCode",pk,pk,stopCode)
 		if foundInnerVPE:
-			printGadgetChain(outputsTxtVPE, "VirtualAllocEx")
+			printGadgetChain(outputsTxtVPE, "VirtualAllocEx",True)
 
 	elif patType=="TerminateProcess":
 		stopCode="TP"
 		foundInnerTP,outputsTxtTP, outputsTxtCTP,outputsPkTP=buildPushadInner(bad,excludeRegs2,"TerminateProcess",1,"apiCode",pk,pk,stopCode)
 		if foundInnerTP:
-			printGadgetChain(outputsTxtTP, "TerminateProcess")
+			printGadgetChain(outputsTxtTP, "TerminateProcess",True)
 
 	elif patType=="CreateProcessA":
 		stopCode="CPA"
 		foundInnerCPA,outputsTxtCPA, outputsTxtCCPA,outputsPkCPA=buildPushadInner(bad,excludeRegs2,"CreateProcessA",1,"apiCode",pk,pk,stopCode)
 		if foundInnerCPA:
-			printGadgetChain(outputsTxtCPA, "CreateProcessA")
+			printGadgetChain(outputsTxtCPA, "CreateProcessA",True)
 
 	elif patType=="ExCreateProcessA":
 		stopCode="CPA"
@@ -15018,13 +17122,13 @@ def buildPushad(bad, patType):
 						if foundInner5:
 							foundInnerExCPA, outputsTxtExCPA, outputsTxtCExCPA, outputsPkExCPA = buildPushadInner(bad, excludeRegs2, "CreateProcessA", 1, "apiCode", pkTemp2, pkBuild([pkPA1, pkPA2, pkPA3, pkPA4, pkPA5]), stopCode, "ExCreateProcessA")
 							if foundInnerExCPA:
-								printGadgetChain(outputsTxtExCPA, "ExCreateProcessA")
+								printGadgetChain(outputsTxtExCPA, "ExCreateProcessA",True)
 
 	elif patType == "OpenProcessToken":
 		stopCode="OPT"
 		foundInnerOPT,outputsTxtOPT, outputsTxtCOPT,outputsPkOPT=buildPushadInner(bad,excludeRegs2,"OpenProcessToken",1,"apiCode",pk,pk,stopCode)
 		if foundInnerOPT:
-			printGadgetChain(outputsTxtOPT, "OpenProcessToken")
+			printGadgetChain(outputsTxtOPT, "OpenProcessToken",True)
 
 	elif patType == "Test":
 		stopCode="Test"
@@ -15032,116 +17136,6 @@ def buildPushad(bad, patType):
 		if foundInnerRC:
 			printGadgetChain(outputsTxtRC, "Test")
 
-def buildPushadOld(excludeRegs,bad, myArgs ,numArgs):
-	global PWinApi
-	global curPat
-	IncDec="dec"
-	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
-	for reg in excludeRegs:
-		availableRegs.remove(reg)
-	length1=True
-	espDesiredMovement=0
-	regs=["eax","ebx","ecx","edx","edi","esi","ebp","esp"]
-	excludeRegs2= copy.deepcopy(excludeRegs)
-	outputs=[]
-	j=-1
-
-	winApi="loadLibrary"
-	winApi="System"
-
-	i,j, apiCode, apiNum, size= giveApiNum(winApi,j)
-	print ("first-> i,j, apiCode, apiNum,size", i,j, apiCode, apiNum,size)
-
-	for x in range(apiNum):
-		excludeRegs2= copy.deepcopy(excludeRegs)
-	
-		i,j, apiCode, apiNum,size= giveApiNum(winApi,j)
-		print ("i,j, apiCode, apiNum,size", i,j, apiCode, apiNum,size)
-	
-		if 1==44:
-			pk=[]
-			foundL1, pl1, lr1,r1 = loadRegP(1,i, bad,True,excludeRegs2,pk,apiCode)
-			if foundL1:
-				excludeRegs2=addExRegs(excludeRegs2, r1)
-				pk=pkBuild([lr1])
-			else:
-				continue
-
-			foundL2, pl2, lr2,r2 = loadRegP(2,i, bad,True,excludeRegs2,pk,apiCode)
-			if foundL2:
-				excludeRegs2=addExRegs(excludeRegs2, r2)
-				pk=pkBuild([pk,lr2])
-			else:
-				continue
-
-			foundL3, pl3, lr3,r3 = loadRegP(3,i, bad,True,excludeRegs2,pk,apiCode)
-			if foundL3:
-				excludeRegs2=addExRegs(excludeRegs2, r3)
-				pk=pkBuild([pk,lr3])
-			else:
-				continue
-
-			foundL4, pl4, lr4,r4 = loadRegP(4,i, bad,True,excludeRegs2,pk,apiCode)
-			if foundL4:
-				excludeRegs2=addExRegs(excludeRegs2, r4)
-				pk=pkBuild([pk,lr4])
-			else:
-				continue
-
-			foundL5, pl5, lr5,r5 = loadRegP(5,i, bad,True,excludeRegs2,pk,apiCode)
-			if foundL5:
-				excludeRegs2=addExRegs(excludeRegs2, r5)
-				pk=pkBuild([pk,lr5])
-			else:
-				continue
-
-			foundL6, pl6, lr6,r6 = loadRegP(6,i, bad,True,excludeRegs2,pk,apiCode)
-			if foundL6:
-				excludeRegs2=addExRegs(excludeRegs2, r6)
-				pk=pkBuild([pk,lr6])
-			else:
-				continue
-
-			foundL7, pl7, lr7,r7 = loadRegP(7,i, bad,True,excludeRegs2,pk,apiCode)
-			if foundL7:
-				excludeRegs2=addExRegs(excludeRegs2, r7)
-				pk=pkBuild([pk,lr7])
-			else:
-				continue
-
-			foundL8, pl8, lr8,r8 = loadRegP(8,i, bad,True,excludeRegs2,pk,apiCode)
-			if foundL8:
-				excludeRegs2=addExRegs(excludeRegs2, r8)
-				pk=pkBuild([pk,lr8])
-			else:
-				continue
-
-			foundPushad, puA,pDict=findPushad(bad,length1,excludeRegs)
-			if foundPushad:
-				pk=pkBuild([pk,puA])
-				dp("have foundPushad")
-			else:
-				dp ("no pushad found")
-
-		foundInner1, pk=buildPushadInner(bad,i,excludeRegs2,winApi,apiNum,apiCode)
-		if foundInner1:
-			foundInner2, pk=buildPushadInner(bad,i,excludeRegs2,winApi,apiNum,apiCode)
-			if foundInner2:
-				pass
-
-		dp ("special chain buildPushad")
-		showChain(pk)	
-		cOut,out= (genOutput(pk,winApi))
-		outputs.append(out)
-		dp (len(outputs))
-
-		j+=1
-		excludeRegs2.clear()
-		# return
-
-	dp ("finalend", len(outputs))
-	for o in outputs:
-		dp (o)
 
 def runEmGetRegAtCurLoc(pe,n,pk, distEsp, IncDec,numP, finalTypePattern=None, destAfter=True):
 	# print(PWinApi,sysTarget, rValStr,distanceMode,patType)
@@ -15180,7 +17174,8 @@ def runEmGetRegAtCurLoc(pe,n,pk, distEsp, IncDec,numP, finalTypePattern=None, de
 	return gOutput
 
 
-def getDistanceParamReg(pe,n,pk, distEsp, IncDec,numP,targetP,targetR, destAfter,PWinApi=0,sysTarget=None, rValStr=None,distanceMode=False,patType=None, finalTypePattern=None):
+def getDistanceParamReg(pe,n,pk, distEsp, IncDec,numP,targetP,targetR, destAfter,PWinApi=0,sysTarget=None, rValStr=None,distanceMode=False,patType=None, finalTypePattern=None,arch=32):
+	# print (gre,"getDistanceParamReg targetP", targetP, arch,res)
 	# print(PWinApi,sysTarget, rValStr,distanceMode,patType)
 	# print (yel,pe,n,pk, distEsp, IncDec,numP,targetP,targetR, destAfter,PWinApi,sysTarget, rValStr,distanceMode,patType,res)
 	global finalPivotGadget
@@ -15190,7 +17185,7 @@ def getDistanceParamReg(pe,n,pk, distEsp, IncDec,numP,targetP,targetR, destAfter
 		myGadgets=buildRopChainTemp(pk)
 	else:
 		# showChain(pk,True,True,yel,"getDistanceParamReg 1")
-		myGadgets=buildRopChainTempMore(pk,rValStr,patType)
+		myGadgets=buildRopChainTempMore(pk,rValStr,patType,arch)
 	try:
 		if sysTarget!=None:
 			sysTarget=img(sysTarget)
@@ -15203,13 +17198,23 @@ def getDistanceParamReg(pe,n,pk, distEsp, IncDec,numP,targetP,targetR, destAfter
 		dp(e)
 		dp(traceback.format_exc())
 
-	gOutput, locParam, locReg, winApiSyscallReached, givStDistance =rop_testerRunROP(pe,n,myGadgets,distEsp, IncDec,numP,targetP,targetR,PWinApi,sysTarget,finalPivotGadget, rValStr,patType,finalTypePattern)
+	gOutput=0
+	locParam=0
+	locReg=0
+	winApiSyscallReached=False
+	givStDistance=0
+	if arch==32:
+		gOutput, locParam, locReg, winApiSyscallReached, givStDistance =rop_testerRunROP(pe,n,myGadgets,distEsp, IncDec,numP,targetP,targetR,PWinApi,sysTarget,finalPivotGadget, rValStr,patType,finalTypePattern)
+	elif arch==64:
+		gOutput, locParam, locReg, winApiSyscallReached, givStDistance =rop_testerRunROP64(pe,n,myGadgets,distEsp, IncDec,numP,targetP,targetR,PWinApi,sysTarget,finalPivotGadget, rValStr,patType,finalTypePattern)
+	# print ("locReg,locParam",locReg,locParam, "winApiSyscallReached",winApiSyscallReached)
 	pkTxt=showChain(pk,False,True)
 	# print (blu, "locReg", yel,hex(locReg), res)
 	# print ("winApiSyscallReached",winApiSyscallReached)
 	outFile.write("The above pertains to the below:\n  " +pkTxt+"\n\n")
 	dp ("destAfter",destAfter)
 	if destAfter:   # Target Param AFTER current memory location (e.g. mov dword [ebx], eax	-->  target destination AFTER ebx)
+		# print( "locParam,locReg",locParam,locReg)
 		diffPR=locParam-locReg
 	else:  # Target Param BEFORE current memory location (e.g. mov dword [ebx], eax	-->  target destination BEFORE ebx)
 		diffPR=locReg-locParam
@@ -15243,7 +17248,7 @@ def getDistanceParamReg(pe,n,pk, distEsp, IncDec,numP,targetP,targetR, destAfter
 		# print ("\t",cya, "switch made",res, hex(diffPR))
 	return diffPR, winApiSyscallReached
 
-def pkBuild(myList):
+def pkBuild(myList,multiplier=None):
 	# dp ("pkBuild", myList)
 	nl=[]
 	nl2=[]
@@ -15279,6 +17284,14 @@ def pkBuild(myList):
 	# 	nl2=pkBuild([nl])
 	# 	notDone=True
 	# 	nl=nl2
+	if multiplier!=None:
+		print (len(nl), multiplier)
+		nl2=copy.deepcopy(nl)
+
+		for x in range (multiplier-1):
+			nl.extend(nl2)
+		print (red,len(nl),res)
+
 	return nl
 
 
@@ -15356,36 +17369,36 @@ def availRegs(regFirst,excludeRegs):
 	# print ("availableRegs",availableRegs)
 	return availableRegs
 
-def tryObfMethods(excludeRegs,bad,goal,tThis, bb, withPR=True,reg=None, comment="",isVal=False):
+def tryObfMethods(excludeRegs,bad,goal,tThis, bb, withPR=True,reg=None, comment="",isVal=False,gSetID=None,gTrackObj=None):
 	dp ("inside tryObfMethods")
-	# print (blu+"tryObfMethods", hex(goal), "excludeRegs",excludeRegs,res)
+	# print (gre,"tryObfMethods",res, gSetID, gTrackObj)
 
-	intSuccess, package =buildIntOverflowPR(excludeRegs,bad,goal,tThis,bb,withPR,reg,comment,isVal)
+	# print (blu+"tryObfMethods", hex(goal), "excludeRegs",excludeRegs,res)
+	gTrackObj,gSetID =gCheck(gTrackObj,gSetID)
+
+	intSuccess, package =buildIntOverflowPR(excludeRegs,bad,goal,tThis,bb,withPR,reg,comment,isVal,gSetID,gTrackObj)
 	if intSuccess:
 		return True, package
-	return False, []
 
-	foundInt2,package = buildFoundIntOv(goal,excludeRegs,bad,withPR,reg, comment,isVal)
+	foundInt2,package = buildFoundIntOv(goal,excludeRegs,bad,withPR,reg, comment,isVal,gSetID,gTrackObj)
 	if foundInt2:
 		# print ("buildFoundIntOv true")
 		return True, package
-
 	# negSucess, package=buildNeg(goal,excludeRegs, bad,withPR,reg,isVal)
 	# if negSucess:
 	# 	return True, package
-	notSucess, package=buildNot(goal,excludeRegs, bad,withPR,reg,comment,isVal)
+
+	notSucess, package=buildNot(goal,excludeRegs, bad,withPR,reg,comment,isVal,gSetID,gTrackObj)
 	if notSucess:
 		return True, package
 
-	xorSuccess,package=buildXor(goal,excludeRegs,bad,bb,withPR,reg,comment,isVal)
+	xorSuccess,package=buildXor(goal,excludeRegs,bad,bb,withPR,reg,comment,isVal,gSetID,gTrackObj)
 	if xorSuccess:
 		return True, package
-	return False,[]
 
-	foundXorSuccess,package=buildFoundXor(goal,excludeRegs,bad,bb, True,withPR, reg,comment,isVal)
+	foundXorSuccess,package=buildFoundXor(goal,excludeRegs,bad,bb,withPR, reg,comment,isVal,gSetID,gTrackObj)
 	if foundXorSuccess:
 		return True, package
-	
 
 	return False, []
 			
@@ -15688,18 +17701,37 @@ def foundIntOverflows2(val,desired,bad):
 		return False,0,0
 		
 
-def disOffset(offset):
+def foundIntOverflows264(val_str, desired, bad):
+	val = int(val_str, 16)
+	MOD = 1 << 64
+	target = (desired - val) & (MOD - 1)
+	if ((val + target) & (MOD - 1)) == (desired & (MOD - 1)):
+		return True, target
+	else:
+		return False, 0
+
+
+
+def disOffset(offset, arch=32):
 	obj=fg.rop[offset]
 	CODED2=obj.raw
 	offset=obj.offset
 	returnVal = ""
-	for i in cs.disasm(CODED2, offset):
+
+	if arch==64:
+		myCs=cs64
+	else:
+		myCs = cs 
+
+	for i in myCs.disasm(CODED2, offset):
 		val =  i.mnemonic + " " + i.op_str + " # "
 		returnVal +=val
 	returnVal=returnVal[:-3]
 	return returnVal
 
-def foundIntOverflows(myDict, desired,bad):
+def foundIntOverflows(myDict, desired,bad,arch=32,gSetID=None,gTrackObj=None):
+	gTrackObj,gSetID =gCheck(gTrackObj,gSetID)
+
 	for g in myDict:
 		# dp (g, type(g))
 		# dp (myDict[g].op2, "	---------	   ",disOffset2(g,fg) )
@@ -15707,8 +17739,18 @@ def foundIntOverflows(myDict, desired,bad):
 			if myDict[g].length ==1 and len(myDict[g].op2) > 4:
 				if checkFreeBadBytes(opt,fg,g,bad,fg.rop, pe, opt["bad_bytes_imgbase"]):
 					# dp ("\n\n************", myDict[g].op2)
-					foundOverflow,target=	foundIntOverflows2(myDict[g].op2, desired,bad)
-					if foundOverflow:
+					foundOverflow=False
+					target=0
+					if arch==32:
+						foundOverflow,target=	foundIntOverflows2(myDict[g].op2, desired,bad)
+					elif arch==64:
+						# print (33333)
+						foundOverflow,target=	foundIntOverflows264(myDict[g].op2, desired,bad)
+						# print ("target",target)
+
+					if foundOverflow and not gTrackObj.hasBeenUsed(gSetID,g,1):
+						gTrackObj.setG(gSetID, [g])
+
 						return foundOverflow,target,g
 						break
 		except:
@@ -15803,8 +17845,10 @@ def findingNeg1(myDict, desired,bad):
 		pass
 	return False,0,0
 
-def findingXor1(myDict, desired,bad,availableRegs,bb):
+def findingXor1(myDict, desired,bad,availableRegs,bb,gSetID=None,gTrackObj=None ):
 	# print (gre+"findingXor1", desired, "availableRegs",availableRegs,res)
+	gTrackObj,gSetID =gCheck(gTrackObj,gSetID)
+
 	t=0
 	for g in myDict:
 		# dp (g, type(g))
@@ -15814,17 +17858,63 @@ def findingXor1(myDict, desired,bad,availableRegs,bb):
 		try:
 			if myDict[g].length ==1:
 				if checkFreeBadBytes(opt,fg,g,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
+					if myDict[g].op1 == myDict[g].op2:
+						continue
 
+					# print ("checking", myDict[g].op1, myDict[g].op2)
 					special=bb.giveXor()
+					# print ("special",hex(special))
 					target=	xor_(desired,special)
-					dp ("xor target:",hex(target))
+
+					# print ("xor target:",hex(target))
 					ans=xor_(target,special)
 					# print (yel+"special", hex(special), "target", hex(target),"ans", hex(ans),res, "myDict[g].op1",myDict[g].op1, yel+"myDict[g].op2",myDict[g].op2,res)
-					dp ("ans", hex(ans), hex(desired), "\t",disOffset(g))
+					# print ("ans", hex(ans), hex(desired), "\t",disOffset(g,64))
 					isRegOp1= re.match( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p',(myDict[g].op1), re.M|re.I)
 					# print ("myDict[g].op2 for item in availableRegs",any(item in myDict[g].op2 for item in availableRegs), blu+"isRegOp1",isRegOp1, res )
 					# print ("checkingforbadbytes",checkFreeBadBytes(opt,fg,target,bad), hex(ans), "bad",bad)
 					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(opt,fg,target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True) and any(item in myDict[g].op2 for item in availableRegs) and isRegOp1:
+						dp ("return true")
+						if not gTrackObj.hasBeenUsed(gSetID,g,2):
+							gTrackObj.setG(gSetID, [g])
+							return True, target, g, special, myDict[g].op2
+		except Exception as e:
+			dp ("exception findingXor1:")
+			dp (e)
+			dp(traceback.format_exc())
+			dp ("error")
+			pass
+		t+=1
+	dp ("return false")
+	return False,0,0,0,0
+
+def findingXor164(myDict, desired,bad,availableRegs,bb):
+	# print (gre+"findingXor1", desired, "availableRegs",availableRegs,res)
+	t=0
+	for g in myDict:
+		# dp (g, type(g))
+		dp (t, myDict[g].op2, "	---------	   ",disOffset(g) )
+		# print (t, myDict[g].op2, "	---------	   ",disOffset(g) )
+		try:
+			if myDict[g].length ==1:
+				if checkFreeBadBytes(opt,fg,g,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"]):
+					if myDict[g].op1 == myDict[g].op2:
+						continue
+					# print (myDict[g].op1, regs64.to64(myDict[g].op1))
+					if myDict[g].op1 != regs64.to64(myDict[g].op1):
+						continue
+					special=bb.giveXor(7)
+					# print ("special",hex(special))
+					target=	xor_(desired,special)
+
+					# print ("xor target:",hex(target))
+					ans=xor_(target,special)
+					# print (yel+"special", hex(special), "target", hex(target),"ans", hex(ans),res, "myDict[g].op1",myDict[g].op1, yel+"myDict[g].op2",myDict[g].op2,res)
+					# print ("ans", hex(ans), hex(desired), "\t",disOffset(g,64))
+					isRegOp1= re.match( r'r[b|c|d|a]x|r[d|s]i|r[s|b]p',(myDict[g].op1), re.M|re.I)
+					# print ("myDict[g].op2 for item in availableRegs",any(item in myDict[g].op2 for item in availableRegs), blu+"isRegOp1",isRegOp1, res )
+					# print ("checkingforbadbytes",checkFreeBadBytes(opt,fg,target,bad), hex(ans), "bad",bad)
+					if ans==desired and len(hex(target)) >8  and len(hex(target)) <19 and checkFreeBadBytes(opt,fg,target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True) and any(item in myDict[g].op2 for item in availableRegs) and isRegOp1:
 						dp ("return true")
 						return True, target, g, special, myDict[g].op2
 		
@@ -15838,16 +17928,25 @@ def findingXor1(myDict, desired,bad,availableRegs,bb):
 	dp ("return false")
 	return False,0,0,0,0
 
-def findingFoundXor1(myDict, desired,bad,availableRegs,bb,enforceNoBadBytes):
+
+def findingFoundXor1(myDict, desired,bad,availableRegs,bb,enforceNoBadBytes, arch=32,gSetID=None,gTrackObj=None):
 	t=0
+	gTrackObj,gSetID =gCheck(gTrackObj,gSetID)
+
 	for g in myDict:
 		# dp (g, type(g))
 		# dp (t, myDict[g].op2, "	---------	   ",disOffset(g) )
 		# print (t, myDict[g].op2, "	---------	   ",disOffset(g) )
 		try:
-			isReg= re.match( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p|[b|c|d|a]l|[b|c|d|a]h|si|di|bp|sp',(myDict[g].op2), re.M|re.I)
-			isRegOp1= re.match( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p',(myDict[g].op1), re.M|re.I)
-			if myDict[g].length ==1 and not isReg and isRegOp1:
+			isReg=False
+			isRegOp1=False
+			if arch==32:
+				isReg= re.match( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p|[b|c|d|a]l|[b|c|d|a]h|si|di|bp|sp',(myDict[g].op2), re.M|re.I)
+				isRegOp1= re.match( r'e[b|c|d|a]x|e[d|s]i|e[s|b]p',(myDict[g].op1), re.M|re.I)
+			if arch==64:	
+				isReg= re.match( r'r[b|c|d|a]x|r[d|s]i|r[s|b]p|[b|c|d|a]l|[b|c|d|a]h|si|di|bp|sp',(myDict[g].op2), re.M|re.I)
+				isRegOp1= re.match( r'r[b|c|d|a]x|r[d|s]i|r[s|b]p',(myDict[g].op1), re.M|re.I)
+			if myDict[g].length ==1 and not isReg and isRegOp1 and not gTrackObj.hasBeenUsed(gSetID,g,3):
 				dp(disOffset(g))
 				# print(disOffset(g))
 				try:
@@ -15862,6 +17961,7 @@ def findingFoundXor1(myDict, desired,bad,availableRegs,bb,enforceNoBadBytes):
 				if ans==desired and checkFreeBadBytes(opt,fg,target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True):
 					dp ("return true")
 					# print (checkFreeBadBytes(opt,fg,g,bad), g, hex(g), hex(img(g)))
+					gTrackObj.setG(gSetID, [g])
 					return True, target, g
 		except Exception as e:
 			dp ("exception findingXor1:")
@@ -15874,7 +17974,9 @@ def findingFoundXor1(myDict, desired,bad,availableRegs,bb,enforceNoBadBytes):
 	dp ("return false foundxor")
 	return False,0,0
 
-def findingNot1(myDict, desired,bad):
+def findingNot1(myDict, desired,bad,gSetID=None,gTrackObj=None):
+	gTrackObj,gSetID =gCheck(gTrackObj,gSetID)
+
 	for g in myDict:
 		# dp (g, type(g))
 		# dp (myDict[g].op2, "	---------	   ",disOffset(g) )
@@ -15887,7 +17989,9 @@ def findingNot1(myDict, desired,bad):
 					dp ("not target:",hex(target))
 					ans=not_(target)
 					dp ("ans", hex(ans), hex(desired))
-					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(opt,fg,target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True):
+					if ans==desired and len(hex(target)) >8  and len(hex(target)) <11 and checkFreeBadBytes(opt,fg,target,bad,fg.rop,pe,n, opt["bad_bytes_imgbase"],True) and not gTrackObj.hasBeenUsed(gSetID,g,4):
+						gTrackObj.setG(gSetID, [g])
+
 						return True, target, g
 					# else:
 					# 	dp("unacceptable size")
@@ -15974,28 +18078,33 @@ def buildNeg2(desired,excludeRegs, bad, withPR=True, firstReg=False):
 				return negFound, rOut
 	return False,0
 
-def buildFoundXor(desired,excludeRegs, bad,bb,withPR=True, firstReg=None, comment="",isVal=False):
+def buildFoundXor(desired,excludeRegs, bad,bb,withPR=True, firstReg=None, comment="",isVal=False,arch=32,gSetID=None,gTrackObj=None):
 	if firstReg != None:
-		foundXorSuccess, package=buildFoundXorTarget(desired,excludeRegs, bad,bb,withPR, firstReg, comment,isVal)
+		foundXorSuccess, package=buildFoundXorTarget(desired,excludeRegs, bad,bb,withPR, firstReg, comment,isVal,arch,gSetID,gTrackObj )
 	else:
-		foundXorSuccess, package=buildFoundXor2(desired,excludeRegs, bad,bb,withPR, firstReg)
+		foundXorSuccess, package=buildFoundXor2(desired,excludeRegs, bad,bb,withPR, firstReg,arch)
 	return foundXorSuccess, package
 
-def buildFoundXorTarget(desired,excludeRegs, bad,bb,withPR=True, firstReg=None, comment="",isVal=False):
+def buildFoundXorTarget(desired,excludeRegs, bad,bb,withPR=True, firstReg=None, comment="",isVal=False,arch=32,gSetID=None,gTrackObj=None):
 	enforceNoBadBytes=False
 	# print ("buildFoundXorTarget", "desired", hex(desired), "firstReg", firstReg)
+	
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	if arch==64:
+		availableRegs=copy.deepcopy(regs64.availableRegs)
+		availableRegs.remove("rsp")
 	for r in excludeRegs:
 		availableRegs.remove(r)
 	dp ("\n\nbuildFoundxor", hex(desired))
 	# print ("regFirst", firstReg)
 
+	# print ("firstReg",firstReg)
 	bExists, myDict=fg.getFg("xor",firstReg)
 	bExistsP, myDictP=fg.getFg("pop",firstReg)
 	# print ("bExists", bExists, "bExistsP", bExistsP)
-	if not bExists and not bExistsP:
+	if not bExists or not bExistsP:
 		return False, 0
-	xorFound, xorVal,x1 = findingFoundXor1(myDict,desired,bad, availableRegs,bb, enforceNoBadBytes)
+	xorFound, xorVal,x1 = findingFoundXor1(myDict,desired,bad, availableRegs,bb, enforceNoBadBytes,arch,gSetID,gTrackObj)
 	if not xorFound:
 		dp ("NO xor found ", firstReg)
 		# print ("NO xor found ", firstReg)
@@ -16010,7 +18119,7 @@ def buildFoundXorTarget(desired,excludeRegs, bad,bb,withPR=True, firstReg=None, 
 
 #bramwell		
 		dp ("xor found", hex(xorVal), hex(x1), disOffset(x1))
-		foundP1, p1, popD1 = findPop(firstReg,bad,True,excludeRegs)
+		foundP1, p1, popD1 = findPop(firstReg,bad,True,excludeRegs, gSetID,gTrackObj)
 
 		if withPR:
 			foundPu1, pu1, pushD1 = findPush(firstReg,bad,True,excludeRegs,-4)
@@ -16035,7 +18144,7 @@ def buildFoundXorTarget(desired,excludeRegs, bad,bb,withPR=True, firstReg=None, 
 			cOut,out=genOutput(rOut)
 			return xorFound, rOut
 	return False,0
-def buildFoundXor2(desired,excludeRegs, bad,bb,withPR=True, firstReg=None):
+def buildFoundXor2(desired,excludeRegs, bad,bb,withPR=True, firstReg=None, arch=32):
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
 	enforceNoBadBytes=False
 	for r in excludeRegs:
@@ -16075,15 +18184,23 @@ def buildFoundXor2(desired,excludeRegs, bad,bb,withPR=True, firstReg=None):
 				cOut,out=genOutput(rOut)
 				return xorFound, rOut
 	return False,0
-def buildXor(desired,excludeRegs,bad, bb,withPR=True, firstReg=None, comment=None,isVal=False):
+def buildXor(desired,excludeRegs,bad, bb,withPR=True, firstReg=None, comment=None,isVal=False,gSetID=None,gTrackObj=None ):
 	# print ("buildXor", firstReg)
 	if firstReg!=None:
-		xorSucccess, package=buildXorTarget(desired,excludeRegs,bad, bb,withPR,firstReg,comment,isVal)
+		xorSucccess, package=buildXorTarget(desired,excludeRegs,bad, bb,withPR,firstReg,comment,isVal,gSetID,gTrackObj)
 	else:
 		xorSucccess, package=buildXor2(desired,excludeRegs,bad, bb,withPR,firstReg)
 	return xorSucccess, package
 
-def buildXorTarget(desired,excludeRegs,bad, bb,withPR=True, firstReg=None, comment=None,isVal=False):
+def buildXor64(desired,excludeRegs,bad, bb,withPR=True, firstReg=None, comment=None,isVal=False):
+	# print ("buildXor", firstReg)
+	if firstReg!=None:
+		xorSucccess, package=buildXorTarget64(desired,excludeRegs,bad, bb,withPR,firstReg,comment,isVal)
+	else:
+		xorSucccess, package=buildXor2(desired,excludeRegs,bad, bb,withPR,firstReg)
+	return xorSucccess, package
+
+def buildXorTarget(desired,excludeRegs,bad, bb,withPR=True, firstReg=None, comment=None,isVal=False,gSetID=None,gTrackObj=None ):
 	# print (red+"buildXorTarget","firstReg",firstReg,"desired",hex(desired),res)
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
 	for r in excludeRegs:
@@ -16093,9 +18210,57 @@ def buildXorTarget(desired,excludeRegs,bad, bb,withPR=True, firstReg=None, comme
 	bExists, myDict=fg.getFg("xor",firstReg)
 	bExistsP, myDictP=fg.getFg("pop",firstReg)
 	if not bExists and not bExistsP:
-		# print (yel+"returning false",res)
 		return False,0
-	xorFound, xorVal,x1,key, secondReg = findingXor1(myDict,desired,bad, availableRegs,bb)
+	xorFound, xorVal,x1,key, secondReg = findingXor1(myDict,desired,bad, availableRegs,bb,gSetID,gTrackObj)
+	if xorFound:
+		dp ("xor found", hex(xorVal), hex(x1), disOffset(x1))
+		dp(secondReg, "secondReg")
+		foundP1, p1, popD1 = findPop(firstReg,bad,True,excludeRegs,gSetID,gTrackObj)
+		foundP2, p2, popD2 = findPop(secondReg,bad,True,excludeRegs,gSetID,gTrackObj)
+
+		if withPR:
+			foundPu1, pu1, pushD1 = findPush(firstReg,bad,True,excludeRegs,-4)
+		else:
+			foundPu1=True
+		if xorFound and foundP1 and foundPu1:
+			try:
+				tryThis= " -> " + disOffset(desired)
+				dp (tryThis)
+			except Exception as e:
+				tryThis=""
+			tryThis=tryThisFunc(desired)				
+			rp1=chainObj(p1, "loading first XOR value", [xorVal])
+			rp2=chainObj(p2, "loading second XOR value", [key])
+			com1 = redundantComChecker("",hex(desired) +tryThis,comment)
+			rp3=chainObj(x1, hex(xorVal) + " ^ " + hex(key) + " = " + hex(desired) + " - " + com1, [])
+
+			# rp3=chainObj(x1, hex(xorVal) + " ^ " + hex(key) + " = " + hex(desired) +tryThis + " - "+comment, [])
+			rOut=[rp1, rp2,rp3]
+			if withPR:
+				prObj=chainObj(pu1, "Push/ret - going to 0x" + hx(desired,8), [])
+				rOut.extend([prObj])
+
+			showChain(rOut)
+			return xorFound, rOut
+	dp ("return false xor")
+	return False,0
+
+def buildXorTarget64(desired,excludeRegs,bad, bb,withPR=True, firstReg=None, comment=None,isVal=False):
+	# print (red+"buildXorTarget","firstReg",firstReg,"desired",hex(desired),res)
+	availableRegs=copy.deepcopy(regs64.availableRegs)
+
+	# print ("excludeRegs",excludeRegs)
+	for r in excludeRegs:
+		# print (r)
+		availableRegs.remove(r)
+		dp ("\n\nbuildxor", hex(desired))
+
+	bExists, myDict=fg.getFg("xor",firstReg)
+	bExistsP, myDictP=fg.getFg("pop",firstReg)
+	if not bExists or  not bExistsP:
+		return False,0
+	xorFound, xorVal,x1,key, secondReg = findingXor164(myDict,desired,bad, availableRegs,bb)
+
 	if xorFound:
 		dp ("xor found", hex(xorVal), hex(x1), disOffset(x1))
 		dp(secondReg, "secondReg")
@@ -16171,10 +18336,53 @@ def buildXor2(desired,excludeRegs,bad, bb,withPR=True, firstReg=None):
 	dp ("return false xor")
 	return False,0
 
-def buildNot(desired,excludeRegs, bad,withPR=True, firstReg=None,comment="",isVal=False):
+
+def buildXor2(desired,excludeRegs,bad, bb,withPR=True, firstReg=None):
+	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
+	for r in excludeRegs:
+		availableRegs.remove(r)
+	dp ("\n\nbuildxor", hex(desired))
+
+	for reg in availableRegs:
+		bExists, myDict=fg.getFg("xor",reg)
+		bExistsP, myDictP=fg.getFg("pop",reg)
+		if not bExists and not bExistsP:
+			continue
+		xorFound, xorVal,x1,key, secondReg = findingXor1(myDict,desired,bad, availableRegs,bb)
+		if xorFound:
+			dp ("xor found", hex(xorVal), hex(x1), disOffset(x1))
+			dp(secondReg, "secondReg")
+			foundP1, p1, popD1 = findPop(reg,bad,True,excludeRegs)
+			foundP2, p2, popD2 = findPop(secondReg,bad,True,excludeRegs)
+
+			if withPR:
+				foundPu1, pu1, pushD1 = findPush(reg,bad,True,excludeRegs,-4)
+			else:
+				foundPu1=True
+			if xorFound and foundP1 and foundPu1:
+				try:
+					tryThis= " -> " + disOffset(desired)
+					dp (tryThis)
+				except Exception as e:
+					tryThis=""
+				tryThis=tryThisFunc(desired)				
+				rp1=chainObj(p1, "loading first XOR value", [xorVal])
+				rp2=chainObj(p2, "loading second XOR value", [key])
+				rp3=chainObj(x1, hex(xorVal) + " ^ " + hex(key) + " = " + hex(desired) +tryThis, [])
+				rOut=[rp1, rp2,rp3]
+				if withPR:
+					prObj=chainObj(pu1, "Push/ret - going to 0x" + hx(desired,8), [])
+					rOut.extend([prObj])
+
+				showChain(rOut)
+				return xorFound, rOut
+	dp ("return false xor")
+	return False,0
+
+def buildNot(desired,excludeRegs, bad,withPR=True, firstReg=None,comment="",isVal=False,gSetID=None,gTrackObj=None):
 	
 	if firstReg !=None:
-		foundNot,package =	buildNotTarget(desired,excludeRegs, bad,withPR, firstReg, comment,isVal)
+		foundNot,package =	buildNotTarget(desired,excludeRegs, bad,withPR, firstReg, comment,isVal, gSetID, gTrackObj)
 	else:
 		foundNot,package =buildNot2(desired,excludeRegs, bad,withPR, firstReg)
 	return foundNot,package 
@@ -16189,7 +18397,7 @@ def redundantComChecker(com1,phrase,comment):
 		return com1
 	except:
 		return phrase
-def buildNotTarget(desired,excludeRegs, bad,withPR=True, firstReg=None,comment="",isVal=False):
+def buildNotTarget(desired,excludeRegs, bad,withPR=True, firstReg=None,comment="",isVal=False,gSetID=None,gTrackObj=None):
 	dp ("\n\nbuildNot", hex(desired))
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
 	
@@ -16197,9 +18405,9 @@ def buildNotTarget(desired,excludeRegs, bad,withPR=True, firstReg=None,comment="
 	bExistsP, myDictP=fg.getFg("pop",firstReg)
 	if not bExists and not bExistsP:
 		return False, 0
-	negFound, preNot,f1 = findingNot1(myDict,desired,bad)
+	negFound, preNot,f1 = findingNot1(myDict,desired,bad, gSetID, gTrackObj)
 	if negFound:
-		foundP1, p1, popD1 = findPop(firstReg,bad,True,excludeRegs)
+		foundP1, p1, popD1 = findPop(firstReg,bad,True,excludeRegs,gSetID,gTrackObj)
 		if withPR:
 			foundPu1, pu1, pushD1 = findPush(firstReg,bad,True,excludeRegs,-4)
 		else:
@@ -16249,28 +18457,34 @@ def buildNot2(desired,excludeRegs, bad,withPR=True, firstReg=None):
 				showChain(rOut)
 				return negFound, rOut
 	return False,0
-def buildFoundIntOv(desired,excludeRegs,bad, withPR=True,regFirst=None, comment=None,isVal=False):
+def buildFoundIntOv(desired,excludeRegs,bad, withPR=True,regFirst=None, comment=None,isVal=False,arch=32,gSetID=None,gTrackObj=None):
 	# print (yel,"regFirst", regFirst,res)
 	# regFirst="ebp"
 	if regFirst!=None:
-		foundInt2,package = buildFoundIntOvTarget(desired,excludeRegs,bad, withPR, regFirst,comment,isVal)
+		foundInt2,package = buildFoundIntOvTarget(desired,excludeRegs,bad, withPR, regFirst,comment,isVal,arch,gSetID,gTrackObj)
 	else:
 		foundInt2,package = buildFoundIntOv2(desired,excludeRegs,bad, withPR, regFirst)
 
 	return foundInt2,package
-def buildFoundIntOvTarget(desired,excludeRegs,bad, withPR=True, regFirst=None, comment=None,isVal=False):
-	dp ("buildFoundIntOv", hex(desired))
-	# print (red+"buildFoundIntOv", "regFirst", regFirst, "goal", desired, res)
+def buildFoundIntOvTarget(desired,excludeRegs,bad, withPR=True, regFirst=None, comment=None,isVal=False,arch=32,gSetID=None,gTrackObj=None):
+	dp ("buildFoundIntOv", hex(desired), arch)
+	# print (red+"buildFoundIntOv", "regFirst", regFirst, "goal", desired, res,arch)
 	availableRegs=["eax", "ebx","ecx","edx", "esi","edi","ebp"]
-	for reg in excludeRegs:
-		availableRegs.remove(reg)
-
+	if arch==32:
+		for reg in excludeRegs:
+			availableRegs.remove(reg)
+	if arch==64:
+		availableRegs=copy.deepcopy(regs64.availableRegs)
+		for reg in excludeRegs:
+			if reg in availableRegs:
+				availableRegs.remove(reg)
 
 	bExists, myDict=fg.getFg("add",regFirst)
 	bExistsP, myDictP=fg.getFg("pop",regFirst)
-	if not bExists and not bExistsP:
+	if not bExists or not bExistsP:
+		# print ("not", bExists, bExistsP, regFirst, regFirst)
 		return False,0
-	intFound, overflow,f1 = foundIntOverflows(myDict,desired,bad)
+	intFound, overflow,f1 = foundIntOverflows(myDict,desired,bad,arch, gSetID,gTrackObj)
 	foundP1, p1, popD1 = findPop(regFirst,bad,True,excludeRegs)
 	if not intFound:
 		# print ("intFound ")
@@ -17666,6 +19880,30 @@ def genVirtualProtectPushad():
 	timeStop = timeit.default_timer()
 	print(red," Time:",yel, str(timeStop - timeStart),res)
 
+def	genNtQueryInformationProcess():
+	clearGlobals()
+	
+	timeStart = timeit.default_timer()
+	foundSys, sysCh = buildSyscall64("NtQueryInformationProcess")
+	timeStop = timeit.default_timer()
+	if foundSys:
+		cOut,out=genOutput(sysCh)
+		print(cOut)
+		print(red," Time:",yel, str(timeStop - timeStart),res)
+		printGadgetChain(out, "NtQueryInformationProcess")
+
+def genNtQueryInformationThread():
+	clearGlobals()
+				
+	timeStart = timeit.default_timer()
+	foundSys, sysCh = buildSyscall64("NtQueryInformationThread")
+	timeStop = timeit.default_timer()
+	if foundSys:
+		cOut,out=genOutput(sysCh)
+		print(cOut)
+		print(red," Time:",yel, str(timeStop - timeStart),res)
+		printGadgetChain(out, "NtQueryInformationThread")
+
 
 def genWinExecPushad():
 	timeStart = timeit.default_timer()
@@ -17908,14 +20146,15 @@ def getBaseDir(filename=None, alt=None):
 	# print ("baseDir",baseDir)
 	return baseDir
 
-def printGadgetChain(gadgetTxt, chainType):
-
+def printGadgetChainOLD(gadgetTxt, chainType):
+	print (filename2)
 	gadgetTxt2=""
 	if type(gadgetTxt)==list:
 		for g in gadgetTxt:
 			gadgetTxt2+=g+"\n\n"
 		gadgetTxt=gadgetTxt2
 	outputs=getBaseDir(filename2)
+	print (outputs)
 	restorePoint = sys.stdout
 	sys.stdout = open(outputs+"_"+chainType+".txt", 'w')
 
@@ -17925,6 +20164,46 @@ def printGadgetChain(gadgetTxt, chainType):
 	sys.stdout.close()
 	sys.stdout = restorePoint
 	print (res,"   Above is slightly truncated. Full exploit saved to "+ cya +outputs+"_"+chainType+".txt"+res)
+
+def getBaseDir(_=None):
+	return str(OUTPUT_DIR)
+
+
+
+
+def printGadgetChain(gadgetTxt, chainType, pushadTimer=False):
+	global filename2
+	if filename2:
+		name = os.path.basename(filename2)
+		base, ext = os.path.splitext(name)
+		if ext.lower() in ('.dll', '.exe'):
+			name = base
+		toolName = name
+
+	if isinstance(toolName, bool):
+		pushadTimer, toolName = toolName, None
+	if isinstance(gadgetTxt, list):
+		gadgetTxt = "\n\n".join(gadgetTxt)
+	tool_root	= os.getcwd()
+	outputs_root = os.path.join(tool_root, "Outputs")
+	os.makedirs(outputs_root, exist_ok=True)
+
+	baseTool = os.path.splitext(toolName or chainType)[0]
+
+	target_dir = os.path.join(outputs_root, baseTool)
+	os.makedirs(target_dir, exist_ok=True)
+
+	out_filename = f"{baseTool}_{chainType}.txt"
+	out_path	 = os.path.join(target_dir, out_filename)
+
+	print(out_path)
+	with open(out_path, 'w') as f:
+		f.write(gadgetTxt)
+
+	print(res,
+		  "Above is slightly truncated. Full exploit saved to",
+		  cya + out_path + res)
+
 
 def printWilds(myDict, searchStr):
 	outputs=getBaseDir(filename2)
@@ -18457,6 +20736,105 @@ def getExclusionCrtieria():
 			print(traceback.format_exc())
 			print ("exception")
 
+
+
+def researchMode():
+	researchModeTop()
+	print(uiResearchMode())
+	global opt
+	userIN=""
+
+	while userIN != "e" or userIN !="x":		#Loops on keyboard input
+		try:			#Will break the loop on entering x
+			print(yel + " ROP_ROCKET>"+ cya+"Researcher Mode> " +res, end="")
+			userIN = input()
+			print(res)
+			if userIN[0:1] == "1":
+				if opt["researcherMode"]:
+					opt["researcherMode"]=False
+				else:
+					opt["researcherMode"]=True
+				
+				print ("  Current setting for researcherMode: ", mag+str(opt["researcherMode"])+res)
+				
+			elif userIN[0:1] == "2" or userIN[0:1] == "n":
+				print(cya+"  Enter max num. of chains to attempt to generate: " +res, end="")
+				userLines = input()
+				print(res)
+				try: 
+					try:
+						userLines=int(userLines)
+					except:
+						userLines=int(userLines,16)
+					opt["maxChainAttempts"]=userLines
+					print ("  The max number of chains to generate is now " + str(opt["timeout"]) + " (" +hex(opt["maxChainAttempts"])+").")				
+				except:
+						print ("  Input is rejected.")									
+			
+			elif userIN[0:1] == "3":
+				print(res+"  10 minutes is 600 seconds; 30 minutes is 1200 seconds: " +res)
+				
+				print(cya+"  Enter max time in SECONDS: " +res, end="")
+				userLines = input()
+				print(res)
+				try: 
+					try:
+						userLines=int(userLines)
+					except:
+						userLines=int(userLines,16)
+					opt["timeout"]=userLines
+					minutes = opt["timeout"]/60
+					print ("  Max time is now " + str(opt["timeout"]) + " (" +hex(opt["timeout"])+") seconds or " +str(minutes)+" minutes.")				
+				except:
+						print ("  Input is rejected.")			
+
+			elif userIN[0:1] == "4":
+				buildPushadEverything(bad)					
+			elif userIN[0:1] == "q" or userIN[0:1] == "x":
+				break			
+			elif userIN[0:1] == "h" or userIN[0:7] == "display":
+				print(uiResearchMode())
+			else:
+				print("   Invalid input. Enter " + red + "x"+res+" to exit Style.\n")
+		except Exception as e:
+			print (e)
+			print(traceback.format_exc())
+			print ("exception")
+
+def researchModeTop():
+	raw = (
+		f"{whi}  ROP ROCKET is designed to obtain the first ROP chain it completes for each pattern. "
+		"Some APIs like VirtualProtect may have two patterns, but others have many more. "
+		"We now offer a research mode, that allows you to continue with a potentially unlimited number "
+		"of unique variations of each API, repeating the same patterns but with a new setup. Simply specify the number of chains you wish to complete.Note that printing in researcher mode only prints to file - not the screen - as potentially there could be thousands of variations!\n\n") 
+	text1 = textwrap.fill(raw, width=80, subsequent_indent="  ")
+
+	text2=red+"\n  Note that at this time only the PUSHAD method is supported - mov dereferences is\n  combo PUSHAD/mov dereferences are not supported.\n\n"+res
+
+	print(text1)
+	print(text2)
+
+def uiResearchMode():
+	if opt["researcherMode"]:
+		togx86Ex=res+"["+cya+"ON"+res+"]"
+	else:
+		togx86Ex=res+"["+cya+"OFF"+res+"]"
+
+	toglength=res+"["+cya+str(opt["maxChainAttempts"])+res+"]"
+	togTimeout=res+"["+cya+hex(opt["timeout"])+res+"]"
+
+	text=gre+"\n	  Current Status			\n"
+	text+=whi+"\n  Researcher Mode: {}\t\t\n".format(togx86Ex)
+	text+=gre+"\n	  Options			\n"
+	text+=yel+"   {}\t {}		{} {}\t	   Toggle Researcher Mode on/off.\n".format(cya+"1"+res,mag+"Researcher Mode" +res, togx86Ex, " "+yel, cya)
+	text+=yel+"   {}\t {}		{} {}		 Set maximum number of chains to search for.\n".format(cya+"2"+res,mag+"Max chains" +res, toglength, " "+yel)
+	text+=yel+"   {}\t {}		{} {} Set time for search to run before it terminates.\n".format(cya+"3"+res,mag+"Timeout" +res, togTimeout, " "+yel)
+	text+=yel+"   {}\t {}		{} {}			Obtain all PUSHAD patterns.\n".format(cya+"4"+res,mag+"Get everything" +res, " ", " "+yel)
+
+	text+=gre+"   {} {} Show this submenu\n".format(cya+"h"+gre, res+"-"+gre)
+	text+=gre+"   {} {} Exit\n".format(cya+"x"+gre,res+"-"+res)
+	return text
+
 def uiShowPrintSettings():
 	global opt
 	try:
@@ -18710,7 +21088,8 @@ def getGadgetsSubMenu():
 	print(uiShowGetGadgetsSettings())
 	global opt
 	userIN=""
-
+	global curArch
+	print (red,"   You can only select "+whi+"x86"+red+" or "+whi+"x64 "+red+"- or gadgets will be overwritten!\n   "+gre+" Clear previous gadgets if switching architecture.",res)
 	while userIN != "e" or userIN !="x":		#Loops on keyboard input
 		try:			#Will break the loop on entering x
 			print(yel + " ROP_ROCKET>"+ cya+"Get_Gadgets>" + mag + "Options> " +res, end="")
@@ -18751,30 +21130,44 @@ def getGadgetsSubMenu():
 				
 			elif userIN[0:1] == "5" or userIN[0:1] == "g":
 				print ("  This will fetch all gadgets according to the settings.")
-				if opt["bx86Get"] and not opt["bx64Get"]:
+				if opt["bx86Get"]:
 					print ("  Getting x86 gadgets...")
 					if opt["bx86Extracted"]:
 						print ("  You may wish to clear previously saved gadgets first.")
 					getGadgets()
 					print ("  Fetched")
-				elif not opt["bx86Get"] and  opt["bx64Get"]:
+				if opt["bx64Get"]:
 					print ("  Getting x64 gadgets...")
 					if opt["bx64Extracted"]:
 						print ("  You may wish to clear previously saved gadgets first.")
 					getGadgetsx64()
 					print ("  Fetched")
-				elif opt["bx86Get"] and  opt["bx64Get"]:
-					print ("  Getting x86 and x64 gadgets...")
-					if opt["bx64Extracted"] or opt["bx86Extracted"]:
-						print ("  You may wish to clear previously saved gadgets first.")
-					getGadgetsx6486()
-					print ("  Fetched")
+				# if opt["bx86Get"] and not opt["bx64Get"]:
+				# 	print ("  Getting x86 gadgets...")
+				# 	if opt["bx86Extracted"]:
+				# 		print ("  You may wish to clear previously saved gadgets first.")
+				# 	getGadgets()
+				# 	print ("  Fetched")
+				# elif not opt["bx86Get"] and  opt["bx64Get"]:
+				# 	print ("  Getting x64 gadgets...")
+				# 	if opt["bx64Extracted"]:
+				# 		print ("  You may wish to clear previously saved gadgets first.")
+				# 	getGadgetsx64()
+				# 	print ("  Fetched")
+				# elif opt["bx86Get"] and  opt["bx64Get"]:h
+				# 	if opt["bx64Extracted"] or opt["bx86Extracted"]:
+				# 		print ("  You may wish to clear previously saved gadgets first.")
+				# 	print ("  Getting x86 gadgets...")
+				# 	getGadgets()
+				# 	print ("  Getting x64 gadgets...")
+				# 	getGadgetsx64()
+				# 	print ("  Fetched")
 				else:
 					print ("   None are selected!\n")
-
-			elif userIN[0:1] == "5" or userIN[0:1] == "b":
-				print ("  This will fetch both x86 and x64 gadgets.")
-				getGadgetsx6486()
+			
+			# elif userIN[0:1] == "5" or userIN[0:1] == "b":
+			# 	print ("  This will fetch both x86 and x64 gadgets.")
+			# 	getGadgetsx6486()
 			elif userIN[0:1] == "q" or userIN[0:1] == "x":
 				break			
 			elif userIN[0:1] == "h" or userIN[0:7] == "display":
@@ -19259,8 +21652,14 @@ def ui():
 			elif userIN[0:2] == "as":
 				# printTest()
 				buildASLR_Bypass64()	
+			elif userIN[0:3] == "nqp":
+				genNtQueryInformationProcess()
+			elif userIN[0:3] == "nqt":
+				genNtQueryInformationProcess()
 			elif userIN[0:3] == "set":
 				sParams.uiSetFillerQuantity()
+			elif userIN[0:3] == "res":
+				researchMode()
 			elif userIN[0:2] == "ct":
 				genCreateToolhelp32SnapshotROP()
 			elif userIN[0:1] == "u" or userIN[0:1] == "U":
@@ -19417,6 +21816,7 @@ if __name__ == "__main__":
 				file_dllDict = open(filenameDLL, 'rb') 
 				dllDict = pickle.load(file_dllDict)
 				loadP=True
+
 			except:
 				print (mag,"Error loading previously saved - extraction restarting.",res)
 				Extraction()
@@ -19425,7 +21825,6 @@ if __name__ == "__main__":
 
 
 		if not useSaved:
-			
 			noneBox=[]
 			for each in pe[n].dlls:
 				bIsFound, notFound=findDLL_IAT(each)
@@ -19446,7 +21845,6 @@ if __name__ == "__main__":
 				# timeStop = timeit.default_timer()
 				dp ("run_fast_scandir time")
 				# dp(str(# timeStop - # timeStart))
-				
 			for dll in noneBox:
 				findDLLOther(dll)
 
@@ -19466,7 +21864,6 @@ if __name__ == "__main__":
 
 
 		genBasesForEm()
-
 
 		n =peName
 

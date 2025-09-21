@@ -97,6 +97,7 @@ class badBytes:
 			self.i=0
 			return 0
 	def giveXor(self,need=3):
+		# need=7
 		val=self.startXor
 		try:
 			for opc in range(need):
@@ -145,11 +146,11 @@ def buildObfValuesIntOverflow(goal,bad,bb, maxL=10000):   ### only works with a 
 				if len(hex(evil1L[t])) >8  and len(hex(evil1L[t])) <11:
 					if len(hex(evil4)) >8  and len(hex(evil4)) <11:
 						if checkFreeBadBytes2(evil4,bad) and checkFreeBadBytes2(evil1L[t],bad):
-							# dp ("     *****         no bad chars")
+							# dp ("	 *****		 no bad chars")
 							return True, evil1L[t],evil4
 						# else:
 						# 	pass
-							# dp ("     ^^^^^^^^^   bad chars")
+							# dp ("	 ^^^^^^^^^   bad chars")
 		t+=1
 	t=0
 
@@ -159,18 +160,18 @@ def buildObfValuesIntOverflow(goal,bad,bb, maxL=10000):   ### only works with a 
 		evil4=diff + evil2L[t]
 		# dp ("evil4, diff", evil4, diff)
 		# dp ("evil 4 too big")
-		dp("    ->evil1",hex(evil1L[t]),"evil4",hex(evil4), hex(evil2L[t]))
+		dp("	->evil1",hex(evil1L[t]),"evil4",hex(evil4), hex(evil2L[t]))
 		# special=0xffffffff
 		special=bb.give()
 		extra=evil4-special
 		evil1L[t]=evil1L[t]+extra
 		evil4=evil4-extra
-		dp ("\tcalculating evil1 and 4 new:",hex(evil1L[t]),"+",hex(evil4),"        ----len:", len(hex(evil1L[t]))-2, len(hex(evil4))-2)
+		dp ("\tcalculating evil1 and 4 new:",hex(evil1L[t]),"+",hex(evil4),"		----len:", len(hex(evil1L[t]))-2, len(hex(evil4))-2)
 		dp(" \t\ttrunc:",hex(truncate(evil1L[t]+evil4,32)), hex(evil1L[t]+evil4))		
 		if (hex(truncate(evil1L[t]+evil4,32))) == hex(goal):
 			if len(hex(evil1L[t])) >8  and len(hex(evil1L[t])) <11:
 				if len(hex(evil4)) >8  and len(hex(evil4)) <11:
-					dp ("\t\t\t\t!!!            it is a match3", hex(truncate(evil1L[t]+evil4,32)))
+					dp ("\t\t\t\t!!!			it is a match3", hex(truncate(evil1L[t]+evil4,32)))
 					# dp("\t\t-> evil1 and evil 4",hex(evil1L[t]), "+", hex(evil4))
 					if checkFreeBadBytes2(evil1L[t],bad):
 						# dp ("yes, free bad bytes!")
@@ -181,7 +182,75 @@ def buildObfValuesIntOverflow(goal,bad,bb, maxL=10000):   ### only works with a 
 			evil1L=evil1LC.copy()
 			evil2L=evil2LC.copy()
 	return False,0,0
+	
+def buildObfValuesIntOverflow64(goal, bad, bb, maxL=10000):
 
+	start   = 0x0040000000400000
+	evil1L  = [
+		0xeeeeeeeeeeeeeeee, 0xdddddddddddddddd, 0xcccccccccccccccc,
+		0xbbbbbbbbbbbbbbbb, 0xaaaaaaaaaaaaaaaa, 0x9999999999999999,
+		0x8888888888888888, 0x7777777777777777, 0x6666666666666666,
+		0x5555555555555555, 0x4444444444444444, 0x3333333333333333,
+		0x2222222222222222, 0x1111111111111111, 0x0941424309414243
+	]
+	evil1LC = evil1L.copy()
+
+	evil2L  = [
+		0x1151111211511112, 0x2262222322622223, 0x3373333433733334,
+		0x4484444544844445, 0x5595555655955556, 0x66a6666766a66667,
+		0x77b7777877b77778, 0x88c8888988c88889, 0x99d9999a99d9999a,
+		0xaaeaaaabaaeaaaab, 0xbbfbbbbcbbfbbbbc, 0xcd0ccccdcd0ccccd,
+		0xde1ddddede1dddde, 0xef2eeeefef2eeeef, 0xf6febdbdf6febdbd
+	]
+	evil2LC = evil2L.copy()
+
+	mask64 = (1 << 64) - 1
+	diff   = (goal - start) & mask64
+
+	# Helper to truncate to N bits
+	def truncate(val, bits):
+		return val & ((1 << bits) - 1)
+
+	# 1) Primary direct solve
+	mask64 = (1 << 64) - 1
+	for e1 in evil1L:
+		# directly solve e4 so that e1 + e4 ≡ goal (mod 2^64)
+		e4 = (goal - e1) & mask64
+		# verify we hit goal under 64‑bit overflow
+		if ((e1 + e4) & mask64) != goal & mask64:
+			continue
+		# bad‑byte check on both halves
+		if checkFreeBadBytes2(e1, bad) and checkFreeBadBytes2(e4, bad):
+			return True, e1, e4
+			pass
+	# 2) Backup loop if primary fails
+	t = 0
+	for _ in range(maxL):
+		diff	 = (goal - start) & mask64
+		e4	   = (diff + evil2L[t]) & mask64
+		# compute adjustment via bb.give()
+		special  = bb.give(7)
+		extra   = special  # or however you want to fold in bb.give()
+		e1_new  = (evil1L[t] + extra)       & mask64
+		e4_new  = (goal - e1_new)           & mask64
+
+		# debug print
+		# print(" -> try backup t=", t,
+		   # "e1=", hex(e1_new), "e4=", hex(e4_new),
+		   # "sum=", hex(truncate(e1_new + e4_new, 64)))
+		# print (hex(truncate(e1_new + e4_new, 64)), hex(goal & mask64))
+		if truncate(e1_new + e4_new, 64) == (goal & mask64):
+			print (1)
+			if len(hex(e1_new)) >16  and len(hex(e1_new)) <19:
+				print (2)
+				if len(hex(e4_new)) >16  and len(hex(e4_new)) <19:
+	  				return True, e1_new, e4_new
+		t += 1
+		if t > 14:
+			t = 0
+			evil1L = evil1LC.copy()
+			evil2L = evil2LC.copy()
+	return False, None, None
 
 def buildXORStart(goal,bad,bb, maxL=10000):   ### only works with a 0x00 in front!!!!
 	t=0
