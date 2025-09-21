@@ -13086,19 +13086,18 @@ def buildSyscall64(apiCode	):
 	return foundAslrSys, s1
 	# exit()		
 	
-
 def buildASLR_Bypass64(	):
 	print (aslrLogo())
-	
+
 	apiCode="NtQueryInformationProcess"
 	apiCode="NtQueryInformationThread"
 	apiCodes=["NtQueryInformationProcess","NtQueryInformationThread"]
 	# foundAslrSys, s1, sysGSReg, sysR2=aslr_syscallLeakGS()
 	length1=True
-	foundAslrSys, s1,sysReg=  aslr_syscall(apiCode)
-	if foundAslrSys:
-		showChain(s1,True,True,gre, "Res",64)
-	# exit()		
+
+	# foundAslrSys, s1,sysReg=  aslr_syscall(apiCode)
+	# if foundAslrSys:
+	# 	showChain(s1,True,True,gre, "Res",64)
 	
 	regsNotUsed= copy.deepcopy(regs64.availableRegs)
 

@@ -5,7 +5,7 @@ Please note that this is still a work in progress, with some updated and enhance
 
 Work is ongoing with new capabilities regularly added at present. Please check back on a regular basis.
 
-![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/rop_rocket.png?raw=true)
+![image](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/rop_rocket.png)
 
 
 # Powerful ROP Capabilities
@@ -22,6 +22,13 @@ ROP ROCKET is very powerful with some unique capabilities, which includes the fo
 - Persistence - ROP ROCKET will extract x86 gadgets upon launch. These are saved in an .obj file, so they will remain each time you open it, allowing previously found gadgets to be instantly available. Generating new attacks should be more or less instantaneous at this point. Note: if you extract up to 0x22 bytes and then decide you want to decrease it, you will need to clear those and re-capture; saving your results is automatic.
 - Config.cfg file for useful settings for some personal preferences.
 - Some other new and unique features are planned as well.
+
+# High Entropy ASLR Bypasses
+August 2025: ROP ROCKET has an ASLR Bypass Mini-Tool, released at DEFCON on August 10, 2025, which  will generate nine ASLR bypasses to 64-bit, high entropy ASLR.
+
+![r_bypass1](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/aslr_bypass2.png?raw=true)
+
+![ASLR Bypass Screenshot](https://github.com/Bw3ll/ROP_ROCKET/blob/main/rop%20rocket_screenshots/aslr_bypass1.png?raw=true)
 
 # Install Instructions
 

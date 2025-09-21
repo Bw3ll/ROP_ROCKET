@@ -147,7 +147,3 @@ if testing:
         # just throw temp away, tracker stays as it was
         pass
         gTrackTesting.show()
-
-
-
-

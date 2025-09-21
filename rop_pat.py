@@ -1474,4 +1474,3 @@ patSys64={
 		'5':{'r':'r10', 'val':0xFFFFFFFFFFFFFFFF, 'com':'first parm from rcx - current process  ', 'hasStr':False, 'hasPtr':False, 'hasStru': False, 'strucT':None, 'struSize':None, 'loc':None},
 		'retrieve':{'loc':'loc1', 'com':'PEB'}
 		}	
-}
