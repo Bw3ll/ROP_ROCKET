@@ -2544,6 +2544,7 @@ class PEInfo:
 		self.dllDict={}
 		self.emBase=0  # emulated base - nothing to do with actual bases used - these are allocated in emulation to avoid conflicts
 		self.emBaseOld=0  # emulated base - nothing to do with actual bases used - these are allocated in emulation to avoid conflicts
+		self.machine=False
 
 
 	def setExtracted(self,val):
@@ -2552,6 +2553,8 @@ class PEInfo:
 		self.setSkip=val
 	def setMagic(self,val):
 		self.magic=val
+	def setMachine(self,val):
+		self.machine=val
 	def setIsDLL(self,val):
 		self.isDLL=val
 	def setPath(self,val):

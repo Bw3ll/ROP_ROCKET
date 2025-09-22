@@ -269,6 +269,45 @@ def findEvilImports(myPE):
 	# except:
 	# 	dp ("kernel32 is not there")
 
+IMAGE_FILE_MACHINE = {
+	0x014c: "x86",	# IMAGE_FILE_MACHINE_I386
+	0x8664: "x64",	# IMAGE_FILE_MACHINE_AMD64
+	0xAA64: "arm64",  # IMAGE_FILE_MACHINE_ARM64
+	0x0200: "ia64",   # IMAGE_FILE_MACHINE_IA64 (Itanium)
+}
+
+def resolve_system32():
+	windir = os.environ.get("WINDIR", r"C:\Windows")
+	if sys.maxsize <= 2**32:
+		sysnative = os.path.join(windir, "Sysnative")
+		if os.path.isdir(sysnative):  #  only on 64-bit Windows
+			return sysnative
+	return os.path.join(windir, "System32")
+
+def get_pe_arch(path: str) -> str:
+	pe = pefile.PE(path, fast_load=True)
+	machine = pe.FILE_HEADER.Machine
+	magic = getattr(pe.OPTIONAL_HEADER, "Magic", None)
+	# print (hex(magic))
+	# Magic: 0x10B = PE32 (32-bit), 0x20B = PE32+ (64-bit)
+	if magic == 0x20B:  # 64-bit image
+		if machine == 0x8664:
+			return "x64"
+		if machine == 0xAA64:
+			return "arm64"
+		if machine == 0x0200:
+			return "ia64"
+		return "64-bit"
+	elif magic == 0x10B:
+		return "x86"
+	return IMAGE_FILE_MACHINE.get(machine, "unknown")
+
+def is_x64(path_to_binary: str) -> bool:
+	try:
+		return get_pe_arch(path_to_binary) == "x64"
+	except Exception:
+		return False
+
 def Extraction():
 	global o
 	# global modName
@@ -304,6 +343,12 @@ def Extraction():
 			if skipPath == True:
 				myPE = pefile.PE(PEtemp)
 		t=0
+		try: 
+			bMachinex64=is_x64(PE_path+ "\\"+peName)
+			pe[n].setMachine(bMachinex64)
+		except:	
+			pass
+
 		thereIsATextLabelled=False
 		findEvilImports(myPE)
 		for x in myPE.sections:
@@ -519,6 +564,7 @@ def extractDLLsEachParallel(args):
 	# dp ("dll", dll)
 	# dp ("pe", pe, type(pe))
 	newPE=PEInfo()
+
 	global peName, n
 	# print ("dll",dll)
 	try:
@@ -21868,11 +21914,16 @@ if __name__ == "__main__":
 
 		# start2 = timeit.default_timer()
 		if not useSaved:
+			# print (red,pe[n].machine,res)
 			if not doParallel:
 				get_OP_RET(15)
 			else:
 				fgK = foundGadgets()
-				startGet_Op_Ret_Parallel()
+				if not pe[n].machine:
+					startGet_Op_Ret_Parallel()
+				else:
+					startGet_Op_Ret_Parallel64()
+
 				# stop2 = timeit.default_timer()
 				# dp("Time 3: " + str(stop2 - start2))				
 			filename=filenameRaw+"_gadgets.obj"
