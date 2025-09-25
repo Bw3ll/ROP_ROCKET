@@ -2787,10 +2787,12 @@ def rop_tester(testCode, ID=False, regWritable=False):
     outFile.write(binaryToStr(testCode)+"\n")
 
 
-    
     global rop_testerCalled
     global prevRop_testerCalled
     checkDoGC=prevRop_testerCalled-rop_testerCalled
+    # print ("rop_tester",red,prevRop_testerCalled,rop_testerCalled,res)
+    prevRop_testerCalled+=1
+
     if checkDoGC==20:
         prevRop_testerCalled=rop_testerCalled
         doGC()  ## manual garbage collection - memory problems
@@ -2805,8 +2807,8 @@ def rop_tester(testCode, ID=False, regWritable=False):
         try:
             mu = Uc(UC_ARCH_X86, UC_MODE_32)
         except Exception as e:
-            print(yel,"ERROR: %s" % e)
-            print(traceback.format_exc(),res)
+            dp(yel,"ERROR: %s" % e)
+            dp(traceback.format_exc(),res)
 
         # map 2MB memory for this emulation
         mu.mem_map(ADDRESS, 2 * 1024 * 1024)
@@ -2960,6 +2962,8 @@ def rop_testerFS(testCode, fsReg,fsAdjust, ID=False, regWritable=False):
 
 
     bad_instruct_count=4
+    prevRop_testerCalled+=1
+
     checkDoGC=prevRop_testerCalled-rop_testerCalled
     if checkDoGC==20:
         prevRop_testerCalled=rop_testerCalled
@@ -2977,8 +2981,8 @@ def rop_testerFS(testCode, fsReg,fsAdjust, ID=False, regWritable=False):
         try:
             mu = Uc(UC_ARCH_X86, UC_MODE_32)
         except Exception as e:
-            print(yel,"ERROR: %s" % e)
-            print(traceback.format_exc(),res)
+            dp(yel,"ERROR: %s" % e)
+            dp(traceback.format_exc(),res)
 
         # map 2MB memory for this emulation
         # mu.mem_map(ADDRESS, 4 * 1024 * 1024)
